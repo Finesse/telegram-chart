@@ -1,13 +1,7 @@
-import {Component} from 'inferno';
-import shallowEqualObjects from 'shallow-equal/objects';
+import {PureComponent} from '../helpers/inferno';
 import ChartLine from './ChartLine';
 
-export default class ChartMapLines extends Component {
-  // Memoize the component render result
-  shouldComponentUpdate(nextProps, nextState) {
-    return !shallowEqualObjects(this.props, nextProps) || !shallowEqualObjects(this.state, nextState);
-  }
-
+export default class ChartMapLines extends PureComponent {
   render() {
     const linesEntries = Object.entries(this.props.linesData);
 

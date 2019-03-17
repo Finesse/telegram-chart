@@ -2,6 +2,8 @@ import {Component, createRef} from 'inferno';
 import {chartSidePadding, chartMapHeight} from '../../style';
 import ToggleButton from '../ToggleButton/ToggleButton';
 import ChartMapLines from '../ChartMapLines';
+import ChartTopFade from '../ChartTopFade/ChartTopFade';
+import ChartMainSection from '../ChartMainSection/ChartMainSection';
 import styles from './Chart.css?module';
 
 export default class Chart extends Component {
@@ -36,8 +38,6 @@ export default class Chart extends Component {
   }
 
   render() {
-    const linesEntries = Object.entries(this.props.lines);
-
     return (
       <div className={styles.root}>
         <h3 className={styles.name}>{this.props.name}</h3>
@@ -48,6 +48,18 @@ export default class Chart extends Component {
           shapeRendering="optimizeSpeed"
           ref={this.canvasRef}
         >
+          <ChartMainSection
+            canvasWidth={this.state.canvasWidth}
+            x={chartSidePadding}
+            y={0}
+            width={this.state.canvasWidth - chartSidePadding * 2}
+            height={this.state.canvasHeight - chartMapHeight}
+            startIndex={this.state.startX}
+            endIndex={this.state.endX}
+            linesData={this.props.lines}
+            linesState={this.state.lines}
+            dates={this.props.x}
+          />
           <ChartMapLines
             canvasWidth={this.state.canvasWidth}
             x={chartSidePadding}
@@ -57,9 +69,15 @@ export default class Chart extends Component {
             linesData={this.props.lines}
             linesState={this.state.lines}
           />
+          <ChartTopFade
+            x={0}
+            y={0}
+            width="100%"
+            height={18}
+          />
         </svg>
         <div className={styles.toggles}>
-          {linesEntries.map(([key, {name, color}]) => (
+          {Object.entries(this.props.lines).map(([key, {name, color}]) => (
             <ToggleButton
               key={key}
               color={color}

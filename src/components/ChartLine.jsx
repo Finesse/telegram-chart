@@ -1,4 +1,4 @@
-import shallowEqualObjects from 'shallow-equal/objects';
+import {memo} from '../helpers/inferno';
 
 /**
  * Makes an SVG polyline that displays a chart line with linear interpolation. The line is rendered from the left edge
@@ -7,7 +7,7 @@ import shallowEqualObjects from 'shallow-equal/objects';
  *
  * X and Y are the SVG coordinates, `values` are the data Ys and its indices are the Xs.
  */
-export default function ChartLine({
+export default memo(function ChartLine({
   values,
   canvasWidth,
   fromIndex,
@@ -47,11 +47,4 @@ export default function ChartLine({
   }
 
   return <polyline points={points} strokeWidth={strokeWidth} {...polylineProps} />;
-}
-
-ChartLine.defaultHooks = {
-  // Memoize the component render result
-  onComponentShouldUpdate(prevProps, nextProps) {
-    return !shallowEqualObjects(prevProps, nextProps);
-  }
-};
+});
