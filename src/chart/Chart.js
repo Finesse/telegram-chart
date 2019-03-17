@@ -1,5 +1,5 @@
 import getMaxOnRange from '../helpers/getMaxOnRange';
-import drawChartOnCanvas from './drawChartOnCanvas';
+import updateSVG from './updateSVG';
 import styles from './chart.css?module';
 
 /**
@@ -22,7 +22,7 @@ export default class Chart {
    * The chart canvas element
    * @type {HTMLCanvasElement}
    */
-  canvas;
+  svg;
 
   /**
    * The line toggle buttons
@@ -35,12 +35,6 @@ export default class Chart {
    * @type {number|null}
    */
   animationFrameId = null;
-
-  /**
-   * The device pixel ratio (number of real pixels per CSS pixel)
-   * @type {number}
-   */
-  pixelRatio = 1;
 
   /**
    * @param {HTMLElement} domElement Where to render the chart
@@ -62,8 +56,8 @@ export default class Chart {
       lines: linesState
     };
 
-    const {root, canvas, toggles} = createDOM(chartData.name, chartData.lines);
-    this.canvas = canvas;
+    const {root, svg, toggles} = createDOM(chartData.name, chartData.lines);
+    this.svg = svg;
     this.lineToggles = toggles;
 
     domElement.appendChild(root);
@@ -106,10 +100,6 @@ export default class Chart {
    * Handles a window resize event
    */
   handleResize = () => {
-    this.pixelRatio = window.devicePixelRatio || 1;
-    this.canvas.width = this.canvas.clientWidth * this.pixelRatio;
-    this.canvas.height = this.canvas.clientHeight * this.pixelRatio;
-
     this.renderOnNextAnimationFrame();
   };
 
@@ -118,7 +108,7 @@ export default class Chart {
    */
   render() {
     const [canvasDrawData, needsUpdateOnNextFrame] = this.getCanvasDrawData();
-    drawChartOnCanvas(this.canvas, canvasDrawData);
+    updateSVG(this.svg, canvasDrawData);
     this.updateListToggles();
 
     if (needsUpdateOnNextFrame) {
@@ -163,7 +153,6 @@ export default class Chart {
     }));
 
     return [{
-      pixelRatio: this.pixelRatio,
       minX: this.chartState.startX,
       maxX: this.chartState.endX,
       minY: 0,
@@ -185,7 +174,7 @@ export default class Chart {
  *
  * @param {string} name
  * @param {{}} lines
- * @returns {{canvas: HTMLElement, root: HTMLElement, toggles: Record<string, HTMLElement>}}
+ * @returns {{svg: SVGElement, root: HTMLElement, toggles: Record<string, HTMLElement>}}
  */
 function createDOM(name, lines) {
   const rootElement = document.createElement('div');
@@ -196,9 +185,15 @@ function createDOM(name, lines) {
   nameElement.className = styles.name;
   rootElement.appendChild(nameElement);
 
-  const canvas = document.createElement('canvas');
-  canvas.className = styles.canvas;
-  rootElement.appendChild(canvas);
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', styles.canvas);
+  svg.setAttribute('viewBox', '0 0 500 400');
+  svg.setAttribute('preserveAspectRatio', 'none');
+  svg.setAttribute('shapeRendering', 'optimizeSpeed');
+  svg.setAttribute('version', '1.1');
+  svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  svg.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+  rootElement.appendChild(svg);
 
   const toggles = {};
   const togglesBox = document.createElement('div');
@@ -222,5 +217,5 @@ function createDOM(name, lines) {
     toggle.appendChild(nameElement);
   }
 
-  return {root: rootElement, canvas, toggles};
+  return {root: rootElement, svg, toggles};
 }
