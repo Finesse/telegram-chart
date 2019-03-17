@@ -1,0 +1,9 @@
+:global(body) {
+    margin: 0;
+    padding: 12px;
+    font-family: Helvetica, sans-serif;
+}
+
+.chart:not(:first-child) {
+    margin-top: 30px;
+}
