@@ -41,17 +41,20 @@ module.exports = (env, argv) => {
   const isDevelopment = mode !== 'production';
 
   return {
-    entry: `./${sourceDirectory}/index.js`,
+    entry: `./${sourceDirectory}/index.jsx`,
     mode,
     devtool: isDevelopment && 'inline-source-map',
     resolve: {
       modules: [sourceDirectory, 'node_modules'],
-      extensions: ['.js', '.jsx', '.json']
+      extensions: ['.js', '.jsx', '.json'],
+      alias: isDevelopment ? {
+        inferno: path.resolve(__dirname, 'node_modules/inferno/dist/index.dev.esm.js')
+      } : {}
     },
     module: {
       rules: [
         {
-          test: /\.js$/,
+          test: /\.(js|jsx)$/,
           exclude: /node_modules/,
           loader: {
             loader: 'babel-loader',
@@ -61,7 +64,8 @@ module.exports = (env, argv) => {
               ],
               plugins: [
                 '@babel/plugin-transform-runtime',
-                '@babel/plugin-proposal-class-properties'
+                '@babel/plugin-proposal-class-properties',
+                'babel-plugin-inferno'
               ]
             }
           }

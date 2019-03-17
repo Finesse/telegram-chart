@@ -1,0 +1,33 @@
+.button {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  height: 34px;
+  min-width: 34px;
+  padding: 0 6px;
+  border: 1px solid;
+  border-radius: 17px;
+  cursor: pointer;
+  outline: none;
+  font-size: 12px;
+  background: none;
+}
+
+.icon {
+  flex: none;
+  display: block;
+  box-sizing: border-box;
+  width: 20px;
+  height: 20px;
+  border: 2px solid;
+  border-radius: 100%;
+  transition: background 0.3s ease-in-out;
+}
+
+.button:not(.on) > .icon {
+  background: transparent !important;
+}
+
+.name {
+  margin: 0 9px 0 13px;
+}

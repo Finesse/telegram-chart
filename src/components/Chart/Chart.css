@@ -1,0 +1,37 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  height: 410px;
+  max-height: 100vh;
+}
+
+.name {
+  margin: 0;
+  padding: 0 12px;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.canvas {
+  width: 100%;
+  flex: auto;
+  min-height: 160px;
+}
+
+.canvas > * {
+  flex: none;
+}
+
+.chart * {
+  vector-effect: non-scaling-stroke;
+}
+
+.toggles {
+  margin: 8px 5px -7px;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.toggle {
+  margin: 7px;
+}
