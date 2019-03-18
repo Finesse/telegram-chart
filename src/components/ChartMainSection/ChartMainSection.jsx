@@ -10,7 +10,7 @@ export default class ChartMainSection extends Component {
   render() {
     const linesEntries = Object.entries(this.props.linesData);
 
-    const maxY = Math.max(...linesEntries.map(([key, {values}]) => {
+    const maxY = Math.max(0, ...linesEntries.map(([key, {values}]) => {
       return this.props.linesState[key] && this.props.linesState[key].enabled
         ? getMaxOnRange(values, this.props.startIndex, this.props.endIndex)
         : 0;
