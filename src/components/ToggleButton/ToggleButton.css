@@ -1,7 +1,12 @@
+/* CSSO fails when `box-sizing` is inside `.icon` for some reason */
+.button,
+.icon {
+  box-sizing: border-box;
+}
+
 .button {
   display: flex;
   align-items: center;
-  box-sizing: border-box;
   height: 34px;
   min-width: 34px;
   padding: 0 6px;
@@ -16,7 +21,6 @@
 .icon {
   flex: none;
   display: block;
-  box-sizing: border-box;
   width: 20px;
   height: 20px;
   border: 2px solid;
