@@ -2,7 +2,7 @@ import {Component} from 'inferno';
 import getMaxOnRange from '../../helpers/getMaxOnRange';
 import AnimationGroup, {TestTransition} from '../../helpers/animationGroup';
 import ChartLine from '../ChartLine';
-import styles from './ChartMainSection.css?module';
+import ChartValueScale from '../ChartValueScale/ChartValueScale';
 
 const linesTopMargin = 20;
 const linesBottomMargin = 31;
@@ -42,13 +42,14 @@ export default class ChartMainSection extends Component {
     const {maxValue, ...linesOpacity} = this.transitionGroup.getState();
 
     return <>
-      <line
-        x1={this.props.x}
-        y1={this.props.y + this.props.height - linesBottomMargin - 0.5}
-        x2={this.props.x + this.props.width}
-        y2={this.props.y + this.props.height - linesBottomMargin - 0.5}
-        strokeWidth={1}
-        className={styles.primaryGrid}
+      <ChartValueScale
+        x={this.props.x}
+        y={this.props.y}
+        width={this.props.width}
+        height={this.props.height - linesBottomMargin}
+        fromValue={0}
+        toValue={maxValue / (this.props.height - linesBottomMargin - linesTopMargin) * (this.props.height - linesBottomMargin)}
+        notchScale={Math.log10(maxValue) * 3 - 1}
       />
       {Object.entries(this.props.linesData).map(([key, {color, values}]) => {
         const opacity = linesOpacity[`line_${key}`];

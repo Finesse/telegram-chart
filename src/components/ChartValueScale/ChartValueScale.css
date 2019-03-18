@@ -1,0 +1,13 @@
+.line {
+  stroke: #f2f4f5;
+}
+
+.line.primary {
+  stroke: #ecf0f3;
+}
+
+.label {
+  fill: #96a2aa;
+  font-size: 10px;
+  transform: translateY(-6px);
+}
