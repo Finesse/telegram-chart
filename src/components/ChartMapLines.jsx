@@ -14,14 +14,14 @@ export default class ChartMapLines extends PureComponent {
 
     // Launch the transitions
     if (prevProps.linesData !== this.props.linesData || prevProps.linesState !== this.props.linesState) {
-      const maxY = this.getDataMaxY();
-      if (maxY > 0) {
+      const maxValue = this.getDataMaxValue();
+      if (maxValue > 0) {
         // Don't shrink the chart when all the lines are disabled
-        this.transitionGroup.setTargets({maxY});
+        this.transitionGroup.setTargets({maxValue});
       }
 
       for (const [key, {enabled}] of Object.entries(this.props.linesState)) {
-        this.transitionGroup.setTargets({[key]: enabled ? 1 : 0});
+        this.transitionGroup.setTargets({[`line_${key}`]: enabled ? 1 : 0});
       }
     }
   }
@@ -31,7 +31,7 @@ export default class ChartMapLines extends PureComponent {
   }
 
   render() {
-    const {maxY, ...linesOpacity} = this.transitionGroup.getState();
+    const {maxValue, ...linesOpacity} = this.transitionGroup.getState();
 
     return <>
       {/* A rectangle to prevent lines from overflowing the block */}
@@ -51,7 +51,7 @@ export default class ChartMapLines extends PureComponent {
       {/* The lines */}
       <g clipPath={`url(#${this.id}_clip)`}>
         {Object.entries(this.props.linesData).map(([key, {color, values}]) => {
-          const opacity = linesOpacity[key];
+          const opacity = linesOpacity[`line_${key}`];
           if (opacity <= 0) {
             return null;
           }
@@ -65,7 +65,7 @@ export default class ChartMapLines extends PureComponent {
               fromX={this.props.x}
               toX={this.props.x + this.props.width}
               fromValue={0}
-              toValue={maxY}
+              toValue={maxValue}
               fromY={this.props.y + this.props.height - 2}
               toY={this.props.y + 2}
 
@@ -83,7 +83,7 @@ export default class ChartMapLines extends PureComponent {
     </>;
   }
 
-  getDataMaxY() {
+  getDataMaxValue() {
     const linesEntries = Object.entries(this.props.linesData);
 
     return Math.max(0, ...linesEntries.map(([key, {values}]) => {
@@ -95,13 +95,13 @@ export default class ChartMapLines extends PureComponent {
 
   makeTransitions() {
     const transitions = {
-      maxY: () => new TestTransition({
-        initialValue: this.getDataMaxY()
+      maxValue: () => new TestTransition({
+        initialValue: this.getDataMaxValue()
       })
     };
 
     for (const key of Object.keys(this.props.linesData)) {
-      transitions[key] = () => new TestTransition({
+      transitions[`line_${key}`] = () => new TestTransition({
         initialValue: this.props.linesState[key] && this.props.linesState[key].enabled ? 1 : 0
       });
     }
