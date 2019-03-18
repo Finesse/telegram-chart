@@ -1,4 +1,5 @@
 import {Component} from 'inferno';
+import memoizeOne from 'memoize-one';
 import getMaxOnRange from '../../helpers/getMaxOnRange';
 import AnimationGroup, {TestTransition} from '../../helpers/animationGroup';
 import ChartLine from '../ChartLine';
@@ -25,7 +26,10 @@ export default class ChartMainSection extends Component {
       const maxValue = this.getDataMaxValue();
       if (maxValue > 0) {
         // Don't shrink the chart when all the lines are disabled
-        this.transitionGroup.setTargets({maxValue});
+        this.transitionGroup.setTargets({
+          maxValue,
+          maxValueNotchScale: maxValueToNotchScale(maxValue)
+        });
       }
 
       for (const [key, {enabled}] of Object.entries(this.props.linesState)) {
@@ -39,7 +43,7 @@ export default class ChartMainSection extends Component {
   }
 
   render() {
-    const {maxValue, ...linesOpacity} = this.transitionGroup.getState();
+    const {maxValue, maxValueNotchScale, ...linesOpacity} = this.transitionGroup.getState();
 
     return <>
       <ChartValueScale
@@ -49,7 +53,7 @@ export default class ChartMainSection extends Component {
         height={this.props.height - linesBottomMargin}
         fromValue={0}
         toValue={maxValue / (this.props.height - linesBottomMargin - linesTopMargin) * (this.props.height - linesBottomMargin)}
-        notchScale={Math.log10(maxValue) * 3 - 1}
+        notchScale={maxValueNotchScale}
       />
       {Object.entries(this.props.linesData).map(([key, {color, values}]) => {
         const opacity = linesOpacity[`line_${key}`];
@@ -94,9 +98,14 @@ export default class ChartMainSection extends Component {
   }
 
   makeTransitions() {
+    const getMaxValue = memoizeOne(() => this.getDataMaxValue());
+
     const transitions = {
       maxValue: () => new TestTransition({
-        initialValue: this.getDataMaxValue()
+        initialValue: getMaxValue()
+      }),
+      maxValueNotchScale: () => new TestTransition({
+        initialValue: maxValueToNotchScale(getMaxValue())
       })
     };
 
@@ -108,4 +117,11 @@ export default class ChartMainSection extends Component {
 
     return transitions;
   }
+}
+
+/**
+ * @see ChartValueScale.jsx
+ */
+function maxValueToNotchScale(value) {
+  return Math.floor(Math.log10(value) * 3 - 1.7);
 }

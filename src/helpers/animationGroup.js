@@ -133,6 +133,10 @@ export default class AnimationGroup {
   };
 }
 
+function quadInOut(t) {
+  return ((t *= 2) <= 1 ? t * t : --t * (2 - t) + 1) / 2;
+}
+
 /**
  * @implements AnimationGroup~Animation
  */
@@ -148,7 +152,8 @@ export class TestTransition {
   }
 
   getState() {
-    const value = this.targetValue - (this.targetValue - this.startValue) * Math.exp((this.startTime - Date.now()) / 100);
+    // const value = this.targetValue - (this.targetValue - this.startValue) * Math.exp((this.startTime - Date.now()) / 100);
+    const value = this.startValue + (this.targetValue - this.startValue) * quadInOut(Math.min(1, (Date.now() - this.startTime) / 500));
 
     return Math.abs(this.targetValue - value) > 0.01 ? value : this.targetValue;
   }

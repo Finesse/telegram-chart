@@ -5,41 +5,80 @@ import styles from './ChartValueScale.css?module';
 
 const lineWidth = 1;
 
+/**
+ * `notchScale` determines the distance between the notches measured in the value units.
+ * 0 is 1, 1 is 2, 2 is 5, 3 is 10, 4 is 20, 5 is 50 and so on.
+ * It can also be not integer, in this case a transitional state is rendered.
+ */
 export default memo(function ChartValueScale({x, y, width, height, fromValue, toValue, notchScale}) {
-  const notchValue = getNotchValue(notchScale);
+  const {
+    value1: notchValue1,
+    value2: notchValue2,
+    transition: notchValuesTransition
+  } = getNotchValues(notchScale);
   const yPerValue = height / ((toValue - fromValue) || 1);
-  const startNotch = Math.ceil(fromValue / notchValue) * notchValue;
-  const endNotch = Math.floor(toValue / notchValue) * notchValue;
+  const start1Notch = Math.ceil(fromValue / notchValue1) * notchValue1;
+  const start2Notch = Math.ceil(fromValue / notchValue2) * notchValue2;
   const notches = [];
 
-  for (let i = startNotch; i <= endNotch; i += notchValue) {
-    const notchY = y + height - (i - fromValue) * yPerValue;
+  // There is the 0.1 + 0.2 problem here but it is not applicable for the input data so I haven't solved it
+  for (let notch1 = start1Notch, notch2 = start2Notch; notch1 < toValue || notch2 < toValue;) {
+    let value;
+    let opacity;
+
+    if (notch1 === notch2) {
+      value = notch1;
+      opacity = 1;
+      notch1 += notchValue1;
+      notch2 += notchValue2;
+    } else if (notch1 < notch2) {
+      value = notch1;
+      opacity = 1 - notchValuesTransition;
+      notch1 += notchValue1;
+    } else {
+      value = notch2;
+      opacity = notchValuesTransition;
+      notch2 += notchValue2;
+    }
+
+    const notchY = y + height - (value - fromValue) * yPerValue;
     const alignedNotchY = Math.round(notchY + lineWidth / 2) - lineWidth / 2;
 
     notches.push(
-      <Fragment key={i}>
-        <line
-          x1={x}
-          y1={alignedNotchY}
-          x2={x + width}
-          y2={alignedNotchY}
-          strokeWidth={lineWidth}
-          className={`${styles.line} ${i === 0 ? styles.primary : ''}`}
-        />
-        <text textAnchor="left" x={x} y={alignedNotchY} className={styles.label}>{i}</text>
-      </Fragment>
+      // It's faster without `key` here
+      <line
+        x1={x}
+        y1={alignedNotchY}
+        x2={x + width}
+        y2={alignedNotchY}
+        strokeWidth={lineWidth}
+        className={`${styles.line} ${value === 0 ? styles.primary : ''}`}
+        style={`opacity: ${opacity};`}
+      />,
+      <text
+        textAnchor="left"
+        x={x}
+        y={alignedNotchY - 6}
+        className={styles.label}
+        style={`opacity: ${opacity};`}
+      >
+        {value}
+      </text>
     );
-  }
-
-  if (!notches) {
-    return null;
   }
 
   return <g>{notches}</g>;
 });
 
+function getNotchValues(scale) {
+  return {
+    value1: getNotchValue(Math.floor(scale)),
+    value2: getNotchValue(Math.ceil(scale)),
+    transition: scale % 1
+  };
+}
+
 function getNotchValue(scale) {
-  scale = Math.floor(scale);
   const scalePrimaryLevel = Math.floor(scale / 3);
   const scaleSecondaryLevel = modulo(scale, 3);
   let scaleMultiplier;
