@@ -57,9 +57,6 @@ export default class ChartMainSection extends Component {
       />
       {Object.entries(this.props.linesData).map(([key, {color, values}]) => {
         const opacity = linesOpacity[`line_${key}`];
-        if (opacity <= 0) {
-          return null;
-        }
 
         return (
           <ChartLine
@@ -76,11 +73,11 @@ export default class ChartMainSection extends Component {
 
             key={key}
             stroke={color}
-            strokeWidth={2}
-            fill="none"
+            stroke-width={2}
             stroke-linecap="round"
             stroke-linejoin="round"
-            style={`opacity: ${opacity};`}
+            fill="none"
+            style={opacity > 0 ? `opacity: ${opacity};` : 'display: none;'}
           />
         );
       })}

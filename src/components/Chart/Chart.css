@@ -5,6 +5,10 @@
   max-height: 100vh;
 }
 
+.root > * {
+  flex: none;
+}
+
 .name {
   margin: 0;
   padding: 0 12px;
@@ -18,11 +22,7 @@
   min-height: 160px;
 }
 
-.canvas > * {
-  flex: none;
-}
-
-.chart * {
+.canvas * {
   vector-effect: non-scaling-stroke;
 }
 
