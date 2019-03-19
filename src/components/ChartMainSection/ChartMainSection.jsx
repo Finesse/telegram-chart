@@ -54,6 +54,7 @@ export default class ChartMainSection extends Component {
         fromValue={0}
         toValue={maxValue / (this.props.height - linesBottomMargin - linesTopMargin) * (this.props.height - linesBottomMargin)}
         notchScale={maxValueNotchScale}
+        prepareNotchesCount={20}
       />
       {Object.entries(this.props.linesData).map(([key, {color, values}]) => {
         const opacity = linesOpacity[`line_${key}`];

@@ -1,4 +1,3 @@
-import {Fragment} from 'inferno';
 import {memo} from '../../helpers/inferno';
 import modulo from '../../helpers/modulo';
 import styles from './ChartValueScale.css?module';
@@ -10,7 +9,16 @@ const lineWidth = 1;
  * 0 is 1, 1 is 2, 2 is 5, 3 is 10, 4 is 20, 5 is 50 and so on.
  * It can also be not integer, in this case a transitional state is rendered.
  */
-export default memo(function ChartValueScale({x, y, width, height, fromValue, toValue, notchScale}) {
+export default memo(function ChartValueScale({
+  x,
+  y,
+  width,
+  height,
+  fromValue,
+  toValue,
+  notchScale,
+  prepareNotchesCount = 0
+}) {
   const {
     value1: notchValue1,
     value2: notchValue2,
@@ -65,6 +73,14 @@ export default memo(function ChartValueScale({x, y, width, height, fromValue, to
         {value}
       </text>
     );
+  }
+
+  // Render a few excess notches to not create and destroy DOM elements during animation
+  for (let i = notches.length / 2; i < prepareNotchesCount; ++i) {
+    notches.push(
+      <line style="display: none;" />,
+      <text style="display: none;" />
+    )
   }
 
   return <g>{notches}</g>;
