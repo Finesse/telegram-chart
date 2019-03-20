@@ -139,6 +139,7 @@ function quadInOut(t) {
 
 /**
  * @implements AnimationGroup~Animation
+ * @todo Make a real transition
  */
 export class TestTransition {
   startValue;

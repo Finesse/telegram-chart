@@ -16,7 +16,7 @@ export default function getMaxOnRange(values, from, to) {
   let max = interpolateLinear(values, from);
 
   // Check the interim values
-  for (let i = Math.ceil(from), e = Math.floor(to); i < e; ++i) {
+  for (let i = Math.ceil(from), e = Math.floor(to); i <= e; ++i) {
     if (values[i] > max) {
       max = values[i];
     }

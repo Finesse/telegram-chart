@@ -8,6 +8,8 @@ const lineWidth = 1;
  * `notchScale` determines the distance between the notches measured in the value units.
  * 0 is 1, 1 is 2, 2 is 5, 3 is 10, 4 is 20, 5 is 50 and so on.
  * It can also be not integer, in this case a transitional state is rendered.
+ *
+ * @todo <text />s significantly reduce the animation smoothness
  */
 export default memo(function ChartValueScale({
   x,
@@ -63,6 +65,7 @@ export default memo(function ChartValueScale({
         className={`${styles.line} ${value === 0 ? styles.primary : ''}`}
         style={`opacity: ${opacity};`}
       />,
+      /*
       <text
         textAnchor="left"
         x={x}
@@ -72,14 +75,15 @@ export default memo(function ChartValueScale({
       >
         {value}
       </text>
+      */
     );
   }
 
   // Render a few excess notches to not create and destroy DOM elements during animation
-  for (let i = notches.length / 2; i < prepareNotchesCount; ++i) {
+  for (let i = notches.length; i < prepareNotchesCount; ++i) {
     notches.push(
       <line style="display: none;" />,
-      <text style="display: none;" />
+      // <text style="display: none;" />
     )
   }
 

@@ -2,6 +2,8 @@ import {PureComponent} from '../helpers/inferno';
 import AnimationGroup, {TestTransition} from '../helpers/animationGroup';
 import ChartLine from './ChartLine';
 
+// todo: Make text draw over the lines
+// todo: Add the date scale
 export default class ChartMapLines extends PureComponent {
   id = `mapLines_${Math.random()}`;
 
@@ -85,7 +87,7 @@ export default class ChartMapLines extends PureComponent {
 
     return Math.max(0, ...linesEntries.map(([key, {values}]) => {
       return this.props.linesState[key] && this.props.linesState[key].enabled
-        ? Math.max(...values) // todo: Memoize
+        ? Math.max(...values)
         : 0;
     }));
   }

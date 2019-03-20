@@ -16,13 +16,19 @@
   font-weight: bold;
 }
 
-.canvas {
+.chart {
   width: 100%;
   flex: auto;
   min-height: 160px;
+  display: flex;
+  flex-direction: column;
 }
 
-.canvas * {
+.svg {
+  flex: auto;
+}
+
+.svg * {
   vector-effect: non-scaling-stroke;
 }
 
