@@ -1,10 +1,10 @@
 import {Component, createRef} from 'inferno';
+import {Application as PixiApplication} from '@pixi/app';
+import {Container as PixiContainer} from '@pixi/display';
+import {Graphics as PixiGraphics} from '@pixi/graphics';
+import memoizeOne from 'memoize-one';
 import {chartSidePadding, chartMapHeight} from '../../style';
 import ToggleButton from '../ToggleButton/ToggleButton';
-import ChartMapLines from '../ChartMapLines';
-import ChartTopFade from '../ChartTopFade/ChartTopFade';
-import ChartMainSection from '../ChartMainSection/ChartMainSection';
-import ChartMapSelector from '../ChartMapSelector/ChartMapSelector';
 import GestureRecognizer from './GestureRecognizer';
 import styles from './Chart.css?module';
 
@@ -16,6 +16,11 @@ const minMapSelectionLength = 2;
 // todo: Use exponential value for animating the lines maxY
 export default class Chart extends Component {
   canvasRef = createRef();
+
+  /**
+   * @type {PIXI.Application}
+   */
+  pixiApp;
 
   constructor(props) {
     super(props);
@@ -41,12 +46,29 @@ export default class Chart extends Component {
   }
 
   componentDidMount() {
+    const canvas = this.canvasRef.current;
+
+    const app = new PixiApplication({
+      view: canvas,
+      width: canvas.clientWidth,
+      height: canvas.clientHeight,
+      autoStart: false,
+      antialias: true,
+      transparent: true
+    });
+
+    this.mapLines = makeMapLines(this.props.lines);
+    app.stage.addChild(...this.mapLines.stageChildren);
+
+    this.pixiApp = app;
+
     window.addEventListener('resize', this.handleWindowResize);
     this.handleWindowResize();
   }
 
   componentWillUnmount() {
     window.removeEventListener('resize', this.handleWindowResize);
+    this.pixiApp.destroy();
   }
 
   render() {
@@ -64,51 +86,7 @@ export default class Chart extends Component {
           onMapSelectorMiddleChange={this.handleXMove}
           onMapSelectorEndChange={this.handleEndXChange}
         >
-          <svg
-            className={styles.svg}
-            viewBox={`0 0 ${this.state.canvasWidth} ${this.state.canvasHeight}`}
-            preserveAspectRatio="none"
-            shapeRendering={window.devicePixelRatio >= 3 ? 'optimizeSpeed' : 'auto'}
-            ref={this.canvasRef}
-          >
-            {this.state.canvasWidth > 0 && this.state.canvasHeight > 0 && <>
-              <ChartMainSection
-                canvasWidth={this.state.canvasWidth}
-                x={chartSidePadding}
-                y={0}
-                width={this.state.canvasWidth - chartSidePadding * 2}
-                height={this.state.canvasHeight - chartMapHeight}
-                startIndex={this.state.startX}
-                endIndex={this.state.endX}
-                linesData={this.props.lines}
-                linesState={this.state.lines}
-                dates={this.props.x}
-              />
-              <ChartMapLines
-                canvasWidth={this.state.canvasWidth}
-                x={chartSidePadding}
-                y={this.state.canvasHeight - chartMapHeight}
-                width={this.state.canvasWidth - chartSidePadding * 2}
-                height={chartMapHeight}
-                linesData={this.props.lines}
-                linesState={this.state.lines}
-              />
-              <ChartMapSelector
-                x={chartSidePadding}
-                y={this.state.canvasHeight - chartMapHeight}
-                width={this.state.canvasWidth - chartSidePadding * 2}
-                height={chartMapHeight}
-                relativeStart={relativeStartX}
-                relativeEnd={relativeEndX}
-              />
-              <ChartTopFade
-                x={0}
-                y={0}
-                width="100%"
-                height={18}
-              />
-            </>}
-          </svg>
+          <canvas className={styles.canvas} ref={this.canvasRef} />
         </GestureRecognizer>
         <div className={styles.toggles}>
           {Object.entries(this.props.lines).map(([key, {name, color}]) => (
@@ -142,10 +120,20 @@ export default class Chart extends Component {
   };
 
   handleWindowResize = () => {
-    this.setState({
-      canvasWidth: this.canvasRef.current.clientWidth,
-      canvasHeight: this.canvasRef.current.clientHeight
+    const canvas = this.canvasRef.current;
+    const canvasWidth = canvas.clientWidth;
+    const canvasHeight = canvas.clientHeight;
+    this.pixiApp.renderer.resolution = window.devicePixelRatio || 1;
+    this.pixiApp.renderer.resize(canvasWidth, canvasHeight);
+    this.mapLines.update({
+      canvasWidth: canvasWidth,
+      x: chartSidePadding,
+      y: canvasHeight - chartMapHeight,
+      width: canvasWidth - chartSidePadding * 2,
+      height: chartMapHeight,
+      maxValue: 200
     });
+    this.pixiApp.render();
   };
 
   handleStartXChange = relativeX => {
@@ -172,4 +160,98 @@ export default class Chart extends Component {
 
     this.setState({startX, endX});
   };
+}
+
+function makeMapLines(linesData) {
+  const mask = new PixiGraphics();
+  const container = new PixiContainer();
+  container.mask = mask;
+
+  const lines = {};
+  for (const [key, {values, color}] of Object.entries(linesData)) {
+    const line = makeLine({values, color, width: 1});
+    container.addChild(line.stageChild);
+    lines[key] = line;
+  }
+
+  return {
+    stageChildren: [container, mask],
+    update: memoizeOne(({
+      canvasWidth,
+      x,
+      y,
+      width,
+      height,
+      maxValue
+    }) => {
+      mask.clear();
+      mask.beginFill(0x000000);
+      mask.drawRect(x, y, width, height);
+
+      for (const [key, line] of Object.entries(lines)) {
+        line.update({
+          canvasWidth,
+          fromIndex: 0,
+          toIndex: linesData[key].values.length - 1,
+          fromX: x,
+          toX: x + width,
+          fromValue: 0,
+          toValue: maxValue,
+          fromY: y + height,
+          toY: y
+        });
+      }
+    })
+  };
+}
+
+function makeLine({values, color, width}) {
+  const path = new PixiGraphics();
+
+  return {
+    stageChild: path,
+    update: memoizeOne(({
+      canvasWidth,
+      fromIndex,
+      toIndex,
+      fromX = 0,
+      toX = canvasWidth,
+      fromValue,
+      toValue,
+      fromY,
+      toY,
+      opacity = 1
+    }) => {
+      path.clear();
+
+      if (opacity <= 0 || fromIndex === toIndex || fromValue === toValue) {
+        return;
+      }
+
+      const xPerIndex = (toX - fromX) / (toIndex - fromIndex);
+      const yPerValue = (toY - fromY) / (toValue - fromValue);
+      const realFromIndex = Math.floor(Math.max(0, fromIndex - (xPerIndex === 0 ? 0 : (fromX + width / 2) / xPerIndex)));
+      const realToIndex = Math.ceil(Math.min(values.length - 1, toIndex + (xPerIndex === 0 ? 0 : (canvasWidth - toX + width / 2) / xPerIndex)));
+
+      path.lineStyle(width, parseColorToPixi(color), opacity, 0.5);
+
+      for (let i = realFromIndex; i <= realToIndex; ++i) {
+        const x = fromX + (i - fromIndex) * xPerIndex;
+        const y = fromY + (values[i] - fromValue) * yPerValue;
+
+        if (i === realFromIndex) {
+          path.moveTo(x, y);
+        } else {
+          path.lineTo(x, y);
+        }
+      }
+    })
+  };
+}
+
+function parseColorToPixi(color) {
+  if (typeof color === 'number') {
+    return color;
+  }
+  return parseInt(color.slice(1), 16);
 }

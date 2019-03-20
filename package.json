@@ -25,6 +25,7 @@
     "inferno": "^7.1.10",
     "memoize-one": "^5.0.0",
     "mini-css-extract-plugin": "^0.5.0",
+    "pixi.js": "^5.0.0-rc.2",
     "postcss-csso": "^3.0.0",
     "postcss-loader": "^3.0.0",
     "shallow-equal": "^1.1.0",

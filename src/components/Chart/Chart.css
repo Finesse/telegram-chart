@@ -20,16 +20,11 @@
   width: 100%;
   flex: auto;
   min-height: 160px;
-  display: flex;
-  flex-direction: column;
 }
 
-.svg {
-  flex: auto;
-}
-
-.svg * {
-  vector-effect: non-scaling-stroke;
+.canvas {
+  width: 100%;
+  height: 100%;
 }
 
 .toggles {
