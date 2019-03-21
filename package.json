@@ -16,6 +16,10 @@
     "@babel/plugin-transform-runtime": "^7.3.4",
     "@babel/preset-env": "^7.3.4",
     "@babel/runtime": "^7.3.4",
+    "@pixi/app": "^5.0.0-rc.2",
+    "@pixi/core": "^5.0.0-rc.2",
+    "@pixi/display": "^5.0.0-rc.2",
+    "@pixi/graphics": "^5.0.0-rc.2",
     "autoprefixer": "^9.5.0",
     "babel-loader": "^8.0.5",
     "babel-plugin-inferno": "^6.0.5",
@@ -28,7 +32,6 @@
     "postcss-csso": "^3.0.0",
     "postcss-loader": "^3.0.0",
     "shallow-equal": "^1.1.0",
-    "two.js": "^0.7.0-beta.3",
     "webpack": "^4.29.6",
     "webpack-cli": "^3.3.0",
     "webpack-dev-server": "^3.2.1"

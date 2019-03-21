@@ -1,9 +1,9 @@
 import {Component, createRef} from 'inferno';
-import Two from 'two.js';
+import * as PIXI from '../../pixi';
 import {chartSidePadding, chartMapHeight} from '../../style';
 import AnimationGroup, {TestTransition} from '../../helpers/animationGroup';
 import getMaxOnRange from '../../helpers/getMaxOnRange';
-import memoizeNamedArguments from '../../helpers/memoizeNamedArguments';
+import memoizeObjectArguments from '../../helpers/memoizeObjectArguments';
 import ToggleButton from '../ToggleButton/ToggleButton';
 import GestureRecognizer from './GestureRecognizer';
 import styles from './Chart.css?module';
@@ -18,9 +18,9 @@ export default class Chart extends Component {
   canvasRef = createRef();
 
   /**
-   * @type {Two}
+   * @type {PIXI.Application}
    */
-  twoApp;
+  pixiApp;
 
   constructor(props) {
     super(props);
@@ -35,9 +35,7 @@ export default class Chart extends Component {
     this.state = {
       startIndex: this.getDataLength() * 0.73,
       endIndex: this.getDataLength(),
-      lines: linesState,
-      canvasWidth: 0,
-      canvasHeight: 0
+      lines: linesState
     };
 
     const transitions = {
@@ -75,18 +73,16 @@ export default class Chart extends Component {
   }
 
   componentDidMount() {
-    const canvasBlock = this.canvasRef.current.element;
-
-    const twoApp = new Two({
-      type: Two.Types.canvas,
-      autostart: false
+    const app = new PIXI.Application({
+      view: this.canvasRef.current,
+      autoStart: false,
+      antialias: true,
+      transparent: true
     });
-    twoApp.appendTo(canvasBlock);
 
-    this.mapLines = makeMapLines(this.props.lines);
-    twoApp.add(...this.mapLines.sceneChildren);
-
-    this.twoApp = twoApp;
+    this.chartDrawer = makeChart(this.props.lines, this.props.x);
+    app.stage.addChild(...this.chartDrawer.stageChildren);
+    this.pixiApp = app;
 
     window.addEventListener('resize', this.handleWindowResize);
     this.handleWindowResize();
@@ -116,10 +112,15 @@ export default class Chart extends Component {
         this.transitionGroup.setTargets({mainMaxValue});
       }
     }
+
+    if (prevState.startIndex !== this.state.startIndex || prevState.endIndex !== this.state.endIndex) {
+      this.transitionGroup.updateOnNextFrame();
+    }
   }
 
   componentWillUnmount() {
     window.removeEventListener('resize', this.handleWindowResize);
+    this.pixiApp.destroy();
   }
 
   render() {
@@ -136,8 +137,9 @@ export default class Chart extends Component {
           onMapSelectorStartChange={this.handleStartIndexChange}
           onMapSelectorMiddleChange={this.handleIndexMove}
           onMapSelectorEndChange={this.handleEndIndexChange}
-          ref={this.canvasRef}
-        />
+        >
+          <canvas className={styles.canvas} ref={this.canvasRef} />
+        </GestureRecognizer>
         <div className={styles.toggles}>
           {Object.entries(this.props.lines).map(([key, {name, color}]) => (
             <ToggleButton
@@ -163,16 +165,15 @@ export default class Chart extends Component {
       linesOpacity[key] = linesState[`line_${key}_opacity`];
     }
 
-    const {clientWidth: canvasWidth, clientHeight: canvasHeight} = this.canvasRef.current.element;
-    this.mapLines.update({
-      canvasWidth: canvasWidth,
-      x: chartSidePadding,
-      y: canvasHeight - chartMapHeight,
-      width: canvasWidth - chartSidePadding * 2,
-      height: chartMapHeight,
-      maxValue: mapMaxValue
+    this.chartDrawer.update({
+      canvasWidth: this.pixiApp.renderer.width / this.pixiApp.renderer.resolution,
+      canvasHeight: this.pixiApp.renderer.height / this.pixiApp.renderer.resolution,
+      mapMaxValue,
+      mainMaxValue,
+      startIndex: this.state.startIndex,
+      endIndex: this.state.endIndex
     }, linesOpacity);
-    this.twoApp.render();
+    this.pixiApp.render();
   }
 
   handleLineToggle = key => {
@@ -190,8 +191,9 @@ export default class Chart extends Component {
   };
 
   handleWindowResize = () => {
-    const canvasBlock = this.canvasRef.current.element;
-    this.twoApp.renderer.setSize(canvasBlock.clientWidth, canvasBlock.clientHeight);
+    const canvas = this.canvasRef.current;
+    this.pixiApp.renderer.resolution = window.devicePixelRatio || 1;
+    this.pixiApp.renderer.resize(canvas.clientWidth, canvas.clientHeight);
     this.transitionGroup.updateOnNextFrame();
   };
 
@@ -221,25 +223,107 @@ export default class Chart extends Component {
   };
 }
 
-function makeMapLines(linesData) {
-  const mask = new Two.Rectangle(0, 0, 0, 0);
-  mask.clip = true;
-  mask.noFill();
-  mask.noStroke();
+function makeChart(linesData, dates) {
+  const mapLines = makeMapLines(linesData);
+  const mapSelector = makeMapSelector();
 
-  const container = new Two.Group();
+  const datesLength = dates.length - 1;
+
+  return {
+    stageChildren: [...mapLines.stageChildren, ...mapSelector.stageChildren],
+    update({
+      canvasWidth,
+      canvasHeight,
+      mapMaxValue,
+      mainMaxValue,
+      startIndex,
+      endIndex
+    }, linesOpacity) {
+      mapLines.update({
+        canvasWidth,
+        x: chartSidePadding,
+        y: canvasHeight - chartMapHeight,
+        width: canvasWidth - chartSidePadding * 2,
+        height: chartMapHeight,
+        maxValue: mapMaxValue
+      }, linesOpacity);
+
+      mapSelector.update({
+        x: chartSidePadding,
+        y: canvasHeight - chartMapHeight,
+        width: canvasWidth - chartSidePadding * 2,
+        height: chartMapHeight,
+        relativeStart: startIndex / datesLength,
+        relativeEnd: endIndex / datesLength
+      });
+    }
+  }
+}
+
+function makeMapSelector() {
+  const selectorHorizontalBorderWidth = 1;
+  const selectorVerticalBorderWidth = 4;
+  const outsideColor = 0xF6F8F2;
+  const outsideOpacity = 0.8;
+  const borderColor = 0x3076A7;
+  const borderOpacity = 0.16;
+
+  const outsideLeft = new PIXI.Graphics();
+  const outsideRight = new PIXI.Graphics();
+  const borderTop = new PIXI.Graphics();
+  const borderBottom = new PIXI.Graphics();
+  const borderLeft = new PIXI.Graphics();
+  const borderRight = new PIXI.Graphics();
+
+  return {
+    stageChildren: [outsideLeft, outsideRight, borderTop, borderBottom, borderLeft, borderRight],
+    update: memoizeObjectArguments(({x, y, width, height, relativeStart, relativeEnd}) => {
+      const middleX = Math.round(x + (relativeStart + relativeEnd) / 2 * width);
+      const startX = Math.min(middleX - selectorVerticalBorderWidth, Math.round(x + relativeStart * width));
+      const endX = Math.max(middleX + selectorVerticalBorderWidth, Math.round(x + relativeEnd * width));
+
+      outsideLeft.clear();
+      outsideLeft.beginFill(outsideColor, outsideOpacity);
+      outsideLeft.drawRect(x, y, Math.max(0, startX - x), height);
+
+      outsideRight.clear();
+      outsideRight.beginFill(outsideColor, outsideOpacity);
+      outsideRight.drawRect(endX, y, Math.max(0, x + width - endX), height);
+
+      borderTop.clear();
+      borderTop.beginFill(borderColor, borderOpacity);
+      borderTop.drawRect(startX, y, Math.max(0, endX - startX), selectorHorizontalBorderWidth);
+
+      borderBottom.clear();
+      borderBottom.beginFill(borderColor, borderOpacity);
+      borderBottom.drawRect(startX, y + height - selectorHorizontalBorderWidth, Math.max(0, endX - startX), selectorHorizontalBorderWidth);
+
+      borderLeft.clear();
+      borderLeft.beginFill(borderColor, borderOpacity);
+      borderLeft.drawRect(startX, y + selectorHorizontalBorderWidth, selectorVerticalBorderWidth, Math.max(0, height - selectorHorizontalBorderWidth * 2));
+
+      borderRight.clear();
+      borderRight.beginFill(borderColor, borderOpacity);
+      borderRight.drawRect(endX - selectorVerticalBorderWidth, y + selectorHorizontalBorderWidth, selectorVerticalBorderWidth, Math.max(0, height - selectorHorizontalBorderWidth * 2));
+    })
+  };
+}
+
+function makeMapLines(linesData) {
+  const mask = new PIXI.Graphics();
+  const container = new PIXI.Container();
   container.mask = mask;
 
   const lines = {};
   for (const [key, {values, color}] of Object.entries(linesData)) {
     const line = makeLine({values, color, width: 1});
-    container.add(line.sceneChild);
+    container.addChild(line.stageChild);
     lines[key] = line;
   }
 
   return {
-    sceneChildren: [container, mask],
-    update: memoizeNamedArguments(({
+    stageChildren: [container, mask],
+    update: memoizeObjectArguments(({
       canvasWidth,
       x,
       y,
@@ -247,9 +331,9 @@ function makeMapLines(linesData) {
       height,
       maxValue
     }, linesOpacity) => {
-      mask.translation.set(x + width / 2, y + height / 2);
-      mask.width = width;
-      mask.height = height;
+      mask.clear();
+      mask.beginFill(0x000000);
+      mask.drawRect(x, y, width, height);
 
       for (const [key, line] of Object.entries(lines)) {
         line.update({
@@ -270,16 +354,11 @@ function makeMapLines(linesData) {
 }
 
 function makeLine({values, color, width}) {
-  const path = new Two.Path([], false, false);
-  path.noFill();
-  path.stroke = color;
-  path.linewidth = width;
-  path.cap = 'round';
-  path.join = 'round';
+  const path = new PIXI.Graphics();
 
   return {
-    sceneChild: path,
-    update: memoizeNamedArguments(({
+    stageChild: path,
+    update: memoizeObjectArguments(({
       canvasWidth,
       fromIndex,
       toIndex,
@@ -291,36 +370,33 @@ function makeLine({values, color, width}) {
       toY,
       opacity = 1
     }) => {
+      path.clear();
+
       if (opacity <= 0 || fromIndex === toIndex || fromValue === toValue) {
-        path.visible = false;
         return;
       }
-
-      path.visible = true;
-      path.opacity = opacity;
 
       const xPerIndex = (toX - fromX) / (toIndex - fromIndex);
       const yPerValue = (toY - fromY) / (toValue - fromValue);
       const realFromIndex = Math.floor(Math.max(0, fromIndex - (xPerIndex === 0 ? 0 : (fromX + width / 2) / xPerIndex)));
       const realToIndex = Math.ceil(Math.min(values.length - 1, toIndex + (xPerIndex === 0 ? 0 : (canvasWidth - toX + width / 2) / xPerIndex)));
-      let vertexIndex = 0;
+
+      path.lineStyle(width, colorHexToPixi(color), opacity, 0.5);
 
       for (let i = realFromIndex; i <= realToIndex; ++i) {
         const x = fromX + (i - fromIndex) * xPerIndex;
         const y = fromY + (values[i] - fromValue) * yPerValue;
-        let vertex = path.vertices[vertexIndex];
 
-        if (vertex) {
-          vertex.x = x;
-          vertex.y = y;
+        if (i === realFromIndex) {
+          path.moveTo(x, y);
         } else {
-          path.vertices.push(new Two.Anchor(x, y));
+          path.lineTo(x, y);
         }
-
-        vertexIndex++;
       }
-
-      path.vertices.splice(vertexIndex, path.vertices.length);
     })
   };
+}
+
+function colorHexToPixi(color) {
+  return parseInt(color.slice(1), 16);
 }

@@ -15,6 +15,6 @@ function shallowEqualArrayOfObjects(arr1, arr2) {
   return true;
 }
 
-export default function memoizeNamedArguments(fn) {
+export default function memoizeObjectArguments(fn) {
   return memoizeOne(fn, shallowEqualArrayOfObjects);
 }
