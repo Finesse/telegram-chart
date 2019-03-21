@@ -20,12 +20,26 @@
   width: 100%;
   flex: auto;
   min-height: 160px;
-  display: flex;
+  position: relative;
 }
 
 .canvas {
-  flex: 1;
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  left: 0;
   width: 100%;
+  height: 100%;
+}
+
+.fade {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 18px;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0));
 }
 
 .toggles {

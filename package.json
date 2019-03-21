@@ -20,6 +20,7 @@
     "@pixi/core": "^5.0.0-rc.2",
     "@pixi/display": "^5.0.0-rc.2",
     "@pixi/graphics": "^5.0.0-rc.2",
+    "@pixi/text": "^5.0.0-rc.2",
     "autoprefixer": "^9.5.0",
     "babel-loader": "^8.0.5",
     "babel-plugin-inferno": "^6.0.5",

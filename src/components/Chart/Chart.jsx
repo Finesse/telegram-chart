@@ -1,12 +1,11 @@
 import {Component, createRef} from 'inferno';
 import * as PIXI from '../../pixi';
-import {chartSidePadding, chartMapHeight} from '../../style';
 import AnimationGroup, {TestTransition} from '../../helpers/animationGroup';
 import getMaxOnRange from '../../helpers/getMaxOnRange';
-import memoizeObjectArguments from '../../helpers/memoizeObjectArguments';
 import ToggleButton from '../ToggleButton/ToggleButton';
 import GestureRecognizer from './GestureRecognizer';
 import styles from './Chart.css?module';
+import makeChartDrawer from './drawers/chart';
 
 const minMapSelectionLength = 2;
 
@@ -14,6 +13,7 @@ const minMapSelectionLength = 2;
 // todo: Add the selected column information
 // todo: Round the elements positions considering the device pixel density
 // todo: Use exponential value for animating the lines maxY
+// todo: Remove inferno
 export default class Chart extends Component {
   canvasRef = createRef();
 
@@ -41,6 +41,9 @@ export default class Chart extends Component {
     const transitions = {
       mapMaxValue: () => new TestTransition({initialValue: this.getMapMaxValue()}),
       mainMaxValue: () => new TestTransition({initialValue: this.getMainMaxValue()}),
+      mainMaxValueNotchScale: () => new TestTransition({
+        initialValue: maxValueToNotchScale(this.getMainMaxValue())
+      }),
     };
     for (const [key, {enabled}] of Object.entries(linesState)) {
       transitions[`line_${key}_opacity`] = () => new TestTransition({initialValue: enabled ? 1 : 0});
@@ -80,7 +83,7 @@ export default class Chart extends Component {
       transparent: true
     });
 
-    this.chartDrawer = makeChart(this.props.lines, this.props.x);
+    this.chartDrawer = makeChartDrawer(this.props.lines, this.props.x);
     app.stage.addChild(...this.chartDrawer.stageChildren);
     this.pixiApp = app;
 
@@ -109,11 +112,15 @@ export default class Chart extends Component {
       const mainMaxValue = this.getMainMaxValue();
       if (mainMaxValue > 0) {
         // Don't shrink the chart when all the lines are disabled
-        this.transitionGroup.setTargets({mainMaxValue});
+        this.transitionGroup.setTargets({
+          mainMaxValue,
+          mainMaxValueNotchScale: maxValueToNotchScale(mainMaxValue)
+        });
       }
     }
 
     if (prevState.startIndex !== this.state.startIndex || prevState.endIndex !== this.state.endIndex) {
+      // It works much smoother if you update on the next frame but not immediately
       this.transitionGroup.updateOnNextFrame();
     }
   }
@@ -138,6 +145,7 @@ export default class Chart extends Component {
           onMapSelectorMiddleChange={this.handleIndexMove}
           onMapSelectorEndChange={this.handleEndIndexChange}
         >
+          <div className={styles.fade} />
           <canvas className={styles.canvas} ref={this.canvasRef} />
         </GestureRecognizer>
         <div className={styles.toggles}>
@@ -158,7 +166,7 @@ export default class Chart extends Component {
   }
 
   renderChart() {
-    const {mapMaxValue, mainMaxValue, ...linesState} = this.transitionGroup.getState();
+    const {mapMaxValue, mainMaxValue, mainMaxValueNotchScale, ...linesState} = this.transitionGroup.getState();
 
     const linesOpacity = {};
     for (const key of Object.keys(this.props.lines)) {
@@ -170,6 +178,7 @@ export default class Chart extends Component {
       canvasHeight: this.pixiApp.renderer.height / this.pixiApp.renderer.resolution,
       mapMaxValue,
       mainMaxValue,
+      mainMaxValueNotchScale,
       startIndex: this.state.startIndex,
       endIndex: this.state.endIndex
     }, linesOpacity);
@@ -223,180 +232,9 @@ export default class Chart extends Component {
   };
 }
 
-function makeChart(linesData, dates) {
-  const mapLines = makeMapLines(linesData);
-  const mapSelector = makeMapSelector();
-
-  const datesLength = dates.length - 1;
-
-  return {
-    stageChildren: [...mapLines.stageChildren, ...mapSelector.stageChildren],
-    update({
-      canvasWidth,
-      canvasHeight,
-      mapMaxValue,
-      mainMaxValue,
-      startIndex,
-      endIndex
-    }, linesOpacity) {
-      mapLines.update({
-        canvasWidth,
-        x: chartSidePadding,
-        y: canvasHeight - chartMapHeight,
-        width: canvasWidth - chartSidePadding * 2,
-        height: chartMapHeight,
-        maxValue: mapMaxValue
-      }, linesOpacity);
-
-      mapSelector.update({
-        x: chartSidePadding,
-        y: canvasHeight - chartMapHeight,
-        width: canvasWidth - chartSidePadding * 2,
-        height: chartMapHeight,
-        relativeStart: startIndex / datesLength,
-        relativeEnd: endIndex / datesLength
-      });
-    }
-  }
-}
-
-function makeMapSelector() {
-  const selectorHorizontalBorderWidth = 1;
-  const selectorVerticalBorderWidth = 4;
-  const outsideColor = 0xF6F8F2;
-  const outsideOpacity = 0.8;
-  const borderColor = 0x3076A7;
-  const borderOpacity = 0.16;
-
-  const outsideLeft = new PIXI.Graphics();
-  const outsideRight = new PIXI.Graphics();
-  const borderTop = new PIXI.Graphics();
-  const borderBottom = new PIXI.Graphics();
-  const borderLeft = new PIXI.Graphics();
-  const borderRight = new PIXI.Graphics();
-
-  return {
-    stageChildren: [outsideLeft, outsideRight, borderTop, borderBottom, borderLeft, borderRight],
-    update: memoizeObjectArguments(({x, y, width, height, relativeStart, relativeEnd}) => {
-      const middleX = Math.round(x + (relativeStart + relativeEnd) / 2 * width);
-      const startX = Math.min(middleX - selectorVerticalBorderWidth, Math.round(x + relativeStart * width));
-      const endX = Math.max(middleX + selectorVerticalBorderWidth, Math.round(x + relativeEnd * width));
-
-      outsideLeft.clear();
-      outsideLeft.beginFill(outsideColor, outsideOpacity);
-      outsideLeft.drawRect(x, y, Math.max(0, startX - x), height);
-
-      outsideRight.clear();
-      outsideRight.beginFill(outsideColor, outsideOpacity);
-      outsideRight.drawRect(endX, y, Math.max(0, x + width - endX), height);
-
-      borderTop.clear();
-      borderTop.beginFill(borderColor, borderOpacity);
-      borderTop.drawRect(startX, y, Math.max(0, endX - startX), selectorHorizontalBorderWidth);
-
-      borderBottom.clear();
-      borderBottom.beginFill(borderColor, borderOpacity);
-      borderBottom.drawRect(startX, y + height - selectorHorizontalBorderWidth, Math.max(0, endX - startX), selectorHorizontalBorderWidth);
-
-      borderLeft.clear();
-      borderLeft.beginFill(borderColor, borderOpacity);
-      borderLeft.drawRect(startX, y + selectorHorizontalBorderWidth, selectorVerticalBorderWidth, Math.max(0, height - selectorHorizontalBorderWidth * 2));
-
-      borderRight.clear();
-      borderRight.beginFill(borderColor, borderOpacity);
-      borderRight.drawRect(endX - selectorVerticalBorderWidth, y + selectorHorizontalBorderWidth, selectorVerticalBorderWidth, Math.max(0, height - selectorHorizontalBorderWidth * 2));
-    })
-  };
-}
-
-function makeMapLines(linesData) {
-  const mask = new PIXI.Graphics();
-  const container = new PIXI.Container();
-  container.mask = mask;
-
-  const lines = {};
-  for (const [key, {values, color}] of Object.entries(linesData)) {
-    const line = makeLine({values, color, width: 1});
-    container.addChild(line.stageChild);
-    lines[key] = line;
-  }
-
-  return {
-    stageChildren: [container, mask],
-    update: memoizeObjectArguments(({
-      canvasWidth,
-      x,
-      y,
-      width,
-      height,
-      maxValue
-    }, linesOpacity) => {
-      mask.clear();
-      mask.beginFill(0x000000);
-      mask.drawRect(x, y, width, height);
-
-      for (const [key, line] of Object.entries(lines)) {
-        line.update({
-          canvasWidth,
-          fromIndex: 0,
-          toIndex: linesData[key].values.length - 1,
-          fromX: x,
-          toX: x + width,
-          fromValue: 0,
-          toValue: maxValue,
-          fromY: y + height,
-          toY: y,
-          opacity: linesOpacity[key]
-        });
-      }
-    })
-  };
-}
-
-function makeLine({values, color, width}) {
-  const path = new PIXI.Graphics();
-
-  return {
-    stageChild: path,
-    update: memoizeObjectArguments(({
-      canvasWidth,
-      fromIndex,
-      toIndex,
-      fromX = 0,
-      toX = canvasWidth,
-      fromValue,
-      toValue,
-      fromY,
-      toY,
-      opacity = 1
-    }) => {
-      path.clear();
-
-      if (opacity <= 0 || fromIndex === toIndex || fromValue === toValue) {
-        return;
-      }
-
-      const xPerIndex = (toX - fromX) / (toIndex - fromIndex);
-      const yPerValue = (toY - fromY) / (toValue - fromValue);
-      const realFromIndex = Math.floor(Math.max(0, fromIndex - (xPerIndex === 0 ? 0 : (fromX + width / 2) / xPerIndex)));
-      const realToIndex = Math.ceil(Math.min(values.length - 1, toIndex + (xPerIndex === 0 ? 0 : (canvasWidth - toX + width / 2) / xPerIndex)));
-
-      path.lineStyle(width, colorHexToPixi(color), opacity, 0.5);
-
-      for (let i = realFromIndex; i <= realToIndex; ++i) {
-        const x = fromX + (i - fromIndex) * xPerIndex;
-        const y = fromY + (values[i] - fromValue) * yPerValue;
-
-        if (i === realFromIndex) {
-          path.moveTo(x, y);
-        } else {
-          path.lineTo(x, y);
-        }
-      }
-    })
-  };
-}
-
-function colorHexToPixi(color) {
-  return parseInt(color.slice(1), 16);
+/**
+ * @see valueScale.js
+ */
+function maxValueToNotchScale(value) {
+  return Math.floor(Math.log10(value) * 3 - 1.7);
 }
