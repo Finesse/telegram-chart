@@ -109,8 +109,6 @@ export default class AnimationGroup {
 
   /**
    * Calls the update callback on the next browser animation frame
-   *
-   * @protected
    */
   updateOnNextFrame() {
     if (this.animationFrameId === null) {

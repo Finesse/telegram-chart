@@ -22,7 +22,8 @@
   min-height: 160px;
 }
 
-.canvas {
+.chart > canvas,
+.chart > svg {
   width: 100%;
   height: 100%;
 }

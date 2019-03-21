@@ -8,6 +8,10 @@ export default class GestureRecognizer extends PureComponent {
   middleMapSelectorDrag = null;
   endMapSelectorDrag = null;
 
+  get element() {
+    return this.blockRef.current;
+  }
+
   mouseDown = event => {
     event.preventDefault();
     const {x, y} = this.getEventRelativeCoordinates(event);
