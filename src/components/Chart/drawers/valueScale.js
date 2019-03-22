@@ -16,11 +16,7 @@ const lineWidth = 1;
  *
  * @todo Prerender the text labels
  */
-export default function makeValueScale({
-  minNotchScale = 1,
-  maxNotchScale = 1,
-  expectedMaxValue
-}) {
+export default function makeValueScale() {
   const lines = new PIXI.Graphics();
   const textContainer = new PIXI.Container();
   const labelTextStyle = new PIXI.TextStyle({

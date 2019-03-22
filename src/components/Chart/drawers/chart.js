@@ -3,12 +3,14 @@ import makeMapLines from './mapLines';
 import makeMapSelector from './mapSelector';
 import makeMainLines from './mainLines';
 import makeValueScale from './valueScale';
+import makeDateScale from './dateScale';
 
 export default function makeChart(linesData, dates) {
   const mapLines = makeMapLines(linesData);
   const mapSelector = makeMapSelector();
   const mainLines = makeMainLines(linesData);
   const valueScale = makeValueScale(linesData);
+  const dateScale = makeDateScale(dates);
 
   const datesLength = dates.length - 1;
 
@@ -17,7 +19,8 @@ export default function makeChart(linesData, dates) {
       ...mapLines.stageChildren,
       ...mapSelector.stageChildren,
       ...mainLines.stageChildren,
-      ...valueScale.stageChildren
+      ...valueScale.stageChildren,
+      dateScale.stageChild
     ],
     update({
       canvasWidth,
@@ -25,6 +28,7 @@ export default function makeChart(linesData, dates) {
       mapMaxValue,
       mainMaxValue,
       mainMaxValueNotchScale,
+      dateNotchScale,
       startIndex,
       endIndex
     }, linesOpacity) {
@@ -67,6 +71,17 @@ export default function makeChart(linesData, dates) {
           * (canvasHeight - chartMainLinesBottomMargin - chartMapHeight)
           / (canvasHeight - chartMainLinesTopMargin - chartMainLinesBottomMargin - chartMapHeight),
         notchScale: mainMaxValueNotchScale
+      });
+
+      dateScale.update({
+        canvasWidth,
+        y: canvasHeight - chartMapHeight - chartMainLinesBottomMargin + 8,
+        fromX: chartSidePadding,
+        toX: canvasWidth - chartSidePadding,
+        fromIndex: startIndex,
+        toIndex: endIndex,
+        notchScale: dateNotchScale,
+        maxNotchCount: 20
       });
     }
   }

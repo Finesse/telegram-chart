@@ -22,6 +22,9 @@ export default class Chart extends Component {
    */
   pixiApp;
 
+  canvasWidth = 0;
+  canvasHeight = 0;
+
   constructor(props) {
     super(props);
 
@@ -44,6 +47,9 @@ export default class Chart extends Component {
       mainMaxValueNotchScale: () => new TestTransition({
         initialValue: maxValueToNotchScale(this.getMainMaxValue())
       }),
+      dateNotchScale: () => new TestTransition({
+        initialValue: getDateNotchScale(this.state.endIndex - this.state.startIndex)
+      })
     };
     for (const [key, {enabled}] of Object.entries(linesState)) {
       transitions[`line_${key}_opacity`] = () => new TestTransition({initialValue: enabled ? 1 : 0});
@@ -120,6 +126,10 @@ export default class Chart extends Component {
     }
 
     if (prevState.startIndex !== this.state.startIndex || prevState.endIndex !== this.state.endIndex) {
+      this.transitionGroup.setTargets({
+        dateNotchScale: getDateNotchScale(this.state.endIndex - this.state.startIndex)
+      });
+
       // It works much smoother if you update on the next frame but not immediately
       this.transitionGroup.updateOnNextFrame();
     }
@@ -166,7 +176,13 @@ export default class Chart extends Component {
   }
 
   renderChart() {
-    const {mapMaxValue, mainMaxValue, mainMaxValueNotchScale, ...linesState} = this.transitionGroup.getState();
+    const {
+      mapMaxValue,
+      mainMaxValue,
+      mainMaxValueNotchScale,
+      dateNotchScale,
+      ...linesState
+    } = this.transitionGroup.getState();
 
     const linesOpacity = {};
     for (const key of Object.keys(this.props.lines)) {
@@ -174,11 +190,12 @@ export default class Chart extends Component {
     }
 
     this.chartDrawer.update({
-      canvasWidth: this.pixiApp.renderer.width / this.pixiApp.renderer.resolution,
-      canvasHeight: this.pixiApp.renderer.height / this.pixiApp.renderer.resolution,
+      canvasWidth: this.canvasWidth,
+      canvasHeight: this.canvasHeight,
       mapMaxValue,
       mainMaxValue,
       mainMaxValueNotchScale,
+      dateNotchScale,
       startIndex: this.state.startIndex,
       endIndex: this.state.endIndex
     }, linesOpacity);
@@ -201,8 +218,10 @@ export default class Chart extends Component {
 
   handleWindowResize = () => {
     const canvas = this.canvasRef.current;
+    this.canvasWidth = canvas.clientWidth;
+    this.canvasHeight = canvas.clientHeight;
     this.pixiApp.renderer.resolution = window.devicePixelRatio || 1;
-    this.pixiApp.renderer.resize(canvas.clientWidth, canvas.clientHeight);
+    this.pixiApp.renderer.resize(this.canvasWidth, this.canvasHeight);
     this.transitionGroup.updateOnNextFrame();
   };
 
@@ -233,8 +252,21 @@ export default class Chart extends Component {
 }
 
 /**
- * @see valueScale.js
+ * @see The valueScale.js file
  */
 function maxValueToNotchScale(value) {
   return Math.floor(Math.log10(value) * 3 - 1.7);
+}
+
+/**
+ * @see The dateScale.js file
+ */
+function getDateNotchScale(datesCount) {
+  if (datesCount <= 0) {
+    return 1e9;
+  }
+
+  const maxDatesCount = 6;
+
+  return Math.max(0, Math.ceil(Math.log2(datesCount / maxDatesCount)));
 }
