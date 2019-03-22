@@ -45,7 +45,6 @@ module.exports = (env, argv) => {
     mode,
     devtool: isDevelopment && 'inline-source-map',
     resolve: {
-      modules: [sourceDirectory, 'node_modules'],
       extensions: ['.js', '.jsx', '.json'],
       alias: isDevelopment ? {
         inferno: path.resolve(__dirname, 'node_modules/inferno/dist/index.dev.esm.js')
