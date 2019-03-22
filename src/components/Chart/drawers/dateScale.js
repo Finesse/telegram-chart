@@ -1,23 +1,10 @@
 import * as PIXI from '../../../pixi';
 import memoizeObjectArguments from '../../../helpers/memoizeObjectArguments';
 import {fontFamily} from '../../../style';
+import {formatDate} from '../../../helpers/date';
 
 const notchScaleBase = 2;
 const approximateLabelMaxWidth = 40;
-const months = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sen',
-  'Oct',
-  'Nov',
-  'Dec'
-];
 
 /**
  * `notchScale` determines the number of date items between to labels. 0 is 1, 1 is 2, 2 is 4, 3 is 8 and so on.
@@ -98,7 +85,7 @@ export default function makeDateScale(dates) {
           text.x = x;
           text.y = y;
           text.alpha = opacity;
-          text.text = getDateLabel(dates[index]);
+          text.text = formatDate(dates[index]);
           textIndex++;
 
           if (textIndex >= maxNotchCount) {
@@ -110,9 +97,4 @@ export default function makeDateScale(dates) {
       hideTexts(textIndex);
     })
   };
-}
-
-function getDateLabel(timestamp) {
-  const date = new Date(timestamp);
-  return `${months[date.getUTCMonth()]} ${date.getUTCDate()}`;
 }

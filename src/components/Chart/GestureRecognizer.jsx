@@ -1,31 +1,24 @@
 import {createRef} from 'inferno';
 import {PureComponent} from '../../helpers/inferno';
-import {chartMapHeight, chartSidePadding} from '../../style';
+import {chartMapHeight, chartSidePadding, chartMainLinesTopMargin, chartMainLinesBottomMargin} from '../../style';
 
 export default class GestureRecognizer extends PureComponent {
   blockRef = createRef();
   startMapSelectorDrag = null;
   middleMapSelectorDrag = null;
   endMapSelectorDrag = null;
-
-  get element() {
-    return this.blockRef.current;
-  }
+  detailsHover;
 
   mouseDown = event => {
     event.preventDefault();
     const {x, y} = this.getEventRelativeCoordinates(event);
 
-    switch (this.getTargetUnderPointer(x, y)) {
-      case 'mapStart':
-        this.handleMapStartDrag(x, watchMouseDrag);
-        break;
-      case 'mapMiddle':
-        this.handleMapMiddleDrag(x, watchMouseDrag);
-        break;
-      case 'mapEnd':
-        this.handleMapEndDrag(x, watchMouseDrag);
-        break;
+    if (this.isInMapSelectionStart(x, y)) {
+      this.handleMapStartDrag(x, watchMouseDrag);
+    } else if (this.isInMapSelectionEnd(x, y)) {
+      this.handleMapEndDrag(x, watchMouseDrag);
+    } else if (this.isInMapSelectionMiddle(x, y)) {
+      this.handleMapMiddleDrag(x, watchMouseDrag);
     }
   };
 
@@ -33,25 +26,21 @@ export default class GestureRecognizer extends PureComponent {
     for (const touch of event.changedTouches) {
       const {x, y} = this.getEventRelativeCoordinates(touch);
 
-      switch (this.getTargetUnderPointer(x, y)) {
-        case 'mapStart':
-          this.handleMapStartDrag(x, ({onMove, onEnd}) => {
-            event.preventDefault();
-            return watchTouchDrag({startTouch: touch, onMove, onEnd});
-          });
-          break;
-        case 'mapMiddle':
-          this.handleMapMiddleDrag(x, ({onMove, onEnd}) => {
-            event.preventDefault();
-            return watchTouchDrag({startTouch: touch, onMove, onEnd});
-          });
-          break;
-        case 'mapEnd':
-          this.handleMapEndDrag(x, ({onMove, onEnd}) => {
-            event.preventDefault();
-            return watchTouchDrag({startTouch: touch, onMove, onEnd});
-          });
-          break;
+      if (this.isInMapSelectionStart(x, y)) {
+        this.handleMapStartDrag(x, ({onMove, onEnd}) => {
+          event.preventDefault();
+          return watchTouchDrag({startTouch: touch, onMove, onEnd});
+        });
+      } else if (this.isInMapSelectionEnd(x, y)) {
+        this.handleMapEndDrag(x, ({onMove, onEnd}) => {
+          event.preventDefault();
+          return watchTouchDrag({startTouch: touch, onMove, onEnd});
+        });
+      } else if (this.isInMapSelectionMiddle(x, y)) {
+        this.handleMapMiddleDrag(x, ({onMove, onEnd}) => {
+          event.preventDefault();
+          return watchTouchDrag({startTouch: touch, onMove, onEnd});
+        });
       }
     }
   };
@@ -125,32 +114,41 @@ export default class GestureRecognizer extends PureComponent {
   /**
    * The coordinates are in pixels and relative to the block
    */
-  getTargetUnderPointer(x, y) {
-    const {
-      x: mapX,
-      y: mapY,
-      width: mapWidth,
-      height: mapHeight
-    } = this.getMapBounds();
+  isInMapSelectionStart(targetX, targetY) {
+    const {x, y, width, height} = this.getMapBounds();
 
-    // The map selection start point
-    if (isInRectangle(x, y, mapX + mapWidth * this.props.mapSelectorStart - 30, mapY - 10, 40, mapHeight + 20)) {
-      return 'mapStart';
-    }
+    return isInRectangle(targetX, targetY, x + width * this.props.mapSelectorStart - 30, y - 10, 40, height + 20);
+  }
 
-    // The map selection end point
-    if (isInRectangle(x, y, mapX + mapWidth * this.props.mapSelectorEnd - 10, mapY - 10, 40, mapHeight + 20)) {
-      return 'mapEnd';
-    }
+  /**
+   * The coordinates are in pixels and relative to the block
+   */
+  isInMapSelectionEnd(targetX, targetY) {
+    const {x, y, width, height} = this.getMapBounds();
 
-    // The middle of the map selection
-    if (isInRectangle(
-      x, y,
-      mapX + mapWidth * this.props.mapSelectorStart, mapY - 10,
-      mapWidth * (this.props.mapSelectorEnd - this.props.mapSelectorStart), mapHeight + 20
-    )) {
-      return 'mapMiddle';
-    }
+    return isInRectangle(targetX, targetY, x + width * this.props.mapSelectorEnd - 10, y - 10, 40, height + 20);
+  }
+
+  /**
+   * The coordinates are in pixels and relative to the block
+   */
+  isInMapSelectionMiddle(targetX, targetY) {
+    const {x, y, width, height} = this.getMapBounds();
+
+    return isInRectangle(
+      targetX, targetY,
+      x + width * this.props.mapSelectorStart, y - 10,
+      width * (this.props.mapSelectorEnd - this.props.mapSelectorStart), height + 20
+    );
+  }
+
+  /**
+   * The coordinates are in pixels and relative to the block
+   */
+  isInMapLines(targetX, targetY) {
+    const {x, y, width, height} = this.getMainLinesBounds();
+
+    return isInRectangle(targetX, targetY, x, y, width, height);
   }
 
   /**
@@ -179,9 +177,34 @@ export default class GestureRecognizer extends PureComponent {
     };
   }
 
+  getMainLinesBounds() {
+    const {clientWidth, clientHeight} = this.blockRef.current;
+
+    return {
+      x: chartSidePadding,
+      y: chartMainLinesTopMargin,
+      width: clientWidth - chartSidePadding * 2,
+      height: clientHeight - chartMainLinesTopMargin - chartMainLinesBottomMargin - chartMapHeight
+    };
+  }
+
   componentDidMount() {
     // event.preventDefault() doesn't work if the event is attached through the JSX
     this.blockRef.current.addEventListener('touchstart', this.touchStart, {passive: false});
+
+    this.detailsHover = watchHover({
+      element: this.blockRef.current,
+      checkHover: event => {
+        const {x, y} = this.getEventRelativeCoordinates(event);
+        return this.isInMapLines(x, y);
+      },
+      onMove: event => {
+        const {x} = this.getEventRelativeCoordinates(event);
+        const {x: linesX, width: linesWidth} = this.getMainLinesBounds();
+        this.props.onDetailsPositionChange((x - linesX) / (linesWidth || 1))
+      },
+      onEnd: () => this.props.onDetailsPositionChange(null)
+    });
   }
 
   componentWillUnmount() {
@@ -232,6 +255,9 @@ function watchMouseDrag({onMove, onEnd}) {
   return {destroy};
 }
 
+/**
+ * Triggers the move callback until the touch move is finished. Create in a touchstart event handler.
+ */
 function watchTouchDrag({startTouch, eventTarget = window, onMove, onEnd}) {
   const getTouch = event => {
     for (const touch of event.changedTouches) {
@@ -269,4 +295,65 @@ function watchTouchDrag({startTouch, eventTarget = window, onMove, onEnd}) {
   };
 
   return {destroy};
+}
+
+/**
+ *
+ */
+function watchHover({element, onMove, onEnd, checkHover = event => true}) {
+  let hoverId = null;
+
+  const eachSubEvent = (event, callback) => {
+    if (event.type.startsWith('mouse')) {
+      callback('mouse', event);
+    } else if (event.type.startsWith('touch')) {
+      for (const touch of event.changedTouches) {
+        callback(`touch${touch.identifier}`, touch);
+      }
+    }
+  };
+
+  const handleMove = event => {
+    eachSubEvent(event, (id, event) => {
+      if ((hoverId === null || id === hoverId)) {
+        if (checkHover(event)) {
+          hoverId = id;
+          onMove(event);
+        } else if (hoverId !== null) {
+          hoverId = null;
+          onEnd(event);
+        }
+      }
+    });
+  };
+
+  const handleEnd = event => {
+    eachSubEvent(event, (id, event) => {
+      if (hoverId === id) {
+        hoverId = null;
+        onEnd(event);
+      }
+    });
+  };
+
+  const moveEvents = ['mouseenter', 'mousemove', 'touchstart', 'touchmove'];
+  const endEvents = ['mouseleave', 'touchend', 'touchcancel'];
+
+  for (const name of moveEvents) {
+    element.addEventListener(name, handleMove);
+  }
+  for (const name of endEvents) {
+    element.addEventListener(name, handleEnd);
+  }
+
+  return {
+    destroy() {
+      for (const name of moveEvents) {
+        element.removeEventListener(name, handleMove);
+      }
+      for (const name of endEvents) {
+        element.removeEventListener(name, handleEnd);
+      }
+    }
+  };
 }

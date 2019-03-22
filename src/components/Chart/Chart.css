@@ -21,6 +21,7 @@
   flex: auto;
   min-height: 160px;
   position: relative;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .canvas {
@@ -50,4 +51,52 @@
 
 .toggle {
   margin: 7px;
+}
+
+.details {
+  position: absolute;
+  z-index: 2;
+  bottom: 83%;
+  left: 6px;
+  right: 6px;
+  display: flex;
+}
+
+.detailsPusher {
+  flex: 0 0 0;
+  will-change: flexGrow;
+}
+
+.detailsContent {
+  flex: none;
+  box-sizing: border-box;
+  max-width: 90%;
+  padding: 8px 6px;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 0 1.5px rgba(0, 0, 0, 0.5);
+  will-change: contents, transform, opacity;
+}
+
+.detailsHeader {
+  font-size: 12px;
+  margin-bottom: 7px;
+}
+
+.detailsValues {
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-gap: 10px 17px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.detailsPrice {
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.detailsLabel {
+  font-size: 10px;
 }

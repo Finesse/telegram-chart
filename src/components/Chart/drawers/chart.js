@@ -4,6 +4,7 @@ import makeMapSelector from './mapSelector';
 import makeMainLines from './mainLines';
 import makeValueScale from './valueScale';
 import makeDateScale from './dateScale';
+import makeDetailsPointer from './detailsPointer';
 
 export default function makeChart(linesData, dates) {
   const mapLines = makeMapLines(linesData);
@@ -11,6 +12,7 @@ export default function makeChart(linesData, dates) {
   const mainLines = makeMainLines(linesData);
   const valueScale = makeValueScale(linesData);
   const dateScale = makeDateScale(dates);
+  const detailsPointer = makeDetailsPointer(linesData);
 
   const datesLength = dates.length - 1;
 
@@ -20,7 +22,8 @@ export default function makeChart(linesData, dates) {
       ...mapSelector.stageChildren,
       ...mainLines.stageChildren,
       ...valueScale.stageChildren,
-      dateScale.stageChild
+      dateScale.stageChild,
+      detailsPointer.stageChild
     ],
     update({
       canvasWidth,
@@ -30,59 +33,84 @@ export default function makeChart(linesData, dates) {
       mainMaxValueNotchScale,
       dateNotchScale,
       startIndex,
-      endIndex
+      endIndex,
+      detailsIndex,
+      detailsOpacity
     }, linesOpacity) {
+      const mainLinesX = chartSidePadding;
+      const mainLinesY = chartMainLinesTopMargin;
+      const mainLinesWidth = canvasWidth - chartSidePadding * 2;
+      const mainLinesHeight = canvasHeight - chartMainLinesTopMargin - chartMainLinesBottomMargin - chartMapHeight;
+
+      const mapX = chartSidePadding;
+      const mapY = canvasHeight - chartMapHeight;
+      const mapWidth = canvasWidth - chartSidePadding * 2;
+      const mapHeight = chartMapHeight;
+
+      const fromValue = 0;
+
       mapLines.update({
         canvasWidth,
-        x: chartSidePadding,
-        y: canvasHeight - chartMapHeight,
-        width: canvasWidth - chartSidePadding * 2,
-        height: chartMapHeight,
+        x: mapX,
+        y: mapY,
+        width: mapWidth,
+        height: mapHeight,
         maxValue: mapMaxValue
       }, linesOpacity);
 
       mapSelector.update({
-        x: chartSidePadding,
-        y: canvasHeight - chartMapHeight,
-        width: canvasWidth - chartSidePadding * 2,
-        height: chartMapHeight,
+        x: mapX,
+        y: mapY,
+        width: mapWidth,
+        height: mapHeight,
         relativeStart: startIndex / datesLength,
         relativeEnd: endIndex / datesLength
       });
 
       mainLines.update({
         canvasWidth,
-        x: chartSidePadding,
-        y: chartMainLinesTopMargin,
-        width: canvasWidth - chartSidePadding * 2,
-        height: canvasHeight - chartMainLinesTopMargin - chartMainLinesBottomMargin - chartMapHeight,
+        x: mainLinesX,
+        y: mainLinesY,
+        width: mainLinesWidth,
+        height: mainLinesHeight,
         maxValue: mainMaxValue,
         fromIndex: startIndex,
         toIndex: endIndex
       }, linesOpacity);
 
       valueScale.update({
-        x: chartSidePadding,
+        x: mainLinesX,
         y: 0,
-        width: canvasWidth - chartSidePadding * 2,
-        height: canvasHeight - chartMainLinesBottomMargin - chartMapHeight,
-        fromValue: 0,
-        toValue: mainMaxValue
-          * (canvasHeight - chartMainLinesBottomMargin - chartMapHeight)
-          / (canvasHeight - chartMainLinesTopMargin - chartMainLinesBottomMargin - chartMapHeight),
+        width: mainLinesWidth,
+        height: mainLinesHeight + chartMainLinesTopMargin - 1,
+        fromValue,
+        toValue: mainMaxValue * (mainLinesHeight + chartMainLinesTopMargin) / mainLinesHeight,
         notchScale: mainMaxValueNotchScale
       });
 
       dateScale.update({
         canvasWidth,
-        y: canvasHeight - chartMapHeight - chartMainLinesBottomMargin + 8,
-        fromX: chartSidePadding,
-        toX: canvasWidth - chartSidePadding,
+        y: mainLinesY + mainLinesHeight + 8,
+        fromX: mainLinesX,
+        toX: mainLinesX + mainLinesWidth,
         fromIndex: startIndex,
         toIndex: endIndex,
         notchScale: dateNotchScale,
         maxNotchCount: 20
-      });
+      }, linesOpacity);
+
+      detailsPointer.update({
+        fromX: mainLinesX,
+        toX: mainLinesX + mainLinesWidth,
+        fromY: mainLinesY + mainLinesHeight,
+        toY: mainLinesY,
+        fromIndex: startIndex,
+        toIndex: endIndex,
+        fromValue,
+        toValue: mainMaxValue,
+        index: detailsIndex,
+        opacity: detailsOpacity
+      }, linesOpacity);
     }
   }
 }

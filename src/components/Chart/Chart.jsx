@@ -1,7 +1,9 @@
 import {Component, createRef} from 'inferno';
+import memoizeOne from 'memoize-one';
 import * as PIXI from '../../pixi';
-import AnimationGroup, {TestTransition} from '../../helpers/animationGroup';
+import {makeAnimationGroup, makeTestTransition, makeInstantWhenHiddenTransition} from '../../helpers/animationGroup';
 import getMaxOnRange from '../../helpers/getMaxOnRange';
+import {formatDate} from '../../helpers/date';
 import ToggleButton from '../ToggleButton/ToggleButton';
 import GestureRecognizer from './GestureRecognizer';
 import styles from './Chart.css?module';
@@ -10,12 +12,12 @@ import makeChartDrawer from './drawers/chart';
 const minMapSelectionLength = 2;
 
 // todo: Add the toggle icons
-// todo: Add the selected column information
 // todo: Round the elements positions considering the device pixel density
 // todo: Use exponential value for animating the lines maxY
 // todo: Remove inferno
 export default class Chart extends Component {
   canvasRef = createRef();
+  detailsRef = createRef();
 
   /**
    * @type {PIXI.Application}
@@ -38,23 +40,24 @@ export default class Chart extends Component {
     this.state = {
       startIndex: this.getDataLength() * 0.73,
       endIndex: this.getDataLength(),
-      lines: linesState
+      lines: linesState,
+      detailsScreenPosition: null
     };
 
     const transitions = {
-      mapMaxValue: () => new TestTransition({initialValue: this.getMapMaxValue()}),
-      mainMaxValue: () => new TestTransition({initialValue: this.getMainMaxValue()}),
-      mainMaxValueNotchScale: () => new TestTransition({
-        initialValue: maxValueToNotchScale(this.getMainMaxValue())
-      }),
-      dateNotchScale: () => new TestTransition({
-        initialValue: getDateNotchScale(this.state.endIndex - this.state.startIndex)
-      })
+      mapMaxValue: makeTestTransition(this.getMapMaxValue()),
+      mainMaxValue: makeTestTransition(this.getMainMaxValue()),
+      mainMaxValueNotchScale: makeTestTransition(maxValueToNotchScale(this.getMainMaxValue())),
+      dateNotchScale: makeTestTransition(getDateNotchScale(this.state.endIndex - this.state.startIndex)),
+      detailsScreenPosition: makeInstantWhenHiddenTransition(
+        makeTestTransition(0.5),
+        makeTestTransition(0)
+      )
     };
     for (const [key, {enabled}] of Object.entries(linesState)) {
-      transitions[`line_${key}_opacity`] = () => new TestTransition({initialValue: enabled ? 1 : 0});
+      transitions[`line_${key}_opacity`] = makeTestTransition(enabled ? 1 : 0);
     }
-    this.transitionGroup = new AnimationGroup(transitions, () => this.renderChart());
+    this.transitionGroup = makeAnimationGroup(transitions, () => this.updateView());
   }
 
   getDataLength() {
@@ -133,6 +136,25 @@ export default class Chart extends Component {
       // It works much smoother if you update on the next frame but not immediately
       this.transitionGroup.updateOnNextFrame();
     }
+
+    if (
+      prevState.startIndex !== this.state.startIndex ||
+      prevState.endIndex !== this.state.endIndex ||
+      prevState.detailsScreenPosition !== this.state.detailsScreenPosition
+    ) {
+      if (this.state.detailsScreenPosition === null || this.state.startIndex === this.state.endIndex) {
+        this.transitionGroup.setTargets({
+          detailsScreenPosition: [undefined, 0]
+        });
+      } else {
+        const indexRange = this.state.endIndex - this.state.startIndex;
+        const detailsIndex = Math.max(0, Math.min(Math.round(this.state.startIndex + this.state.detailsScreenPosition * indexRange), this.getDataLength()));
+
+        this.transitionGroup.setTargets({
+          detailsScreenPosition: [(detailsIndex - this.state.startIndex) / indexRange, 1]
+        });
+      }
+    }
   }
 
   componentWillUnmount() {
@@ -154,7 +176,23 @@ export default class Chart extends Component {
           onMapSelectorStartChange={this.handleStartIndexChange}
           onMapSelectorMiddleChange={this.handleIndexMove}
           onMapSelectorEndChange={this.handleEndIndexChange}
+          onDetailsPositionChange={this.handleDetailsPositionChange}
         >
+          <div className={styles.details} ref={this.detailsRef} style="visibility: hidden;">
+            <div className={styles.detailsPusher} />
+            <div className={styles.detailsContent}>
+              <div className={styles.detailsHeader} />
+              <ul className={styles.detailsValues}>
+                {Object.entries(this.props.lines).map(([key, {color, name}]) => (
+                  <li key={key} style={`color: ${color};`}>
+                    <div className={styles.detailsPrice} />
+                    <div className={styles.detailsLabel}>{name}</div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className={styles.detailsPusher} />
+          </div>
           <div className={styles.fade} />
           <canvas className={styles.canvas} ref={this.canvasRef} />
         </GestureRecognizer>
@@ -175,12 +213,13 @@ export default class Chart extends Component {
     );
   }
 
-  renderChart() {
+  updateView() {
     const {
       mapMaxValue,
       mainMaxValue,
       mainMaxValueNotchScale,
       dateNotchScale,
+      detailsScreenPosition: [detailsScreenPosition, detailsOpacity],
       ...linesState
     } = this.transitionGroup.getState();
 
@@ -188,6 +227,8 @@ export default class Chart extends Component {
     for (const key of Object.keys(this.props.lines)) {
       linesOpacity[key] = linesState[`line_${key}_opacity`];
     }
+
+    const detailsIndex = this.state.startIndex + detailsScreenPosition * (this.state.endIndex - this.state.startIndex);
 
     this.chartDrawer.update({
       canvasWidth: this.canvasWidth,
@@ -197,10 +238,42 @@ export default class Chart extends Component {
       mainMaxValueNotchScale,
       dateNotchScale,
       startIndex: this.state.startIndex,
-      endIndex: this.state.endIndex
+      endIndex: this.state.endIndex,
+      detailsIndex: detailsIndex,
+      detailsOpacity
     }, linesOpacity);
     this.pixiApp.render();
+
+    this.updateDetailsDOM(detailsScreenPosition, detailsOpacity, Math.round(detailsIndex));
   }
+
+  updateDetailsDOM = memoizeOne((screenPosition, opacity, dataIndex) => {
+    const detailsDOM = this.detailsRef.current;
+
+    if (opacity <= 0) {
+      detailsDOM.style.visibility = 'hidden';
+      return;
+    }
+
+    const [leftPusher, contentBlock, rightPusher] = detailsDOM.children;
+    const [header, valuesList] = contentBlock.children;
+
+    detailsDOM.style.visibility = '';
+    leftPusher.style.flexGrow = screenPosition;
+    rightPusher.style.flexGrow = 1 - screenPosition;
+    contentBlock.style.opacity = opacity;
+    contentBlock.style.transform = `translateY(${(opacity - 1) * 10}px)`;
+
+    header.textContent = formatDate(this.props.x[dataIndex], true);
+
+    let valuesListIndex = 0;
+    for (const {values} of Object.values(this.props.lines)) {
+      const valueElement = valuesList.children[valuesListIndex++];
+      if (valueElement) {
+        valueElement.firstElementChild.textContent = values[dataIndex];
+      }
+    }
+  });
 
   handleLineToggle = key => {
     const {lines} = this.state;
@@ -248,6 +321,10 @@ export default class Chart extends Component {
     const endIndex = startIndex + currentXLength;
 
     this.setState({startIndex, endIndex});
+  };
+
+  handleDetailsPositionChange = relativeX => {
+    this.setState({detailsScreenPosition: relativeX});
   };
 }
 
