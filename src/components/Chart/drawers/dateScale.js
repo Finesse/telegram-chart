@@ -2,9 +2,11 @@ import * as PIXI from '../../../pixi';
 import memoizeObjectArguments from '../../../helpers/memoizeObjectArguments';
 import {fontFamily} from '../../../style';
 import {formatDate} from '../../../helpers/date';
+import {mixNumberColors} from '../../../helpers/color';
 
 const notchScaleBase = 2;
 const approximateLabelMaxWidth = 40;
+const textColors = [0x96a2aa, 0x546778];
 
 /**
  * `notchScale` determines the number of date items between to labels. 0 is 1, 1 is 2, 2 is 4, 3 is 8 and so on.
@@ -16,8 +18,7 @@ export default function makeDateScale(dates) {
   const textContainer = new PIXI.Container();
   const labelStyle = new PIXI.TextStyle({
     fontFamily,
-    fontSize: 10,
-    fill: 0x96a2aa
+    fontSize: 10
   });
 
   const texts = [];
@@ -49,7 +50,8 @@ export default function makeDateScale(dates) {
       fromIndex,
       toIndex,
       notchScale = 0,
-      maxNotchCount = 100 // todo: Reach this goal using the maximum distance in the transition
+      maxNotchCount = 100, // todo: Reach this goal using the maximum distance in the transition
+      theme = 0
     }) => {
       notchScale = Math.max(0, notchScale);
       let textIndex = 0;
@@ -62,6 +64,8 @@ export default function makeDateScale(dates) {
         const realToX = canvasWidth + approximateLabelMaxWidth / 2;
         const xPerIndex = (toX - fromX) / (toIndex - fromIndex);
         const realFromIndex = fromIndex - (xPerIndex === 0 ? 0 : (fromX - realFromX) / xPerIndex);
+
+        labelStyle.fill = mixNumberColors(textColors[0], textColors[1], theme);
 
         for (
           let index = Math.max(0, Math.ceil(realFromIndex / notchRange) * notchRange);

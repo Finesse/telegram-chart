@@ -1,13 +1,16 @@
 import * as PIXI from '../../../pixi';
+import {hexToNumber} from '../../../helpers/color';
 import memoizeObjectArguments from '../../../helpers/memoizeObjectArguments';
 import interpolateLinear from "../../../helpers/interpolateLinear";
+import {mixNumberColors} from '../../../helpers/color';
+import {mixNumbers} from '../../../helpers/number';
 
-const lineColor = 0x5b7589;
-const lineOpacity = 0.19;
+const lineColors = [0x5b7589, 0x5e6d7d];
+const lineOpacities = [0.19, 0.41];
 const lineWidth = 2;
 const pointRadius = 5;
 const pointBorderWidth = 2;
-const pointBackgroundColor = 0xffffff;
+const pointBackgroundColors = [0xffffff, 0x242f3e];
 
 export default function makeDetailsPointer(linesData) {
   const graphics = new PIXI.Graphics();
@@ -24,7 +27,8 @@ export default function makeDetailsPointer(linesData) {
       fromValue,
       toValue,
       index,
-      opacity = 1
+      opacity = 1,
+      theme = 0
     }, linesOpacity) => {
       graphics.clear();
 
@@ -34,6 +38,10 @@ export default function makeDetailsPointer(linesData) {
 
       const x = Math.round(fromX + (index - fromIndex) / (toIndex - fromIndex) * (toX - fromX));
       const yPerValue = (toY - fromY) / (toValue - fromValue);
+
+      const lineColor = mixNumberColors(lineColors[0], lineColors[1], theme);
+      const lineOpacity = mixNumbers(lineOpacities[0], lineOpacities[1], theme);
+      const pointBackgroundColor = mixNumberColors(pointBackgroundColors[0], pointBackgroundColors[1], theme);
 
       // Draw the line
       graphics.lineStyle(lineWidth, lineColor, lineOpacity * opacity, 0.5);
@@ -52,7 +60,7 @@ export default function makeDetailsPointer(linesData) {
           const y = fromY + (value - fromValue) * yPerValue;
           const scale = 0.3 + opacity * 0.7;
 
-          graphics.lineStyle(pointBorderWidth, PIXI.hexToColor(color), dataLineOpacity, 1);
+          graphics.lineStyle(pointBorderWidth, hexToNumber(color), dataLineOpacity, 1);
           graphics.beginFill(pointBackgroundColor, dataLineOpacity);
           graphics.drawCircle(x, y, pointRadius * scale);
           graphics.endFill();

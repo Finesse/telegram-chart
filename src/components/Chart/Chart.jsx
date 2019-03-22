@@ -4,6 +4,7 @@ import * as PIXI from '../../pixi';
 import {makeAnimationGroup, makeTestTransition, makeInstantWhenHiddenTransition} from '../../helpers/animationGroup';
 import getMaxOnRange from '../../helpers/getMaxOnRange';
 import {formatDate} from '../../helpers/date';
+import {themeTransitionDuration, themeTransitionDurationCSS} from '../../style';
 import ToggleButton from '../ToggleButton/ToggleButton';
 import GestureRecognizer from './GestureRecognizer';
 import styles from './Chart.css?module';
@@ -15,6 +16,7 @@ const minMapSelectionLength = 2;
 // todo: Round the elements positions considering the device pixel density
 // todo: Use exponential value for animating the lines maxY
 // todo: Remove inferno
+// todo: Try to optimize the theme switch by not animating the charts that are not visible
 export default class Chart extends Component {
   canvasRef = createRef();
   detailsRef = createRef();
@@ -52,7 +54,8 @@ export default class Chart extends Component {
       detailsScreenPosition: makeInstantWhenHiddenTransition(
         makeTestTransition(0.5),
         makeTestTransition(0)
-      )
+      ),
+      // theme: makeTestTransition(this.props.theme === 'day' ? 0 : 1, {duration: themeTransitionDuration}),
     };
     for (const [key, {enabled}] of Object.entries(linesState)) {
       transitions[`line_${key}_opacity`] = makeTestTransition(enabled ? 1 : 0);
@@ -155,6 +158,16 @@ export default class Chart extends Component {
         });
       }
     }
+
+    if (prevProps.theme !== this.props.theme) {
+      /*
+      this.transitionGroup.setTargets({
+        theme: this.props.theme === 'day' ? 0 : 1
+      });
+      */
+      // Must be called immediately to have a synchronous with CSS render
+      this.updateView();
+    }
   }
 
   componentWillUnmount() {
@@ -167,7 +180,7 @@ export default class Chart extends Component {
     const relativeEndIndex = this.state.endIndex / (this.getDataLength() || 1);
 
     return (
-      <div className={styles.root}>
+      <div className={`${styles.root}`}>
         <h3 className={styles.name}>{this.props.name}</h3>
         <GestureRecognizer
           className={styles.chart}
@@ -180,7 +193,7 @@ export default class Chart extends Component {
         >
           <div className={styles.details} ref={this.detailsRef} style="visibility: hidden;">
             <div className={styles.detailsPusher} />
-            <div className={styles.detailsContent}>
+            <div className={styles.detailsContent} style={themeTransitionDurationCSS}>
               <div className={styles.detailsHeader} />
               <ul className={styles.detailsValues}>
                 {Object.entries(this.props.lines).map(([key, {color, name}]) => (
@@ -193,7 +206,7 @@ export default class Chart extends Component {
             </div>
             <div className={styles.detailsPusher} />
           </div>
-          <div className={styles.fade} />
+          <div className={styles.fade} style={themeTransitionDurationCSS} />
           <canvas className={styles.canvas} ref={this.canvasRef} />
         </GestureRecognizer>
         <div className={styles.toggles}>
@@ -220,6 +233,7 @@ export default class Chart extends Component {
       mainMaxValueNotchScale,
       dateNotchScale,
       detailsScreenPosition: [detailsScreenPosition, detailsOpacity],
+      // theme,
       ...linesState
     } = this.transitionGroup.getState();
 
@@ -240,7 +254,8 @@ export default class Chart extends Component {
       startIndex: this.state.startIndex,
       endIndex: this.state.endIndex,
       detailsIndex: detailsIndex,
-      detailsOpacity
+      detailsOpacity,
+      theme: this.props.theme === 'day' ? 0 : 1
     }, linesOpacity);
     this.pixiApp.render();
 

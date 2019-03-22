@@ -35,7 +35,8 @@ export default function makeChart(linesData, dates) {
       startIndex,
       endIndex,
       detailsIndex,
-      detailsOpacity
+      detailsOpacity,
+      theme // Goes from 0 (day) to 1 (night)
     }, linesOpacity) {
       const mainLinesX = chartSidePadding;
       const mainLinesY = chartMainLinesTopMargin;
@@ -55,7 +56,7 @@ export default function makeChart(linesData, dates) {
         y: mapY,
         width: mapWidth,
         height: mapHeight,
-        maxValue: mapMaxValue
+        maxValue: mapMaxValue / 0.95
       }, linesOpacity);
 
       mapSelector.update({
@@ -64,7 +65,8 @@ export default function makeChart(linesData, dates) {
         width: mapWidth,
         height: mapHeight,
         relativeStart: startIndex / datesLength,
-        relativeEnd: endIndex / datesLength
+        relativeEnd: endIndex / datesLength,
+        theme
       });
 
       mainLines.update({
@@ -85,7 +87,8 @@ export default function makeChart(linesData, dates) {
         height: mainLinesHeight + chartMainLinesTopMargin - 1,
         fromValue,
         toValue: mainMaxValue * (mainLinesHeight + chartMainLinesTopMargin) / mainLinesHeight,
-        notchScale: mainMaxValueNotchScale
+        notchScale: mainMaxValueNotchScale,
+        theme
       });
 
       dateScale.update({
@@ -96,7 +99,8 @@ export default function makeChart(linesData, dates) {
         fromIndex: startIndex,
         toIndex: endIndex,
         notchScale: dateNotchScale,
-        maxNotchCount: 20
+        maxNotchCount: 20,
+        theme
       }, linesOpacity);
 
       detailsPointer.update({
@@ -109,7 +113,8 @@ export default function makeChart(linesData, dates) {
         fromValue,
         toValue: mainMaxValue,
         index: detailsIndex,
-        opacity: detailsOpacity
+        opacity: detailsOpacity,
+        theme
       }, linesOpacity);
     }
   }

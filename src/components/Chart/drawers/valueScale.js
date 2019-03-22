@@ -1,13 +1,16 @@
 import * as PIXI from '../../../pixi';
 import memoizeObjectArguments from '../../../helpers/memoizeObjectArguments';
-import modulo from '../../../helpers/modulo';
+import {modulo} from '../../../helpers/number';
+import {mixNumberColors} from '../../../helpers/color';
+import {mixNumbers} from '../../../helpers/number';
 import {fontFamily} from '../../../style';
 
-const primaryLineColor = 0x5b7589;
-const primaryLineOpacity = 0.11;
-const secondaryLineColor = 0x5b7589;
-const secondaryLineOpacity = 0.09;
+const primaryLineColors = [0x5b7589, 0x8391a3];
+const primaryLineOpacities = [0.11, 0.15];
+const secondaryLineColors = [0x5b7589, 0x8391a3];
+const secondaryLineOpacities = [0.09, 0.06];
 const lineWidth = 1;
+const labelColors = [0x96a2aa, 0x546778];
 
 /**
  * `notchScale` determines the distance between the notches measured in the value units.
@@ -15,14 +18,14 @@ const lineWidth = 1;
  * It can also be not integer, in this case a transitional state is rendered.
  *
  * @todo Prerender the text labels
+ * @todo Change the text labels color using some color filter bacause changing `fill` causes the texts to redraw
  */
 export default function makeValueScale() {
   const lines = new PIXI.Graphics();
   const textContainer = new PIXI.Container();
   const labelTextStyle = new PIXI.TextStyle({
     fontFamily,
-    fontSize: 10,
-    fill: 0x96a2aa
+    fontSize: 10
   });
 
   // Rendering texts is a hard job for hardware so I keep them all pre-rendered
@@ -48,7 +51,7 @@ export default function makeValueScale() {
 
   return {
     stageChildren: [lines, textContainer],
-    update: memoizeObjectArguments(({x, y, width, height, fromValue, toValue, notchScale}) => {
+    update: memoizeObjectArguments(({x, y, width, height, fromValue, toValue, notchScale, theme = 0}) => {
       lines.clear();
       hideAllTexts();
 
@@ -60,6 +63,12 @@ export default function makeValueScale() {
       const yPerValue = height / ((toValue - fromValue) || 1);
       const start1Notch = Math.ceil(fromValue / notchValue1) * notchValue1;
       const start2Notch = Math.ceil(fromValue / notchValue2) * notchValue2;
+
+      const primaryLineColor = mixNumberColors(primaryLineColors[0], primaryLineColors[1], theme);
+      const primaryLineOpacity = mixNumbers(primaryLineOpacities[0], primaryLineOpacities[1], theme);
+      const secondaryLineColor = mixNumberColors(secondaryLineColors[0], secondaryLineColors[1], theme);
+      const secondaryLineOpacity = mixNumbers(secondaryLineOpacities[0], secondaryLineOpacities[1], theme);
+      labelTextStyle.fill = mixNumberColors(labelColors[0], labelColors[1], theme);
 
       // There is the 0.1 + 0.2 problem here but it is not applicable for the input data so I haven't solved it
       for (let notch1 = start1Notch, notch2 = start2Notch; notch1 < toValue || notch2 < toValue;) {

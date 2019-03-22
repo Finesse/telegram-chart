@@ -1,7 +1,19 @@
 :global(body) {
   margin: 0;
   padding: 0;
+  transition-property: background, color;
+  transition-timing-function: ease-in-out;
   /* font-family is set through the JS */
+}
+
+:global(.dayTheme) {
+  background: #fff;
+  color: #222222;
+}
+
+:global(.nightTheme) {
+  background: #242f3e;
+  color: #fff;
 }
 
 .chart {
@@ -10,4 +22,49 @@
 
 .chart:not(:first-child) {
   margin-top: 40px;
+}
+
+.themeSwitcher,
+.themeSwitcherHolder {
+  height: 40px;
+  margin-top: 10px;
+}
+
+.themeSwitcher {
+  position: fixed;
+  z-index: 100;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition-property: background, box-shadow;
+  transition-timing-function: ease-in-out;
+}
+:global(.dayTheme) .themeSwitcher {
+  background: #fff;
+  box-shadow: 0 5px 10px 10px #fff;
+}
+:global(.nightTheme) .themeSwitcher {
+  background: #242f3e;
+  box-shadow: 0 5px 10px 10px #242f3e;
+}
+
+.themeSwitcherButton {
+  border: none;
+  background: none;
+  padding: 5px;
+  margin: 0;
+  font: inherit;
+  font-size: 16px;
+  cursor: pointer;
+  transition: color ease-in-out;
+  outline: none;
+}
+:global(.dayTheme) .themeSwitcherButton {
+  color: #108be3;
+}
+:global(.nightTheme) .themeSwitcherButton {
+  color: #36a8f1;
 }

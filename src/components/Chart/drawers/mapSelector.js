@@ -1,12 +1,14 @@
 import * as PIXI from '../../../pixi';
 import memoizeObjectArguments from '../../../helpers/memoizeObjectArguments';
+import {mixNumberColors} from '../../../helpers/color';
+import {mixNumbers} from '../../../helpers/number';
 
 const selectorHorizontalBorderWidth = 1;
 const selectorVerticalBorderWidth = 4;
-const outsideColor = 0xF6F8F2;
-const outsideOpacity = 0.8;
-const borderColor = 0x3076A7;
-const borderOpacity = 0.16;
+const outsideColors = [0xF6F8F2, 0x1e2836]; // Day and night themes
+const outsideOpacities = [0.8, 0.77];
+const borderColors = [0x3076A7, 0x6c90b2];
+const borderOpacities = [0.16, 0.4];
 
 export default function makeMapSelector() {
   const outsideLeft = new PIXI.Graphics();
@@ -18,10 +20,23 @@ export default function makeMapSelector() {
 
   return {
     stageChildren: [outsideLeft, outsideRight, borderTop, borderBottom, borderLeft, borderRight],
-    update: memoizeObjectArguments(({x, y, width, height, relativeStart, relativeEnd}) => {
+    update: memoizeObjectArguments(({
+      x,
+      y,
+      width,
+      height,
+      relativeStart,
+      relativeEnd,
+      theme = 0
+    }) => {
       const middleX = Math.round(x + (relativeStart + relativeEnd) / 2 * width);
       const startX = Math.min(middleX - selectorVerticalBorderWidth, Math.round(x + relativeStart * width));
       const endX = Math.max(middleX + selectorVerticalBorderWidth, Math.round(x + relativeEnd * width));
+
+      const outsideColor = mixNumberColors(outsideColors[0], outsideColors[1], theme);
+      const outsideOpacity = mixNumbers(outsideOpacities[0], outsideOpacities[1], theme);
+      const borderColor = mixNumberColors(borderColors[0], borderColors[1], theme);
+      const borderOpacity = mixNumbers(borderOpacities[0], borderOpacities[1], theme);
 
       outsideLeft.clear();
       outsideLeft.beginFill(outsideColor, outsideOpacity);

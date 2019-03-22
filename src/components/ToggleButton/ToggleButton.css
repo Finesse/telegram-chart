@@ -14,8 +14,19 @@
   border-radius: 17px;
   cursor: pointer;
   outline: none;
+  font: inherit;
   font-size: 12px;
   background: none;
+  transition-property: color, border-color;
+  transition-timing-function: ease-in-out;
+}
+:global(.dayTheme) .button {
+  color: #43484b;
+  border-color: #e6ecf0;
+}
+:global(.nightTheme) .button {
+  color: #e8ecee;
+  border-color: #344658;
 }
 
 .icon {

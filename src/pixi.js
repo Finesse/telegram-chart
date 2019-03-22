@@ -7,7 +7,3 @@ export {Application} from '@pixi/app';
 export {Container} from '@pixi/display';
 export {Graphics} from '@pixi/graphics';
 export {Text, TextStyle} from '@pixi/text';
-
-export function hexToColor(color) {
-  return parseInt(color.slice(1), 16);
-}

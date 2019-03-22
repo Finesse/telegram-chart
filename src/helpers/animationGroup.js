@@ -88,21 +88,26 @@ function quadInOut(t) {
  * @returns AnimationGroup~Animation
  * @todo Make a real transition
  */
-export function makeTestTransition(initialValue) {
+export function makeTestTransition(initialValue, {
+  duration = 500,
+  easing = quadInOut
+} = {}) {
   let startValue = initialValue;
   let startTime = Date.now();
   let targetValue = initialValue;
+  let finished = true;
 
   const getState = () => {
-    // const value = this.targetValue - (this.targetValue - this.startValue) * Math.exp((this.startTime - Date.now()) / 100);
-    const value = startValue + (targetValue - startValue) * quadInOut(Math.min(1, (Date.now() - startTime) / 500));
+    const stage = Math.min(1, (Date.now() - startTime) / duration);
 
-    return Math.abs(targetValue - value) > 0.0001 ? value : targetValue;
+    if (stage >= 1) {
+      finished = true;
+    }
+
+    return startValue + (targetValue - startValue) * easing(stage);
   };
 
-  const isFinished = () => {
-    return getState() === targetValue;
-  };
+  const isFinished = () => finished;
 
   const setTarget = (value, instant) => {
     if (value === targetValue) {
@@ -112,6 +117,7 @@ export function makeTestTransition(initialValue) {
     startValue = instant ? value : getState();
     startTime = Date.now();
     targetValue = value;
+    finished = false;
   };
 
   return {getState, isFinished, setTarget};

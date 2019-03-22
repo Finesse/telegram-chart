@@ -1,4 +1,5 @@
 import * as PIXI from '../../../pixi';
+import {hexToNumber} from '../../../helpers/color';
 import memoizeObjectArguments from '../../../helpers/memoizeObjectArguments';
 
 /**
@@ -35,7 +36,7 @@ export default function makeLine({values, color, width}) {
       const realFromIndex = Math.floor(Math.max(0, fromIndex - (xPerIndex === 0 ? 0 : (fromX + width / 2) / xPerIndex)));
       const realToIndex = Math.ceil(Math.min(values.length - 1, toIndex + (xPerIndex === 0 ? 0 : (canvasWidth - toX + width / 2) / xPerIndex)));
 
-      path.lineStyle(width, PIXI.hexToColor(color), opacity, 0.5);
+      path.lineStyle(width, hexToNumber(color), opacity, 0.5);
 
       for (let i = realFromIndex; i <= realToIndex; ++i) {
         const x = fromX + (i - fromIndex) * xPerIndex;
