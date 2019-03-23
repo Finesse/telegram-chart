@@ -1,10 +1,11 @@
 import {themeTransitionDurationCSS} from '../../style';
 import {htmlToElement} from '../../helpers/dom';
 import styles from './toggleButton.css?module';
+import iconSVG from './icon.svg?raw';
 
 const template = `
 <button class="${styles.button}" style="${themeTransitionDurationCSS}">
-  <span class="${styles.icon}"></span>
+  ${iconSVG}
   <span class="${styles.name}"></span>
 </button>
 `;
@@ -16,10 +17,9 @@ export default function makeToggleButton(color, name, isOn, onToggle, className)
     button.classList.add(className);
   }
 
-  Object.assign(button.querySelector(`.${styles.icon}`).style, {
-    backgroundColor: color,
-    borderColor: color
-  });
+  const iconElement = button.querySelector('svg');
+  iconElement.classList.add(styles.icon);
+  iconElement.querySelector('circle').style.fill = color;
 
   button.querySelector(`.${styles.name}`).textContent = name;
 

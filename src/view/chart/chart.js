@@ -22,7 +22,6 @@ const template = `
 </div>
 `;
 
-// todo: Add the toggle icons
 // todo: Round the elements positions considering the device pixel density
 // todo: Use exponential value for animating the lines maxY
 // todo: Try to optimize the theme switch by not animating the charts that are not visible

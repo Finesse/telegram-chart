@@ -1,12 +1,7 @@
-/* CSSO fails when `box-sizing` is inside `.icon` for some reason */
-.button,
-.icon {
-  box-sizing: border-box;
-}
-
 .button {
   display: flex;
   align-items: center;
+  box-sizing: border-box;
   height: 34px;
   min-width: 34px;
   padding: 0 6px;
@@ -31,16 +26,25 @@
 
 .icon {
   flex: none;
-  display: block;
   width: 20px;
   height: 20px;
-  border: 2px solid;
-  border-radius: 100%;
-  transition: background 0.3s ease-in-out;
 }
-
-.button:not(.on) > .icon {
-  background: transparent !important;
+.icon > polyline {
+  stroke-dasharray: 12 20;
+  stroke-dashoffset: 12;
+  transform: scale(0.3);
+}
+.icon > polyline,
+.icon > circle:nth-child(2) {
+  transform-origin: 50% 50%;
+  transition: all 0.4s ease-in-out;
+}
+.on .icon > circle:nth-child(2) {
+  transform: scale(0);
+}
+.on .icon > polyline {
+  transform: scale(1);
+  stroke-dashoffset: 0;
 }
 
 .name {

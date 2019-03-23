@@ -91,6 +91,10 @@ module.exports = (env, argv) => {
               use: makeCSSLoaders(false, isDevelopment)
             }
           ]
+        },
+        {
+          resourceQuery: /(^|\?|&)raw($|&)/i,
+          use: 'raw-loader'
         }
       ]
     },
