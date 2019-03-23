@@ -36,6 +36,21 @@ function makeCSSLoaders(useCSSModules, isDevelopment) {
   ];
 }
 
+function getAliases(isDevelopment) {
+  const aliases = {
+    '@pixi/ticker': path.resolve(__dirname, sourceDirectory, 'pixi/mocks/ticker.js')
+  };
+
+  if (!isDevelopment) {
+    // Required for webpack-dev-server
+    Object.assign(aliases, {
+      url: path.resolve(__dirname, sourceDirectory, 'pixi/mocks/url')
+    });
+  }
+
+  return aliases;
+}
+
 module.exports = (env, argv) => {
   const {mode, analyze} = argv;
   const isDevelopment = mode !== 'production';
@@ -44,7 +59,9 @@ module.exports = (env, argv) => {
     entry: `./${sourceDirectory}/index.js`,
     mode,
     devtool: isDevelopment && 'inline-source-map',
-    resolve: {},
+    resolve: {
+      alias: getAliases(isDevelopment)
+    },
     module: {
       rules: [
         {
