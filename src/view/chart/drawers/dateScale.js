@@ -51,7 +51,6 @@ export default function makeDateScale(dates, prepareNotchCount = 0) {
       fromIndex,
       toIndex,
       notchScale = 0,
-      maxNotchCount = 100, // todo: Reach this goal using the maximum distance in the transition
       theme = 0
     }) => {
       notchScale = Math.max(0, notchScale);
@@ -89,10 +88,6 @@ export default function makeDateScale(dates, prepareNotchCount = 0) {
           const {monthIndex, day} = getDateParts(dates[index]);
           printDate(textIndex, monthIndex, day, x, y, textColor, opacity);
           textIndex++;
-
-          if (textIndex >= maxNotchCount) {
-            break;
-          }
         }
       }
 

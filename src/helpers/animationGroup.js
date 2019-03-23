@@ -80,17 +80,23 @@ export function makeAnimationGroup(animations, onUpdate) {
   return {setTargets, getState, destroy, updateOnNextFrame};
 }
 
-function quadInOut(t) {
+export function easeQuadInOut(t) {
   return ((t *= 2) <= 1 ? t * t : --t * (2 - t) + 1) / 2;
 }
 
+export function easeQuadOut(t) {
+  return 1 - (1 - t) * (1 - t);
+}
+
 /**
+ * A simple transition from one value to another
+ *
  * @returns AnimationGroup~Animation
- * @todo Make a real transition
  */
-export function makeTestTransition(initialValue, {
+export function makeTransition(initialValue, {
   duration = 500,
-  easing = quadInOut
+  easing = easeQuadInOut,
+  maxDistance = Infinity
 } = {}) {
   let startValue = initialValue;
   let startTime = Date.now();
@@ -118,12 +124,21 @@ export function makeTestTransition(initialValue, {
     startTime = Date.now();
     targetValue = value;
     finished = false;
+
+    if (startValue < targetValue) {
+      startValue = Math.max(startValue, targetValue - maxDistance);
+    } else {
+      startValue = Math.min(startValue, targetValue + maxDistance);
+    }
   };
 
   return {getState, isFinished, setTarget};
 }
 
 /**
+ * Handles two transitions: makes the first instant when the opacity is 0. Suitable for something that should move
+ * instantly while invisible.
+ *
  * @returns AnimationGroup~Animation
  */
 export function makeInstantWhenHiddenTransition(valueTransition, opacityTransition) {
@@ -139,6 +154,35 @@ export function makeInstantWhenHiddenTransition(valueTransition, opacityTransiti
         valueTransition.setTarget(value, instant || opacityTransition.getState() <= 0);
       }
       opacityTransition.setTarget(opacity, instant);
+    }
+  };
+}
+
+/**
+ * Animates the number power transitions. A great choice for a zoom transition.
+ *
+ * @returns AnimationGroup~Animation
+ */
+export function makeExponentialTransition(initialValue, {minPlainValue = 1e-9, ...options} = {}) {
+  function plainValueToPower(value) {
+    return Math.max(Math.log(value), minPlainValue);
+  }
+
+  function powerToPlainValue(power) {
+    return Math.exp(power);
+  }
+
+  const powerTransition = makeTransition(plainValueToPower(initialValue), options);
+
+  return {
+    getState() {
+      return powerToPlainValue(powerTransition.getState());
+    },
+    isFinished() {
+      return powerTransition.isFinished();
+    },
+    setTarget(value, instant) {
+      powerTransition.setTarget(plainValueToPower(value), instant);
     }
   };
 }

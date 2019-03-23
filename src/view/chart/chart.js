@@ -1,6 +1,12 @@
 import memoizeOne from 'memoize-one';
 import * as PIXI from '../../pixi';
-import {makeAnimationGroup, makeTestTransition, makeInstantWhenHiddenTransition} from '../../helpers/animationGroup';
+import {
+  makeAnimationGroup,
+  makeExponentialTransition,
+  makeInstantWhenHiddenTransition,
+  makeTransition,
+  easeQuadOut
+} from '../../helpers/animationGroup';
 import getMaxOnRange from '../../helpers/getMaxOnRange';
 import {themeTransitionDuration, themeTransitionDurationCSS} from '../../style';
 import makeToggleButton from '../toggleButton/toggleButton';
@@ -23,8 +29,9 @@ const template = `
 `;
 
 // todo: Round the elements positions considering the device pixel density
-// todo: Use exponential value for animating the lines maxY
 // todo: Try to optimize the theme switch by not animating the charts that are not visible
+// todo: Fix the fade in Safari
+// todo: Amend the styles so that they match the design
 export default function makeChart(element, {name, dates, lines}, initialTheme = 'day') {
   // The arguments store the unaltered chart state
 
@@ -256,19 +263,24 @@ function getInitialState(lines, dates, theme) {
 
 function createTransitionGroup({startIndex, endIndex, lines}, mapMaxValue, mainMaxValue, theme, onUpdate) {
   const transitions = {
-    mapMaxValue: makeTestTransition(mapMaxValue),
-    mainMaxValue: makeTestTransition(mainMaxValue),
-    mainMaxValueNotchScale: makeTestTransition(maxValueToNotchScale(mainMaxValue)),
-    dateNotchScale: makeTestTransition(getDateNotchScale(endIndex - startIndex)),
+    mapMaxValue: makeExponentialTransition(mapMaxValue),
+    mainMaxValue: makeExponentialTransition(mainMaxValue),
+    mainMaxValueNotchScale: makeTransition(maxValueToNotchScale(mainMaxValue)),
+    dateNotchScale: makeTransition(getDateNotchScale(endIndex - startIndex), {
+      maxDistance: 1.5
+    }),
     detailsScreenPosition: makeInstantWhenHiddenTransition(
-      makeTestTransition(0.5),
-      makeTestTransition(0)
+      makeTransition(0.5, {
+        easing: easeQuadOut,
+        duration: 300
+      }),
+      makeTransition(0)
     ),
     // theme: makeTestTransition(theme === 'day' ? 0 : 1, {duration: themeTransitionDuration}),
   };
 
   for (const [key, {enabled}] of Object.entries(lines)) {
-    transitions[`line_${key}_opacity`] = makeTestTransition(enabled ? 1 : 0);
+    transitions[`line_${key}_opacity`] = makeTransition(enabled ? 1 : 0);
   }
 
   return makeAnimationGroup(transitions, onUpdate);

@@ -103,7 +103,6 @@ export default function makeChart(linesData, dates) {
         fromIndex: startIndex,
         toIndex: endIndex,
         notchScale: dateNotchScale,
-        maxNotchCount: 20,
         theme
       }, linesOpacity);
 
