@@ -44,9 +44,10 @@ export default function makeDetailsPointer(linesData) {
       const pointBackgroundColor = mixNumberColors(pointBackgroundColors[0], pointBackgroundColors[1], theme);
 
       // Draw the line
-      graphics.lineStyle(lineWidth, lineColor, lineOpacity * opacity, 0.5);
-      graphics.moveTo(x, fromY);
-      graphics.lineTo(x, toY);
+      graphics
+        .lineStyle(lineWidth, lineColor, lineOpacity * opacity, 0.5)
+        .moveTo(x, fromY)
+        .lineTo(x, toY);
 
       // Draw the circles
       if (isFinite(yPerValue)) {

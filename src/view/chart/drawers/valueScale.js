@@ -93,14 +93,15 @@ export default function makeValueScale(prepareNotchCount = 0) {
         const alignedNotchY = Math.round(notchY + lineWidth / 2) - lineWidth / 2;
         const isPrimary = value === 0;
 
-        lines.lineStyle(
-          lineWidth,
-          isPrimary ? primaryLineColor : secondaryLineColor,
-          opacity * (isPrimary ? primaryLineOpacity : secondaryLineOpacity),
-          0.5
-        );
-        lines.moveTo(x, alignedNotchY);
-        lines.lineTo(x + width, alignedNotchY);
+        lines
+          .lineStyle(
+            lineWidth,
+            isPrimary ? primaryLineColor : secondaryLineColor,
+            opacity * (isPrimary ? primaryLineOpacity : secondaryLineOpacity),
+            0.5
+          )
+          .moveTo(x, alignedNotchY)
+          .lineTo(x + width, alignedNotchY);
 
         printNumber(notchIndex, value, x, alignedNotchY - 17, labelColor, opacity);
       }

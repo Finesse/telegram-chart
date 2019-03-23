@@ -31,7 +31,7 @@ export default function makeMainLines(linesData) {
           fromY: y + height,
           toY: y,
           opacity: linesOpacity[key],
-          smoothness: 0.05
+          roundCorners: true
         });
       }
     })

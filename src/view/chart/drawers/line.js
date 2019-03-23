@@ -25,7 +25,7 @@ export default function makeLine({values, color, width}) {
       fromY,
       toY,
       opacity = 1,
-      smoothness = 0
+      roundCorners = false
     }) => {
       path.clear();
 
@@ -37,7 +37,7 @@ export default function makeLine({values, color, width}) {
       const yPerValue = (toY - fromY) / (toValue - fromValue);
       const realFromIndex = Math.floor(Math.max(0, fromIndex - (xPerIndex === 0 ? 0 : (fromX + width / 2) / xPerIndex)));
       const realToIndex = Math.ceil(Math.min(values.length - 1, toIndex + (xPerIndex === 0 ? 0 : (canvasWidth - toX + width / 2) / xPerIndex)));
-      const smoothOffset = smoothness / 2;
+      const roundCornerXOffset = roundCorners ? Math.min(0.5, 0.01 * xPerIndex) : 0;
 
       path.lineStyle(width, hexToNumber(color), opacity, 0.5);
 
@@ -47,17 +47,28 @@ export default function makeLine({values, color, width}) {
 
         if (i === realFromIndex) {
           path.moveTo(x, y);
-        } else if (smoothness <= 0 || i === realToIndex) {
-          path.lineTo(x, y);
-        } else {
-          const x1 = x - smoothOffset * xPerIndex;
-          const y1 = fromY + interpolateLinear(values, i - smoothOffset) * yPerValue;
-          const x2 = x + smoothOffset * xPerIndex;
-          const y2 = fromY + interpolateLinear(values, i + smoothOffset) * yPerValue;
-          path
-            .lineTo(x1, y1)
-            .quadraticCurveTo(x, y, x2, y2);
+          continue;
         }
+
+        // Don't need to round the corner if...
+        if (
+          i === realToIndex || // It is the last point
+          roundCornerXOffset <= 0 || // The rounding is disabled
+          (values[i - 1] > values[i]) === (values[i] > values[i + 1]) // Or the corner is not sharp
+        ) {
+          path.lineTo(x, y);
+          continue;
+        }
+
+        // This flat rounding is almost indistinguishable from the real bezier rounding and much faster
+        const x1 = x - roundCornerXOffset;
+        const y1 = fromY + interpolateLinear(values, i - roundCornerXOffset / xPerIndex) * yPerValue;
+        const x2 = x + roundCornerXOffset;
+        const y2 = fromY + interpolateLinear(values, i + roundCornerXOffset / xPerIndex) * yPerValue;
+        const y12 = y1 * 0.3 + y2 * 0.3 + y * 0.4;
+        path
+          .lineTo(x1, y12)
+          .lineTo(x2, y12);
       }
     })
   };
