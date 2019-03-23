@@ -51,7 +51,7 @@
   box-shadow: 0 5px 10px 10px #242f3e;
 }
 
-.themeSwitcherButton {
+.button {
   border: none;
   background: none;
   padding: 5px;
@@ -62,9 +62,16 @@
   transition: color ease-in-out;
   outline: none;
 }
-:global(.dayTheme) .themeSwitcherButton {
+:global(.dayTheme) .button {
   color: #108be3;
 }
-:global(.nightTheme) .themeSwitcherButton {
+:global(.nightTheme) .button {
   color: #36a8f1;
+}
+
+.bigDataBlock {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
 }

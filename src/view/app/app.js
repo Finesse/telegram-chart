@@ -1,13 +1,20 @@
 import {fontFamily, themeTransitionDuration, themeTransitionDurationCSS} from '../../style';
 import makeChart from '../chart/chart';
 import styles from './app.css?module';
+import makeBigChartData from "../../makeBigChartData";
 
 const template = `
 <div></div>
+<div class="${styles.bigDataBlock}">
+  <button
+    class="${styles.button}"
+    style="${themeTransitionDurationCSS}"
+  >Show BIG data</button>
+</div>
 <div class="${styles.themeSwitcherHolder}"></div>
 <div class="${styles.themeSwitcher}" style="${themeTransitionDurationCSS}">
   <button
-    class="${styles.themeSwitcherButton}"
+    class="${styles.button}"
     style="${themeTransitionDurationCSS}"
   ></button>
 </div>
@@ -20,7 +27,8 @@ export default function makeApp(element, chartsData) {
   document.body.style.fontFamily = fontFamily;
   document.body.style.transitionDuration = `${themeTransitionDuration}ms`;
   element.innerHTML = template;
-  const themeButton = element.querySelector(`.${styles.themeSwitcherButton}`);
+  const themeButton = element.querySelector(`.${styles.themeSwitcher} button`);
+  let bigDataBlock = element.querySelector(`.${styles.bigDataBlock}`);
 
   function switchTheme() {
     theme = theme === 'day' ? 'night' : 'day';
@@ -40,6 +48,19 @@ export default function makeApp(element, chartsData) {
     }
   }
 
+  function addChart(chartData, start) {
+    const chartBox = document.createElement('div');
+    chartBox.className = styles.chart;
+    element.firstElementChild.appendChild(chartBox);
+
+    const chart = makeChart(chartBox, chartData, theme);
+    if (start) {
+      chart.start();
+    }
+
+    return chart;
+  }
+
   themeButton.addEventListener('click', event => {
     event.preventDefault();
     switchTheme();
@@ -47,14 +68,17 @@ export default function makeApp(element, chartsData) {
   applyTheme();
 
   for (const chartData of chartsData) {
-    const chartBox = document.createElement('div');
-    chartBox.className = styles.chart;
-    element.firstElementChild.appendChild(chartBox);
-
-    charts.push(makeChart(chartBox, chartData, theme));
+    charts.push(addChart(chartData));
   }
 
   for (const chart of charts) {
     chart.start();
   }
+
+  bigDataBlock.querySelector('button').addEventListener('click', event => {
+    event.preventDefault();
+    bigDataBlock.remove();
+    bigDataBlock = null;
+    charts.push(addChart(makeBigChartData(10000), true));
+  });
 }

@@ -253,7 +253,7 @@ function getInitialState(lines, dates, theme) {
     canvasWidth: 0,
     canvasHeight: 0,
     pixelRatio: 1,
-    startIndex: (dates.length - 1) * 0.73,
+    startIndex: Math.max((dates.length - 1) * 0.73, dates.length - 1000),
     endIndex: (dates.length - 1),
     lines: linesState,
     detailsScreenPosition: null,
