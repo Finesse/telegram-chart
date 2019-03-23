@@ -5,7 +5,9 @@
   "scripts": {
     "start": "webpack-dev-server --progress",
     "build": "webpack  --mode=production --progress",
-    "build:noprogress": "webpack --mode=production"
+    "build:noprogress": "webpack --mode=production",
+    "analyze:dev": "npm start -- --analyze",
+    "analyze:prod": "npm run build -- --analyze"
   },
   "engines": {
     "node": ">=10"
@@ -35,5 +37,8 @@
     "webpack": "^4.29.6",
     "webpack-cli": "^3.3.0",
     "webpack-dev-server": "^3.2.1"
+  },
+  "devDependencies": {
+    "webpack-bundle-analyzer": "^3.1.0"
   }
 }

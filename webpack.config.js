@@ -37,7 +37,7 @@ function makeCSSLoaders(useCSSModules, isDevelopment) {
 }
 
 module.exports = (env, argv) => {
-  const {mode} = argv;
+  const {mode, analyze} = argv;
   const isDevelopment = mode !== 'production';
 
   return {
@@ -92,7 +92,12 @@ module.exports = (env, argv) => {
       new CleanWebpackPlugin(),
       new HtmlWebpackPlugin({
         template: `${sourceDirectory}/index.html`
-      })
+      }),
+      ...(analyze ? [
+        new (require('webpack-bundle-analyzer').BundleAnalyzerPlugin)({
+          analyzerPort: 8001
+        })
+      ] : [])
     ]
   };
 };
