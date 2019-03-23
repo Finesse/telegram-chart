@@ -1,6 +1,7 @@
 import * as PIXI from '../../../pixi';
 import {hexToNumber} from '../../../helpers/color';
 import memoizeObjectArguments from '../../../helpers/memoizeObjectArguments';
+import interpolateLinear from '../../../helpers/interpolateLinear';
 
 /**
  * Makes an a chart line with linear interpolation. The line is rendered from the left edge of the canvas to the right
@@ -23,7 +24,8 @@ export default function makeLine({values, color, width}) {
       toValue,
       fromY,
       toY,
-      opacity = 1
+      opacity = 1,
+      smoothness = 0
     }) => {
       path.clear();
 
@@ -35,6 +37,7 @@ export default function makeLine({values, color, width}) {
       const yPerValue = (toY - fromY) / (toValue - fromValue);
       const realFromIndex = Math.floor(Math.max(0, fromIndex - (xPerIndex === 0 ? 0 : (fromX + width / 2) / xPerIndex)));
       const realToIndex = Math.ceil(Math.min(values.length - 1, toIndex + (xPerIndex === 0 ? 0 : (canvasWidth - toX + width / 2) / xPerIndex)));
+      const smoothOffset = smoothness / 2;
 
       path.lineStyle(width, hexToNumber(color), opacity, 0.5);
 
@@ -44,8 +47,16 @@ export default function makeLine({values, color, width}) {
 
         if (i === realFromIndex) {
           path.moveTo(x, y);
-        } else {
+        } else if (smoothness <= 0 || i === realToIndex) {
           path.lineTo(x, y);
+        } else {
+          const x1 = x - smoothOffset * xPerIndex;
+          const y1 = fromY + interpolateLinear(values, i - smoothOffset) * yPerValue;
+          const x2 = x + smoothOffset * xPerIndex;
+          const y2 = fromY + interpolateLinear(values, i + smoothOffset) * yPerValue;
+          path
+            .lineTo(x1, y1)
+            .quadraticCurveTo(x, y, x2, y2);
         }
       }
     })

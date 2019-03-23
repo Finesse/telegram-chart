@@ -1,7 +1,6 @@
 import memoizeObjectArguments from '../../../helpers/memoizeObjectArguments';
 import makeLine from './line';
 
-// todo: Round the lines corners
 export default function makeMainLines(linesData) {
   const lines = {};
   for (const [key, {values, color}] of Object.entries(linesData)) {
@@ -31,7 +30,8 @@ export default function makeMainLines(linesData) {
           toValue: maxValue,
           fromY: y + height,
           toY: y,
-          opacity: linesOpacity[key]
+          opacity: linesOpacity[key],
+          smoothness: 0.05
         });
       }
     })
