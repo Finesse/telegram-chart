@@ -5,12 +5,13 @@ import makeMainLines from './mainLines';
 import makeValueScale from './valueScale';
 import makeDateScale from './dateScale';
 import makeDetailsPointer from './detailsPointer';
+import textFactory from './textFactory';
 
 export default function makeChart(linesData, dates) {
   const mapLines = makeMapLines(linesData);
   const mapSelector = makeMapSelector();
   const mainLines = makeMainLines(linesData);
-  const valueScale = makeValueScale(linesData);
+  const valueScale = makeValueScale(20);
   const dateScale = makeDateScale(dates);
   const detailsPointer = makeDetailsPointer(linesData);
 
@@ -28,6 +29,7 @@ export default function makeChart(linesData, dates) {
     update({
       canvasWidth,
       canvasHeight,
+      pixelRatio = 1,
       mapMaxValue,
       mainMaxValue,
       mainMaxValueNotchScale,
@@ -49,6 +51,8 @@ export default function makeChart(linesData, dates) {
       const mapHeight = chartMapHeight;
 
       const fromValue = 0;
+
+      textFactory.setPixelRatio(pixelRatio);
 
       mapLines.update({
         canvasWidth,

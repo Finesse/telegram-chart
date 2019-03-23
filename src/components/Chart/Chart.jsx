@@ -28,6 +28,7 @@ export default class Chart extends Component {
 
   canvasWidth = 0;
   canvasHeight = 0;
+  pixelRatio = 1;
 
   constructor(props) {
     super(props);
@@ -247,6 +248,7 @@ export default class Chart extends Component {
     this.chartDrawer.update({
       canvasWidth: this.canvasWidth,
       canvasHeight: this.canvasHeight,
+      pixelRatio: this.pixelRatio,
       mapMaxValue,
       mainMaxValue,
       mainMaxValueNotchScale,
@@ -308,7 +310,8 @@ export default class Chart extends Component {
     const canvas = this.canvasRef.current;
     this.canvasWidth = canvas.clientWidth;
     this.canvasHeight = canvas.clientHeight;
-    this.pixiApp.renderer.resolution = window.devicePixelRatio || 1;
+    this.pixelRatio = window.devicePixelRatio || 1;
+    this.pixiApp.renderer.resolution = this.pixelRatio;
     this.pixiApp.renderer.resize(this.canvasWidth, this.canvasHeight);
     this.transitionGroup.updateOnNextFrame();
   };
