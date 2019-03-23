@@ -1,8 +1,8 @@
 import * as PIXI from '../../../pixi';
 import memoizeObjectArguments from '../../../helpers/memoizeObjectArguments';
-import {fontFamily} from '../../../style';
-import {formatDate} from '../../../helpers/date';
+import {getDateParts} from '../../../helpers/date';
 import {mixNumberColors} from '../../../helpers/color';
+import textFactory from './textFactory';
 
 const notchScaleBase = 2;
 const approximateLabelMaxWidth = 40;
@@ -11,34 +11,35 @@ const textColors = [0x96a2aa, 0x546778];
 /**
  * `notchScale` determines the number of date items between to labels. 0 is 1, 1 is 2, 2 is 4, 3 is 8 and so on.
  * It can also be not integer, in this case a transitional state is rendered.
- *
- * @todo Prerender the text labels
  */
-export default function makeDateScale(dates) {
+export default function makeDateScale(dates, prepareNotchCount = 0) {
   const textContainer = new PIXI.Container();
-  const labelStyle = new PIXI.TextStyle({
-    fontFamily,
-    fontSize: 10
-  });
+  const textSubContainers = [];
 
-  const texts = [];
+  const printDate = (index, monthIndex, day, x = 0, y = 0, color = 0x000000, opacity = 1) => {
+    if (!textSubContainers[index]) {
+      textSubContainers[index] = textFactory.makeDate();
+      textContainer.addChild(textSubContainers[index].stageChild);
+    }
 
-  const hideTexts = startIndex => {
-    for (let i = startIndex; i < texts.length; ++i) {
-      texts[i].visible = false;
+    Object.assign(textSubContainers[index].stageChild, {
+      x, y,
+      alpha: opacity,
+      visible: true
+    });
+    textSubContainers[index].update(monthIndex, day, color);
+  };
+
+  const hideOtherDates = startIndex => {
+    // Don't remove the containers to reduce the garbage collector load
+    for (let i = startIndex; i < textSubContainers.length; ++i) {
+      textSubContainers[i].stageChild.visible = false;
     }
   };
 
-  const getOrCreateText = index => {
-    if (texts[index]) {
-      texts[index].visible = true;
-    } else {
-      texts[index] = new PIXI.Text('', labelStyle);
-      texts[index].anchor.set(0.5, 0);
-      textContainer.addChild(texts[index]);
-    }
-    return texts[index];
-  };
+  for (let i = 0; i < prepareNotchCount; ++i) {
+    printDate(i, 0, 0);
+  }
 
   return {
     stageChild: textContainer,
@@ -65,7 +66,7 @@ export default function makeDateScale(dates) {
         const xPerIndex = (toX - fromX) / (toIndex - fromIndex);
         const realFromIndex = fromIndex - (xPerIndex === 0 ? 0 : (fromX - realFromX) / xPerIndex);
 
-        labelStyle.fill = mixNumberColors(textColors[0], textColors[1], theme);
+        const textColor = mixNumberColors(textColors[0], textColors[1], theme);
 
         for (
           let index = Math.max(0, Math.ceil(realFromIndex / notchRange) * notchRange);
@@ -85,11 +86,8 @@ export default function makeDateScale(dates) {
             continue;
           }
 
-          const text = getOrCreateText(textIndex);
-          text.x = x;
-          text.y = y;
-          text.alpha = opacity;
-          text.text = formatDate(dates[index]);
+          const {monthIndex, day} = getDateParts(dates[index]);
+          printDate(textIndex, monthIndex, day, x, y, textColor, opacity);
           textIndex++;
 
           if (textIndex >= maxNotchCount) {
@@ -98,7 +96,7 @@ export default function makeDateScale(dates) {
         }
       }
 
-      hideTexts(textIndex);
+      hideOtherDates(textIndex);
     })
   };
 }

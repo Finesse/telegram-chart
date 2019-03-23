@@ -7,71 +7,32 @@ import {months} from '../../../helpers/date';
 /**
  * Rendering text is a hard job for hardware. The factory renders all the required characters once and then just
  * copy-pastes them to a canvas.
+ *
+ * Don't forget to call `setPixelRatio`
  */
-function makeTextFactory({charWidth = 5, ...textStyle} = {}) {
+export function makeTextFactory({charWidth = 5, ...textStyle} = {}) {
   // Creating filter takes some time so 1 filter is used for all the texts
   const colorFilter = new ColorizeFilter();
 
   // Prerender the required digits and months
-  const {getTextureForChar, setPixelRatio: setTextsPixelRatio} = prepareTextures(new PIXI.TextStyle(textStyle));
+  const {
+    getCharTexture,
+    getMonthTexture,
+    setPixelRatio: setTextsPixelRatio
+  } = prepareTextures(new PIXI.TextStyle(textStyle));
 
-  const setPixelRatio = ratio => {
-    colorFilter.resolution = ratio;
-    setTextsPixelRatio(ratio);
+  return {
+    setPixelRatio(ratio) {
+      colorFilter.resolution = ratio;
+      setTextsPixelRatio(ratio);
+    },
+    makeNumber(prepareCharactersCount = 0) {
+      return makeNumber(charWidth, colorFilter, getCharTexture, prepareCharactersCount);
+    },
+    makeDate() {
+      return makeDate(charWidth, colorFilter, getCharTexture, getMonthTexture);
+    },
   };
-
-  const makeNumber = (prepareCharactersCount = 0) => {
-    const {container, setColor} = createContainer(colorFilter);
-
-    for (let i = 0; i < prepareCharactersCount; ++i) {
-      container.addChild(new PIXI.Sprite(getTextureForChar('0')));
-    }
-
-    const update = memoizeOne((number, color) => {
-      const string = String(number);
-      let childIndex = 0;
-      let positionIndex = 0;
-
-      setColor(color);
-
-      for (let i = 0; i < string.length; ++i) {
-        const texture = getTextureForChar(string[i]);
-
-        if (texture === null) {
-          ++positionIndex; // A blank space
-        } else if (texture === undefined) {
-          // An unknown symbol
-        } else {
-          if (container.children[childIndex]) {
-            container.children[childIndex].texture = texture;
-          } else {
-            container.addChild(new PIXI.Sprite(texture));
-          }
-          Object.assign(container.children[childIndex], {
-            visible: true,
-            x: positionIndex * charWidth
-          });
-          ++positionIndex;
-          ++childIndex;
-        }
-      }
-
-      // Don't remove the sprites to reduce the garbage collector load
-      for (; childIndex < container.children.length; ++childIndex) {
-        container.children[childIndex].visible = false;
-      }
-    });
-
-    return {
-      stageChild: container,
-      update,
-      destroy() {
-        container.destroy();
-      }
-    };
-  };
-
-  return {setPixelRatio, makeNumber};
 }
 
 function prepareTextures(textStyle) {
@@ -89,7 +50,7 @@ function prepareTextures(textStyle) {
   }
 
   return {
-    getTextureForChar(char) {
+    getCharTexture(char) {
       if (char >= '0' && char <= '9' || char === '.' || char === '-') {
         return texts[char].texture;
       }
@@ -97,6 +58,9 @@ function prepareTextures(textStyle) {
         return null;
       }
       return undefined;
+    },
+    getMonthTexture(monthIndex) {
+      return texts[months[monthIndex]].texture;
     },
     setPixelRatio(ratio) {
       if (ratio === pixelRatio) {
@@ -135,6 +99,93 @@ const createContainer = colorFilter => {
     setColor: newColor => color = newColor
   };
 };
+
+function makeNumber(charWidth, colorFilter, getCharTexture, prepareCharactersCount = 0) {
+  const {container, setColor} = createContainer(colorFilter);
+
+  for (let i = 0; i < prepareCharactersCount; ++i) {
+    container.addChild(new PIXI.Sprite(getCharTexture('0')));
+  }
+
+  return {
+    stageChild: container,
+    update: memoizeOne((number, color) => {
+      const string = String(number);
+      let childIndex = 0;
+      let positionIndex = 0;
+
+      setColor(color);
+
+      for (let i = 0; i < string.length; ++i) {
+        const texture = getCharTexture(string[i]);
+
+        if (texture === null) {
+          ++positionIndex; // A blank space
+        } else if (texture === undefined) {
+          // An unknown symbol
+        } else {
+          if (container.children[childIndex]) {
+            container.children[childIndex].texture = texture;
+          } else {
+            container.addChild(new PIXI.Sprite(texture));
+          }
+          Object.assign(container.children[childIndex], {
+            visible: true,
+            x: positionIndex * charWidth
+          });
+          ++positionIndex;
+          ++childIndex;
+        }
+      }
+
+      // Don't remove the sprites to reduce the garbage collector load
+      for (; childIndex < container.children.length; ++childIndex) {
+        container.children[childIndex].visible = false;
+      }
+    }),
+    destroy() {
+      container.destroy();
+    }
+  };
+}
+
+function makeDate(charWidth, colorFilter, getCharTexture, getMonthTexture) {
+  const {container, setColor} = createContainer(colorFilter);
+
+  // 3 sprites: 1 for month and 1-2 for day
+  const monthSprite = new PIXI.Sprite(getMonthTexture(0));
+  monthSprite.anchor.set(1, 0);
+  container.addChild(monthSprite);
+
+  const daySprites = [];
+  for (let i = 0; i < 2; ++i) {
+    const sprite = new PIXI.Sprite(getCharTexture('0'));
+    sprite.x = (i + 1) * charWidth;
+    daySprites.push(sprite);
+    container.addChild(sprite);
+  }
+
+  return {
+    stageChild: container,
+    update: memoizeOne((monthIndex, day, color) => {
+      setColor(color);
+
+      monthSprite.texture = getMonthTexture(monthIndex);
+
+      if (day < 10) {
+        daySprites[0].texture = getCharTexture(String(day));
+        daySprites[1].visible = false;
+      } else {
+        daySprites[0].texture = getCharTexture(String(Math.floor(day / 10)));
+        daySprites[1].visible = true;
+        daySprites[1].texture = getCharTexture(String(day % 10));
+      }
+    }),
+    destroy() {
+      container.destroy();
+    }
+  };
+}
 
 export default makeTextFactory({
   fontFamily,

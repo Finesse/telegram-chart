@@ -19,6 +19,9 @@ void main(void) {
 }
 `;
 
+/**
+ * Replaces all the sprite color with the given color considering the alpha channel
+ */
 export default class ColorizeFilter extends Filter {
   constructor(color = 0x000000) {
     super(defaultFilterVertex, fragmentShader);

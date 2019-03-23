@@ -23,7 +23,21 @@ export const weekDays = [
   'San'
 ];
 
-export function formatDate(timestamp, withWeekDay) {
+export function getDateParts(timestamp, withWeekDay) {
   const date = new Date(timestamp);
-  return `${withWeekDay ? `${weekDays[date.getUTCDay()]}, ` : ''}${months[date.getUTCMonth()]} ${date.getUTCDate()}`;
+  const parts = {
+    day: date.getUTCDate(),
+    monthIndex: date.getUTCMonth()
+  };
+
+  if (withWeekDay) {
+    parts.weekDay = date.getUTCDay();
+  }
+
+  return parts;
+}
+
+export function formatDate(timestamp, withWeekDay) {
+  const {day, monthIndex, weekDay} = getDateParts(timestamp, withWeekDay);
+  return `${withWeekDay ? `${weekDays[weekDay]}, ` : ''}${months[monthIndex]} ${day}`;
 }

@@ -29,10 +29,9 @@ export default function makeValueScale(prepareNotchCount = 0) {
     }
 
     Object.assign(textSubContainers[index].stageChild, {
-      x,
-      y,
+      x, y,
       alpha: opacity,
-      visible: opacity > 0
+      visible: true
     });
     textSubContainers[index].update(number, color);
   };
