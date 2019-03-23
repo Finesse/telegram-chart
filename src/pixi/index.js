@@ -1,5 +1,9 @@
 import {Renderer, BatchRenderer} from '@pixi/core';
+import {skipHello} from '@pixi/utils';
 
+if (process.env.NODE_ENV === 'production') {
+  skipHello();
+}
 Renderer.registerPlugin('batch', BatchRenderer);
 
 // Extract only the required stuff to reduce the bundle size
