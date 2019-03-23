@@ -1,0 +1,48 @@
+.holder {
+  display: flex;
+}
+
+.pusher {
+  flex: 0 0 0;
+  will-change: flex-grow;
+}
+
+.content {
+  flex: none;
+  box-sizing: border-box;
+  max-width: 90%;
+  padding: 6px 8px;
+  border-radius: 4px;
+  box-shadow: 0 0 1.5px rgba(0, 0, 0, 0.5);
+  will-change: contents, transform, opacity;
+  transition: background ease-in-out;
+}
+:global(.dayTheme) .content {
+  background: #fff;
+}
+:global(.nightTheme) .content {
+  background: #253241;
+}
+
+.header {
+  font-size: 12px;
+  margin-bottom: 7px;
+}
+
+.values {
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-gap: 10px 17px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.price {
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.label {
+  font-size: 10px;
+}

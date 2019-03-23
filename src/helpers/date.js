@@ -20,7 +20,7 @@ export const weekDays = [
   'Wen',
   'Thu',
   'Fri',
-  'San'
+  'Sat'
 ];
 
 export function getDateParts(timestamp, withWeekDay) {

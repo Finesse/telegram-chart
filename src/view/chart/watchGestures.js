@@ -1,69 +1,65 @@
-import {createRef} from 'inferno';
-import {PureComponent} from '../../helpers/inferno';
 import {chartMapHeight, chartSidePadding, chartMainLinesTopMargin, chartMainLinesBottomMargin} from '../../style';
 
-export default class GestureRecognizer extends PureComponent {
-  blockRef = createRef();
-  startMapSelectorDrag = null;
-  middleMapSelectorDrag = null;
-  endMapSelectorDrag = null;
-  detailsHover;
+export default function watchGestures(element, chartState, callbacks) {
+  let startMapSelectorDrag = null;
+  let middleMapSelectorDrag = null;
+  let endMapSelectorDrag = null;
 
-  mouseDown = event => {
+  function handleMouseDown(event) {
     event.preventDefault();
-    const {x, y} = this.getEventRelativeCoordinates(event);
+    const {x, y} = getEventRelativeCoordinates(event);
 
-    if (this.isInMapSelectionStart(x, y)) {
-      this.handleMapStartDrag(x, watchMouseDrag);
-    } else if (this.isInMapSelectionEnd(x, y)) {
-      this.handleMapEndDrag(x, watchMouseDrag);
-    } else if (this.isInMapSelectionMiddle(x, y)) {
-      this.handleMapMiddleDrag(x, watchMouseDrag);
+    if (isInMapSelectionStart(x, y)) {
+      handleMapStartDrag(x, watchMouseDrag);
+    } else if (isInMapSelectionEnd(x, y)) {
+      handleMapEndDrag(x, watchMouseDrag);
+    } else if (isInMapSelectionMiddle(x, y)) {
+      handleMapMiddleDrag(x, watchMouseDrag);
     }
-  };
+  }
 
-  touchStart = event => {
+  function handleTouchStart(event) {
     for (const touch of event.changedTouches) {
-      const {x, y} = this.getEventRelativeCoordinates(touch);
+      const {x, y} = getEventRelativeCoordinates(touch);
 
-      if (this.isInMapSelectionStart(x, y)) {
-        this.handleMapStartDrag(x, ({onMove, onEnd}) => {
+      if (isInMapSelectionStart(x, y)) {
+        handleMapStartDrag(x, ({onMove, onEnd}) => {
           event.preventDefault();
           return watchTouchDrag({startTouch: touch, onMove, onEnd});
         });
-      } else if (this.isInMapSelectionEnd(x, y)) {
-        this.handleMapEndDrag(x, ({onMove, onEnd}) => {
+      } else if (isInMapSelectionEnd(x, y)) {
+        handleMapEndDrag(x, ({onMove, onEnd}) => {
           event.preventDefault();
           return watchTouchDrag({startTouch: touch, onMove, onEnd});
         });
-      } else if (this.isInMapSelectionMiddle(x, y)) {
-        this.handleMapMiddleDrag(x, ({onMove, onEnd}) => {
+      } else if (isInMapSelectionMiddle(x, y)) {
+        handleMapMiddleDrag(x, ({onMove, onEnd}) => {
           event.preventDefault();
           return watchTouchDrag({startTouch: touch, onMove, onEnd});
         });
       }
     }
-  };
+  }
 
   /**
    * @param {number} x The X position of the event start in px relative to the block
    * @param {function} createWatcher Takes `onMove` and `onEnd` functions and returns an object with a `destroy` method
    */
-  handleMapStartDrag(x, createWatcher) {
-    if (this.startMapSelectorDrag !== null) {
+  function handleMapStartDrag(x, createWatcher) {
+    if (startMapSelectorDrag !== null) {
       return;
     }
 
-    const {x: mapX, width: mapWidth} = this.getMapBounds();
-    const xOffset = x - (mapX + this.props.mapSelectorStart * mapWidth);
+    const {x: mapX, width: mapWidth} = getMapBounds();
+    const xOffset = x - (mapX + chartState.mapSelectorStart * mapWidth);
 
-    this.startMapSelectorDrag = createWatcher({
+    startMapSelectorDrag = createWatcher({
       onMove: event => {
-        const {x} = this.getEventRelativeCoordinates(event);
-        const {x: mapX, width: mapWidth} = this.getMapBounds();
-        this.props.onMapSelectorStartChange((x - xOffset - mapX) / (mapWidth || 1))
+        const {x} = getEventRelativeCoordinates(event);
+        const {x: mapX, width: mapWidth} = getMapBounds();
+        callbacks.mapSelectorStart((x - xOffset - mapX) / (mapWidth || 1))
       },
-      onEnd: () => this.startMapSelectorDrag = null
+      onEnd: () => startMapSelectorDrag = null
     });
   }
 
@@ -71,21 +67,21 @@ export default class GestureRecognizer extends PureComponent {
    * @param {number} x The X position of the event start in px relative to the block
    * @param {function} createWatcher Takes `onMove` and `onEnd` functions and returns an object with a `destroy` method
    */
-  handleMapMiddleDrag(x, createWatcher) {
-    if (this.middleMapSelectorDrag !== null) {
+  function handleMapMiddleDrag(x, createWatcher) {
+    if (middleMapSelectorDrag !== null) {
       return;
     }
 
-    const {x: mapX, width: mapWidth} = this.getMapBounds();
-    const xOffset = x - (mapX + (this.props.mapSelectorStart + this.props.mapSelectorEnd) / 2 * mapWidth);
+    const {x: mapX, width: mapWidth} = getMapBounds();
+    const xOffset = x - (mapX + (chartState.mapSelectorStart + chartState.mapSelectorEnd) / 2 * mapWidth);
 
-    this.middleMapSelectorDrag = createWatcher({
+    middleMapSelectorDrag = createWatcher({
       onMove: event => {
-        const {x} = this.getEventRelativeCoordinates(event);
-        const {x: mapX, width: mapWidth} = this.getMapBounds();
-        this.props.onMapSelectorMiddleChange((x - xOffset - mapX) / (mapWidth || 1))
+        const {x} = getEventRelativeCoordinates(event);
+        const {x: mapX, width: mapWidth} = getMapBounds();
+        callbacks.mapSelectorMiddle((x - xOffset - mapX) / (mapWidth || 1))
       },
-      onEnd: () => this.middleMapSelectorDrag = null
+      onEnd: () => middleMapSelectorDrag = null
     });
   }
 
@@ -93,60 +89,60 @@ export default class GestureRecognizer extends PureComponent {
    * @param {number} x The X position of the event start in px relative to the block
    * @param {function} createWatcher Takes `onMove` and `onEnd` functions and returns an object with a `destroy` method
    */
-  handleMapEndDrag(x, createWatcher) {
-    if (this.endMapSelectorDrag !== null) {
+  function handleMapEndDrag(x, createWatcher) {
+    if (endMapSelectorDrag !== null) {
       return;
     }
 
-    const {x: mapX, width: mapWidth} = this.getMapBounds();
-    const xOffset = x - (mapX + this.props.mapSelectorEnd * mapWidth);
+    const {x: mapX, width: mapWidth} = getMapBounds();
+    const xOffset = x - (mapX + chartState.mapSelectorEnd * mapWidth);
 
-    this.endMapSelectorDrag = createWatcher({
+    endMapSelectorDrag = createWatcher({
       onMove: event => {
-        const {x} = this.getEventRelativeCoordinates(event);
-        const {x: mapX, width: mapWidth} = this.getMapBounds();
-        this.props.onMapSelectorEndChange((x - xOffset - mapX) / (mapWidth || 1))
+        const {x} = getEventRelativeCoordinates(event);
+        const {x: mapX, width: mapWidth} = getMapBounds();
+        callbacks.mapSelectorEnd((x - xOffset - mapX) / (mapWidth || 1))
       },
-      onEnd: () => this.endMapSelectorDrag = null
+      onEnd: () => endMapSelectorDrag = null
     });
   }
 
   /**
    * The coordinates are in pixels and relative to the block
    */
-  isInMapSelectionStart(targetX, targetY) {
-    const {x, y, width, height} = this.getMapBounds();
+  function isInMapSelectionStart(targetX, targetY) {
+    const {x, y, width, height} = getMapBounds();
 
-    return isInRectangle(targetX, targetY, x + width * this.props.mapSelectorStart - 30, y - 10, 40, height + 20);
+    return isInRectangle(targetX, targetY, x + width * chartState.mapSelectorStart - 30, y - 10, 40, height + 20);
   }
 
   /**
    * The coordinates are in pixels and relative to the block
    */
-  isInMapSelectionEnd(targetX, targetY) {
-    const {x, y, width, height} = this.getMapBounds();
+  function isInMapSelectionEnd(targetX, targetY) {
+    const {x, y, width, height} = getMapBounds();
 
-    return isInRectangle(targetX, targetY, x + width * this.props.mapSelectorEnd - 10, y - 10, 40, height + 20);
+    return isInRectangle(targetX, targetY, x + width * chartState.mapSelectorEnd - 10, y - 10, 40, height + 20);
   }
 
   /**
    * The coordinates are in pixels and relative to the block
    */
-  isInMapSelectionMiddle(targetX, targetY) {
-    const {x, y, width, height} = this.getMapBounds();
+  function isInMapSelectionMiddle(targetX, targetY) {
+    const {x, y, width, height} = getMapBounds();
 
     return isInRectangle(
       targetX, targetY,
-      x + width * this.props.mapSelectorStart, y - 10,
-      width * (this.props.mapSelectorEnd - this.props.mapSelectorStart), height + 20
+      x + width * chartState.mapSelectorStart, y - 10,
+      width * (chartState.mapSelectorEnd - chartState.mapSelectorStart), height + 20
     );
   }
 
   /**
    * The coordinates are in pixels and relative to the block
    */
-  isInMapLines(targetX, targetY) {
-    const {x, y, width, height} = this.getMainLinesBounds();
+  function isInMapLines(targetX, targetY) {
+    const {x, y, width, height} = getMainLinesBounds();
 
     return isInRectangle(targetX, targetY, x, y, width, height);
   }
@@ -155,10 +151,9 @@ export default class GestureRecognizer extends PureComponent {
    * @param {MouseEvent|Touch} event
    * @returns {{x: number, y: number}}
    */
-  getEventRelativeCoordinates(event) {
-    const target = this.blockRef.current;
-    const {clientWidth, clientHeight} = target;
-    const bounds = target.getBoundingClientRect();
+  function getEventRelativeCoordinates(event) {
+    const {clientWidth, clientHeight} = element;
+    const bounds = element.getBoundingClientRect();
 
     return {
       x: (event.clientX - bounds.left) / bounds.width * clientWidth,
@@ -166,8 +161,8 @@ export default class GestureRecognizer extends PureComponent {
     };
   }
 
-  getMapBounds() {
-    const {clientWidth, clientHeight} = this.blockRef.current;
+  function getMapBounds() {
+    const {clientWidth, clientHeight} = element;
 
     return {
       x: chartSidePadding,
@@ -177,8 +172,8 @@ export default class GestureRecognizer extends PureComponent {
     };
   }
 
-  getMainLinesBounds() {
-    const {clientWidth, clientHeight} = this.blockRef.current;
+  function getMainLinesBounds() {
+    const {clientWidth, clientHeight} = element;
 
     return {
       x: chartSidePadding,
@@ -188,40 +183,38 @@ export default class GestureRecognizer extends PureComponent {
     };
   }
 
-  componentDidMount() {
-    // event.preventDefault() doesn't work if the event is attached through the JSX
-    this.blockRef.current.addEventListener('touchstart', this.touchStart, {passive: false});
+  element.addEventListener('mousedown', handleMouseDown);
+  element.addEventListener('touchstart', handleTouchStart, {passive: false});
 
-    this.detailsHover = watchHover({
-      element: this.blockRef.current,
-      checkHover: event => {
-        const {x, y} = this.getEventRelativeCoordinates(event);
-        return this.isInMapLines(x, y);
-      },
-      onMove: event => {
-        const {x} = this.getEventRelativeCoordinates(event);
-        const {x: linesX, width: linesWidth} = this.getMainLinesBounds();
-        this.props.onDetailsPositionChange((x - linesX) / (linesWidth || 1))
-      },
-      onEnd: () => this.props.onDetailsPositionChange(null)
-    });
-  }
+  const detailsHoverWatcher = watchHover({
+    element,
+    checkHover: event => {
+      const {x, y} = getEventRelativeCoordinates(event);
+      return isInMapLines(x, y);
+    },
+    onMove: event => {
+      const {x} = getEventRelativeCoordinates(event);
+      const {x: linesX, width: linesWidth} = getMainLinesBounds();
+      callbacks.detailsPosition((x - linesX) / (linesWidth || 1))
+    },
+    onEnd: () => callbacks.detailsPosition(null)
+  });
 
-  componentWillUnmount() {
-    for (const watcher of [this.startMapSelectorDrag, this.middleMapSelectorDrag, this.endMapSelectorDrag]) {
-      if (watcher) {
-        watcher.destroy();
+  return {
+    setChartState(newState) {
+      chartState = {...chartState, ...newState};
+    },
+    destroy() {
+      element.removeEventListener('mousedown', handleMouseDown);
+      element.removeEventListener('touchstart', handleTouchStart);
+
+      for (const watcher of [detailsHoverWatcher, startMapSelectorDrag, middleMapSelectorDrag, endMapSelectorDrag]) {
+        if (watcher) {
+          watcher.destroy();
+        }
       }
     }
-  }
-
-  render() {
-    return (
-      <div className={this.props.className} onMouseDown={this.mouseDown} ref={this.blockRef}>
-        {this.props.children || null}
-      </div>
-    );
-  }
+  };
 }
 
 function isInRectangle(targetX, targetY, rectX, rectY, rectWidth, rectHeight) {

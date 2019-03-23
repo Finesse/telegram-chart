@@ -7,15 +7,15 @@
 export default function convertChartData(data) {
   return data.map(({columns, types, names, colors}, index) => {
     // Determine what columns are Xs and what are Ys
-    let xKey;
-    const yKeys = [];
+    let datesKey;
+    const valuesKeys = [];
     for (const [key, type] of Object.entries(types)) {
       switch (type) {
         case 'x':
-          xKey = key;
+          datesKey = key;
           break;
         case 'line':
-          yKeys.push(key);
+          valuesKeys.push(key);
           break;
         default:
           console.warn(`Unknown column type "${type}" under key "${key}"`);
@@ -28,12 +28,12 @@ export default function convertChartData(data) {
       indexedColumns[key] = values;
     }
 
-    if (xKey === undefined || !indexedColumns[xKey]) {
+    if (datesKey === undefined || !indexedColumns[datesKey]) {
       throw new Error(`There is no x column in data[${index}]`);
     }
 
     const lines = {};
-    for (const yKey of yKeys) {
+    for (const yKey of valuesKeys) {
       lines[yKey] = {
         name: names[yKey],
         color: colors[yKey],
@@ -43,7 +43,7 @@ export default function convertChartData(data) {
 
     return {
       name: `Data #${index + 1}`,
-      x: indexedColumns[xKey],
+      dates: indexedColumns[datesKey],
       lines
     };
   });
