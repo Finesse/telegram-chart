@@ -42,8 +42,7 @@ function getAliases(isDevelopment) {
 
   const aliases = {
     '@pixi/ticker': emptyFile,
-    'earcut': emptyFile,
-    'eventemitter3': path.resolve(__dirname, sourceDirectory, 'pixi/mocks/eventemitter3.js')
+    'earcut': emptyFile
   };
 
   if (!isDevelopment) {
