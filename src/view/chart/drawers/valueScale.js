@@ -103,7 +103,7 @@ export default function makeValueScale(prepareNotchCount = 0) {
           .moveTo(x, alignedNotchY)
           .lineTo(x + width, alignedNotchY);
 
-        printNumber(notchIndex, value, x, alignedNotchY - 17, labelColor, opacity);
+        printNumber(notchIndex, value, x, alignedNotchY - 16, labelColor, opacity);
       }
 
       hideOtherNumbers(notchIndex);

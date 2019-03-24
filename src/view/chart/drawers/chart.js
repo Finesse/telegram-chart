@@ -97,7 +97,7 @@ export default function makeChart(linesData, dates) {
 
       dateScale.update({
         canvasWidth,
-        y: mainLinesY + mainLinesHeight + 8,
+        y: mainLinesY + mainLinesHeight + 5,
         fromX: mainLinesX,
         toX: mainLinesX + mainLinesWidth,
         fromIndex: startIndex,
