@@ -5,6 +5,7 @@ import makeMainLines from './mainLines';
 import makeValueScale from './valueScale';
 import makeDateScale from './dateScale';
 import makeDetailsPointer from './detailsPointer';
+import makeTopFade from './topFade';
 import textFactory from './textFactory';
 
 export default function makeChart(linesData, dates) {
@@ -13,6 +14,7 @@ export default function makeChart(linesData, dates) {
   const mainLines = makeMainLines(linesData);
   const valueScale = makeValueScale(20);
   const dateScale = makeDateScale(dates);
+  const topFade = makeTopFade();
   const detailsPointer = makeDetailsPointer(linesData);
 
   const datesLength = dates.length - 1;
@@ -24,6 +26,7 @@ export default function makeChart(linesData, dates) {
       ...mainLines.stageChildren,
       ...valueScale.stageChildren,
       dateScale.stageChild,
+      topFade.stageChild,
       detailsPointer.stageChild
     ],
     update({
@@ -105,6 +108,15 @@ export default function makeChart(linesData, dates) {
         notchScale: dateNotchScale,
         theme
       }, linesOpacity);
+
+      topFade.update({
+        x: 0,
+        y: 0,
+        width: canvasWidth,
+        height: 18,
+        theme,
+        pixelRatio
+      });
 
       detailsPointer.update({
         fromX: mainLinesX,

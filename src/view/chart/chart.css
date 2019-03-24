@@ -33,23 +33,6 @@
   height: 100%;
 }
 
-.fade {
-  position: absolute;
-  overflow: hidden;
-  z-index: 1;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 18px;
-  transition: background ease-in-out; /* linear-gradients don't support transitions but it's ok for now */
-}
-:global(.dayTheme) .fade {
-  background: linear-gradient(to bottom, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0));
-}
-:global(.nightTheme) .fade {
-  background: linear-gradient(to bottom, rgba(36, 47, 62, 1), rgba(36, 47, 62, 0));
-}
-
 .toggles {
   margin: 8px 5px -7px;
   display: flex;

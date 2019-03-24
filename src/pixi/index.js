@@ -12,4 +12,4 @@ export {Container} from '@pixi/display';
 export {Graphics} from '@pixi/graphics';
 export {Text, TextStyle} from '@pixi/text';
 export {Sprite} from '@pixi/sprite';
-export {Filter, defaultFilterVertex} from '@pixi/core';
+export {Texture, Filter, defaultFilterVertex} from '@pixi/core';

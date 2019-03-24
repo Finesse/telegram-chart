@@ -8,7 +8,7 @@ import {
   easeQuadOut
 } from '../../helpers/animationGroup';
 import getMaxOnRange from '../../helpers/getMaxOnRange';
-import {themeTransitionDuration, themeTransitionDurationCSS} from '../../style';
+import {themeTransitionDuration} from '../../style';
 import makeToggleButton from '../toggleButton/toggleButton';
 import makeColumnDetails from '../columnDetails/columnDetails';
 import watchGestures from './watchGestures';
@@ -21,7 +21,6 @@ const template = `
 <div class="${styles.root}">
   <h3 class="${styles.name}"></h3>
   <div class="${styles.chart}">
-    <div class="${styles.fade}" style="${themeTransitionDurationCSS}"></div>
     <canvas class="${styles.canvas}"></canvas>
   </div>
   <div class="${styles.toggles}"></div>
@@ -49,9 +48,9 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
     updateView
   );
 
-  const {canvas, setDetailsState} = createDOM(element, name, lines, dates, state.lines, handleToggleLine);
+  const {chartBox, canvas, setDetailsState} = createDOM(element, name, lines, dates, state.lines, handleToggleLine);
   const {app: pixiApplication, chartDrawer} = createPixiApplication(canvas, lines, dates);
-  const gesturesWatcher = watchGestures(canvas, getStateForGestureWatcher(dates, state.startIndex, state.endIndex), {
+  const gesturesWatcher = watchGestures(chartBox, getStateForGestureWatcher(dates, state.startIndex, state.endIndex), {
     mapSelectorStart: handleStartIndexChange,
     mapSelectorMiddle: handleIndexMove,
     mapSelectorEnd: handleEndIndexChange,
@@ -175,13 +174,9 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
   });
 
   const applyTheme = memoizeOne(theme => {
-    /*
-      transitions.setTargets({
-        theme: theme === 'day' ? 0 : 1
-      });
-      */
-    // Must be called immediately to have a synchronous with CSS render
-    updateView();
+    transitions.setTargets({
+      theme: theme === 'day' ? 0 : 1
+    });
   });
 
   const applyCanvasSize = memoizeOne((canvasWidth, canvasHeight, pixelRatio) => {
@@ -197,7 +192,7 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
       mainMaxValueNotchScale,
       dateNotchScale,
       detailsScreenPosition: [detailsScreenPosition, detailsOpacity],
-      // theme,
+      theme,
       ...linesState
     } = transitions.getState();
 
@@ -220,7 +215,7 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
       endIndex: state.endIndex,
       detailsIndex: detailsIndex,
       detailsOpacity,
-      theme: state.theme === 'day' ? 0 : 1
+      theme
     }, linesOpacity);
     pixiApplication.render();
 
@@ -274,7 +269,7 @@ function createTransitionGroup({startIndex, endIndex, lines}, mapMaxValue, mainM
       }),
       makeTransition(0)
     ),
-    // theme: makeTestTransition(theme === 'day' ? 0 : 1, {duration: themeTransitionDuration}),
+    theme: makeTransition(theme === 'day' ? 0 : 1, {duration: themeTransitionDuration}),
   };
 
   for (const [key, {enabled}] of Object.entries(lines)) {
@@ -347,6 +342,7 @@ function createDOM(root, name, linesData, dates, linesState, onToggle) {
   }
 
   return {
+    chartBox,
     canvas: root.querySelector(`.${styles.canvas}`),
     setDetailsState: columnDetails.setState
   };
