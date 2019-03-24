@@ -30,7 +30,6 @@ const template = `
 
 // todo: Round the elements positions considering the device pixel density
 // todo: Try to optimize the theme switch by not animating the charts that are not visible
-// todo: Fix the fade in Safari
 // todo: Amend the styles so that they match the design
 export default function makeChart(element, {name, dates, lines}, initialTheme = 'day') {
   // The arguments store the unaltered chart state

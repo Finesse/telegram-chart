@@ -41,23 +41,13 @@
   left: 0;
   width: 100%;
   height: 18px;
+  transition: background ease-in-out; /* linear-gradients don't support transitions but it's ok for now */
 }
-/* linear-gradients don't have transitions so I have to do this */
-.fade::before {
-  content: '';
-  position: absolute;
-  top: -20px;
-  left: -20px;
-  right: -20px;
-  bottom: 100%;
-  transition: box-shadow ease-in-out;
-  transition-duration: inherit;
+:global(.dayTheme) .fade {
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0));
 }
-:global(.dayTheme) .fade::before {
-  box-shadow: 0 9px 18px #fff;
-}
-:global(.nightTheme) .fade::before {
-  box-shadow: 0 9px 18px #242f3e;
+:global(.nightTheme) .fade {
+  background: linear-gradient(to bottom, rgba(36, 47, 62, 1), rgba(36, 47, 62, 0));
 }
 
 .toggles {
