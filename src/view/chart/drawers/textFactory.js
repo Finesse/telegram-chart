@@ -36,7 +36,7 @@ export function makeTextFactory({charWidth = 5, ...textStyle} = {}) {
 }
 
 function prepareTextures(textStyle) {
-  let pixelRatio = 1;
+  let pixelRatio = null;
 
   const texts = {
     '.': new PIXI.Text('.', textStyle),
