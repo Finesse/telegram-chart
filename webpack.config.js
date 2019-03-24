@@ -63,7 +63,7 @@ module.exports = (env, argv) => {
   return {
     entry: `./${sourceDirectory}/index.js`,
     mode,
-    devtool: isDevelopment && 'inline-source-map',
+    devtool: isDevelopment ? 'inline-source-map' : 'source-map',
     resolve: {
       alias: getAliases(isDevelopment)
     },
@@ -106,6 +106,7 @@ module.exports = (env, argv) => {
     optimization: {
       minimizer: [
         new TerserPlugin({
+          sourceMap: true,
           terserOptions: {
             output: {
               comments: false
