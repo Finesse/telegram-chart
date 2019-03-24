@@ -38,14 +38,18 @@ function makeCSSLoaders(useCSSModules, isDevelopment) {
 }
 
 function getAliases(isDevelopment) {
+  const emptyFile = path.resolve(__dirname, sourceDirectory, 'pixi/mocks/empty.js');
+
   const aliases = {
-    '@pixi/ticker': path.resolve(__dirname, sourceDirectory, 'pixi/mocks/ticker.js')
+    '@pixi/ticker': emptyFile,
+    'earcut': emptyFile,
+    'eventemitter3': path.resolve(__dirname, sourceDirectory, 'pixi/mocks/eventemitter3.js')
   };
 
   if (!isDevelopment) {
     // Required for webpack-dev-server
     Object.assign(aliases, {
-      url: path.resolve(__dirname, sourceDirectory, 'pixi/mocks/url')
+      url: emptyFile
     });
   }
 
