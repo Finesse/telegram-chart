@@ -2,6 +2,7 @@ const path = require('path');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
 const autoprefixer = require('autoprefixer');
 const csso = require('postcss-csso');
 
@@ -96,6 +97,17 @@ module.exports = (env, argv) => {
           resourceQuery: /(^|\?|&)raw($|&)/i,
           use: 'raw-loader'
         }
+      ]
+    },
+    optimization: {
+      minimizer: [
+        new TerserPlugin({
+          terserOptions: {
+            output: {
+              comments: false
+            }
+          }
+        })
       ]
     },
     output: {
