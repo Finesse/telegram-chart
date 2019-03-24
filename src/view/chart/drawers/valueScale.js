@@ -90,7 +90,7 @@ export default function makeValueScale(prepareNotchCount = 0) {
         }
 
         const notchY = y + height - (value - fromValue) * yPerValue;
-        const alignedNotchY = Math.round(notchY + lineWidth / 2) - lineWidth / 2;
+        const lineY = Math.round(notchY + lineWidth / 2) - lineWidth / 2;
         const isPrimary = value === 0;
 
         lines
@@ -100,10 +100,10 @@ export default function makeValueScale(prepareNotchCount = 0) {
             opacity * (isPrimary ? primaryLineOpacity : secondaryLineOpacity),
             0.5
           )
-          .moveTo(x, alignedNotchY)
-          .lineTo(x + width, alignedNotchY);
+          .moveTo(x, lineY)
+          .lineTo(x + width, lineY);
 
-        printNumber(notchIndex, value, x, alignedNotchY - 16, labelColor, opacity);
+        printNumber(notchIndex, value, x, Math.round(lineY - 16), labelColor, opacity);
       }
 
       hideOtherNumbers(notchIndex);

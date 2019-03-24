@@ -86,7 +86,7 @@ export default function makeDateScale(dates, prepareNotchCount = 0) {
           }
 
           const {monthIndex, day} = getDateParts(dates[index]);
-          printDate(textIndex, monthIndex, day, x, y, textColor, opacity);
+          printDate(textIndex, monthIndex, day, Math.round(x), y, textColor, opacity);
           textIndex++;
         }
       }

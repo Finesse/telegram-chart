@@ -18,11 +18,13 @@ export default function makeTopFade(quality = 50) {
       colorFilter.setColor(color);
       colorFilter.resolution = pixelRatio;
 
-      sprite.visible = theme % 1 === 0;
       sprite.x = x;
       sprite.y = y;
       sprite.width = width;
       sprite.height = height;
+
+      // The WebGL render is not synchronous with CSS transitions which cause a flicker. This hack reduces it.
+      sprite.visible = theme % 1 === 0;
     })
   };
 }
