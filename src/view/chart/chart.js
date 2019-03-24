@@ -27,8 +27,12 @@ const template = `
 </div>
 `;
 
-// todo: Round the elements positions considering the device pixel density
-// todo: Try to optimize the theme switch by not animating the charts that are not visible
+/**
+ * Draws and operates one chart
+ *
+ * @todo Round the elements positions considering the device pixel density
+ * @todo Try to optimize the theme switch by not animating the charts that are not visible
+ */
 export default function makeChart(element, {name, dates, lines}, initialTheme = 'day') {
   // The arguments store the unaltered chart state
 
@@ -48,6 +52,7 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
     updateView
   );
 
+  // Creating a DOM and a WebGL renderer
   const {chartBox, canvas, setDetailsState} = createDOM(element, name, lines, dates, state.lines, handleToggleLine);
   const {app: pixiApplication, chartDrawer} = createPixiApplication(canvas, lines, dates);
   const gesturesWatcher = watchGestures(chartBox, getStateForGestureWatcher(dates, state.startIndex, state.endIndex), {
@@ -185,6 +190,9 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
     transitions.updateOnNextFrame();
   });
 
+  /**
+   * Applies the current dist chart state to the chart
+   */
   function updateView() {
     const {
       mapMaxValue,
@@ -233,7 +241,9 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
   }
 };
 
-
+/**
+ * Makes the initial mutable not animatable state of the chart
+ */
 function getInitialState(lines, dates, theme) {
   const linesState = {};
   for (const key of Object.keys(lines)) {
@@ -254,6 +264,9 @@ function getInitialState(lines, dates, theme) {
   }
 }
 
+/**
+ * Makes the animatable state of the chart
+ */
 function createTransitionGroup({startIndex, endIndex, lines}, mapMaxValue, mainMaxValue, theme, onUpdate) {
   const transitions = {
     mapMaxValue: makeExponentialTransition(mapMaxValue),
@@ -299,6 +312,9 @@ function getDateNotchScale(datesCount) {
   return Math.max(0, Math.ceil(Math.log2(datesCount / maxDatesCount)));
 }
 
+/**
+ * Returns the maximum value of the data on the map
+ */
 function getMapMaxValue(linesData, linesState) {
   const linesEntries = Object.entries(linesData);
 
@@ -309,6 +325,9 @@ function getMapMaxValue(linesData, linesState) {
   }));
 }
 
+/**
+ * Returns the maximum value of the data on the main chart
+ */
 function getMainMaxValue(linesData, linesState, startIndex, endIndex) {
   const linesEntries = Object.entries(linesData);
 
@@ -319,6 +338,9 @@ function getMainMaxValue(linesData, linesState, startIndex, endIndex) {
   }));
 }
 
+/**
+ * Creates the chart DOM
+ */
 function createDOM(root, name, linesData, dates, linesState, onToggle) {
   root.innerHTML = template;
   root.querySelector(`.${styles.name}`).textContent = name;
@@ -348,6 +370,9 @@ function createDOM(root, name, linesData, dates, linesState, onToggle) {
   };
 }
 
+/**
+ * Creates the chart WebGL renderer
+ */
 function createPixiApplication(canvas, linesData, dates) {
   const app = new PIXI.Application({
     view: canvas,

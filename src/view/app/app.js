@@ -20,6 +20,9 @@ const template = `
 </div>
 `;
 
+/**
+ * Renders and operates the whole application
+ */
 export default function makeApp(element, chartsData) {
   let theme = 'day';
   const charts = [];

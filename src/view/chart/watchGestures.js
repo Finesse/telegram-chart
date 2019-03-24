@@ -1,5 +1,8 @@
 import {chartMapHeight, chartSidePadding, chartMainLinesTopMargin, chartMainLinesBottomMargin} from '../../style';
 
+/**
+ * Watches for different gestures on the chart (drag the map, hover the lines, etc.)
+ */
 export default function watchGestures(element, chartState, callbacks) {
   let startMapSelectorDrag = null;
   let middleMapSelectorDrag = null;
