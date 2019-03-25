@@ -2,7 +2,7 @@ const msInDay = 86400 * 1000;
 const colors = ['#3cc23f', '#f34c44', '#65b9ac', '#4682b4', '#c8f344', '#e044f3'];
 const maxRandomColumns = 500;
 
-export default function makeBigChartData(daysCount, linesCount = 6) {
+export default function makeRandomChartData(daysCount, linesCount = 6) {
   const dates = [Date.now() - daysCount * msInDay];
   const linesValues = [];
 

@@ -1,15 +1,22 @@
 import {fontFamily, themeTransitionDuration, themeTransitionDurationCSS} from '../../style';
+import makeRandomChartData from '../../makeRandomChartData';
 import makeChart from '../chart/chart';
 import styles from './app.css?module';
-import makeBigChartData from "../../makeBigChartData";
 
 const template = `
 <div></div>
-<div class="${styles.bigDataBlock}">
+<div class="${styles.buttonsBlock}">
   <button
     class="${styles.button}"
     style="${themeTransitionDurationCSS}"
+    id="showBigData"
   >Show BIG data</button>
+  <a
+    href="http://github.com/Finesse/telegram-chart"
+    target="_blank"
+    class="${styles.button}"
+    style="${themeTransitionDurationCSS}"
+  >See the source code</a>
 </div>
 <div class="${styles.themeSwitcherHolder}"></div>
 <div class="${styles.themeSwitcher}" style="${themeTransitionDurationCSS}">
@@ -31,7 +38,7 @@ export default function makeApp(element, chartsData) {
   document.body.style.transitionDuration = `${themeTransitionDuration}ms`;
   element.innerHTML = template;
   const themeButton = element.querySelector(`.${styles.themeSwitcher} button`);
-  let bigDataBlock = element.querySelector(`.${styles.bigDataBlock}`);
+  let bigDataButton = element.querySelector('#showBigData');
 
   function switchTheme() {
     theme = theme === 'day' ? 'night' : 'day';
@@ -78,10 +85,10 @@ export default function makeApp(element, chartsData) {
     chart.start();
   }
 
-  bigDataBlock.querySelector('button').addEventListener('click', event => {
+  bigDataButton.addEventListener('click', event => {
     event.preventDefault();
-    bigDataBlock.remove();
-    bigDataBlock = null;
-    charts.push(addChart(makeBigChartData(10000), true));
+    bigDataButton.remove();
+    bigDataButton = null;
+    charts.push(addChart(makeRandomChartData(10000), true));
   });
 }

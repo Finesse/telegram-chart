@@ -54,13 +54,14 @@
 .button {
   border: none;
   background: none;
-  padding: 5px;
+  padding: 5px 20px;
   margin: 0;
   font: inherit;
   font-size: 16px;
   cursor: pointer;
   transition: color ease-in-out;
   outline: none;
+  text-decoration: none;
 }
 :global(.dayTheme) .button {
   color: #108be3;
@@ -69,8 +70,16 @@
   color: #36a8f1;
 }
 
-.bigDataBlock {
+@media (max-width: 500px) {
+  .button {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+}
+
+.buttonsBlock {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   align-items: center;
   padding: 10px;
