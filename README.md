@@ -1,8 +1,33 @@
 # Telegram chart
 
 This is a JS solution for [the Telegram march coding contest](http://t.me/contest/6).
+The goal was to develop an application for showing simple charts based on [the input data](src/chart_data.json).
 
-## How to start
+<details>
+<summary>About the input data format</summary>
+The JSON file is an input data for the 5 charts. It contains a vector of JSON objects ('chart'), each representing a separate graph.
+
+chart.columns – List of all data columns in the chart. Each column has its label at position 0, followed by values.
+x values are UNIX timestamps in milliseconds.
+
+chart.types – Chart types for each of the columns. Supported values:
+"line" (line on the graph with linear interpolation),
+"x" (x axis values for each of the charts at the corresponding positions).
+
+chart.colors – Color for each line in 6-hex-digit format (e.g. "#AAAAAA").
+chart.names – Names for each line.
+</details>
+
+Specialized charting libraries were not allowed.
+The criteria were using to define the winner are speed, efficiency and the size of the app.
+
+This is how the chart application should work: [video](docs/charts.mp4)
+
+|Day|Night|
+|-----|-----|
+|![](docs/jsChartDay.png)|![](docs/jsChartNight.png)|
+
+## How to start the application
 
 First install the application:
 
