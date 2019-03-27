@@ -8,14 +8,8 @@ uniform float g;
 uniform float b;
 
 void main(void) {
-    vec4 c = texture2D(uSampler, vTextureCoord);
-
-    if (c.a > 0.0) {
-      c.rgb /= c.a;
-    }
-
-    vec3 color = vec3(r, g, b);
-    gl_FragColor = vec4(color * c.a, c.a);
+    float opacity = texture2D(uSampler, vTextureCoord).a;
+    gl_FragColor = vec4(r * opacity, g * opacity, b * opacity, opacity);
 }
 `;
 
