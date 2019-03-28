@@ -1,6 +1,6 @@
 # Telegram chart
 
-This is a JS solution for [the Telegram march coding contest](http://t.me/contest/6).
+This is a JS solution for [the Telegram March 2019 coding contest](http://t.me/contest/6).
 The goal was to develop an application for showing simple charts based on [the input data](src/chart_data.json).
 
 <details>
