@@ -13,7 +13,6 @@
   font-size: 12px;
   background: none;
   transition-property: color, border-color;
-  transition-timing-function: ease-in-out;
 }
 :global(.dayTheme) .button {
   color: #43484b;

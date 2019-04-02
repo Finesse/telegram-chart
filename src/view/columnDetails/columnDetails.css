@@ -15,7 +15,7 @@
   border-radius: 4px;
   box-shadow: 0 0 1.5px rgba(0, 0, 0, 0.5);
   will-change: contents, transform, opacity;
-  transition: background ease-in-out;
+  transition-property: background;
 }
 :global(.dayTheme) .content {
   background: #fff;

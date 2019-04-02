@@ -1,10 +1,10 @@
-import {themeTransitionDurationCSS} from '../../style';
+import {themeTransitionCSS} from '../../style';
 import {htmlToElement} from '../../helpers/dom';
 import styles from './toggleButton.css?module';
 import iconSVG from './icon.svg?raw';
 
 const template = `
-<button class="${styles.button}" style="${themeTransitionDurationCSS}">
+<button class="${styles.button}" style="${themeTransitionCSS}">
   ${iconSVG}
   <span class="${styles.name}"></span>
 </button>

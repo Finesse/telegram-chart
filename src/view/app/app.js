@@ -1,4 +1,4 @@
-import {fontFamily, themeTransitionDuration, themeTransitionDurationCSS} from '../../style';
+import {fontFamily, themeTransitionStyle, themeTransitionCSS} from '../../style';
 import makeRandomChartData from '../../makeRandomChartData';
 import makeChart from '../chart/chart';
 import styles from './app.css?module';
@@ -8,21 +8,21 @@ const template = `
 <div class="${styles.buttonsBlock}">
   <button
     class="${styles.button}"
-    style="${themeTransitionDurationCSS}"
+    style="${themeTransitionCSS}"
     id="showBigData"
   >Show BIG data</button>
   <a
     href="http://github.com/Finesse/telegram-chart"
     target="_blank"
     class="${styles.button}"
-    style="${themeTransitionDurationCSS}"
+    style="${themeTransitionCSS}"
   >See the source code</a>
 </div>
 <div class="${styles.themeSwitcherHolder}"></div>
-<div class="${styles.themeSwitcher}" style="${themeTransitionDurationCSS}">
+<div class="${styles.themeSwitcher}" style="${themeTransitionCSS}">
   <button
     class="${styles.button}"
-    style="${themeTransitionDurationCSS}"
+    style="${themeTransitionCSS}"
   ></button>
 </div>
 `;
@@ -35,7 +35,7 @@ export default function makeApp(element, chartsData) {
   const charts = [];
 
   document.body.style.fontFamily = fontFamily;
-  document.body.style.transitionDuration = `${themeTransitionDuration}ms`;
+  Object.assign(document.body.style, themeTransitionStyle);
   element.innerHTML = template;
   const themeButton = element.querySelector(`.${styles.themeSwitcher} button`);
   let bigDataButton = element.querySelector('#showBigData');

@@ -1,5 +1,5 @@
 import memoizeOne from 'memoize-one';
-import {themeTransitionDurationCSS} from '../../style';
+import {themeTransitionCSS} from '../../style';
 import {htmlToElement} from '../../helpers/dom';
 import {formatDate} from '../../helpers/date';
 import styles from './columnDetails.css?module';
@@ -7,7 +7,7 @@ import styles from './columnDetails.css?module';
 const template = `
 <div class="${styles.holder}" style="visibility: hidden;">
   <div class="${styles.pusher}"></div>
-  <div class="${styles.content}" style="${themeTransitionDurationCSS}">
+  <div class="${styles.content}" style="${themeTransitionCSS}">
     <div class="${styles.header}"></div>
     <ul class="${styles.values}"></ul>
   </div>

@@ -2,7 +2,6 @@
   margin: 0;
   padding: 0;
   transition-property: background, color;
-  transition-timing-function: ease-in-out;
   /* font-family is set through the JS */
 }
 
@@ -40,7 +39,6 @@
   justify-content: center;
   align-items: center;
   transition-property: background, box-shadow;
-  transition-timing-function: ease-in-out;
 }
 :global(.dayTheme) .themeSwitcher {
   background: #fff;
@@ -59,7 +57,7 @@
   font: inherit;
   font-size: 16px;
   cursor: pointer;
-  transition: color ease-in-out;
+  transition-property: color;
   outline: none;
   text-decoration: none;
 }

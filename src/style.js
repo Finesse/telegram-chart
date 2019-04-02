@@ -6,4 +6,9 @@ export const chartMainLinesTopMargin = 20;
 export const chartMainLinesBottomMargin = 31;
 
 export const themeTransitionDuration = 300; // ms
-export const themeTransitionDurationCSS = `transition-duration: ${themeTransitionDuration}ms;`;
+export const themeTransitionStyle = {
+  transitionDuration: `${themeTransitionDuration}ms`,
+  transitionTimingFunction: 'ease-in-out'
+};
+export const themeTransitionCSS = `transition-duration: ${themeTransitionStyle.transitionDuration};`
+  + `transition-timing-function: ${themeTransitionStyle.transitionTimingFunction};`;
