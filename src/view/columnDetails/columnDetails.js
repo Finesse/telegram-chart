@@ -39,7 +39,7 @@ export default function makeToggleButton(linesData, dates, className) {
     linesList.appendChild(lineElement);
   }
 
-  const setState = memoizeOne((screenPosition, opacity, dateIndex) => {
+  const setState = memoizeOne((screenPosition, opacity, dateIndex, linesState) => {
     if (opacity <= 0) {
       element.style.visibility = 'hidden';
       return;
@@ -56,10 +56,20 @@ export default function makeToggleButton(linesData, dates, className) {
 
     header.textContent = formatDate(dates[dateIndex], true);
 
+    let isAnyLineEnabled = false;
+
     for (const item of valuesList.children) {
       const key = item.dataset.key;
-      item.firstElementChild.textContent = linesData[key].values[dateIndex];
+      if (linesState[key].enabled) {
+        isAnyLineEnabled = true;
+        item.style.display = '';
+        item.firstElementChild.textContent = linesData[key].values[dateIndex];
+      } else {
+        item.style.display = 'none';
+      }
     }
+
+    valuesList.style.display = isAnyLineEnabled ? '' : 'none';
   });
 
   return {element, setState};

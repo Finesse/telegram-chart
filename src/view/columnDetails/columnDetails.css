@@ -26,16 +26,47 @@
 
 .header {
   font-size: 12px;
-  margin-bottom: 8px;
 }
 
 .values {
-  display: grid;
-  grid-template-columns: auto auto;
-  grid-gap: 10px 17px;
   list-style: none;
+  width: 150px;
+  margin: -2px 0 0 -17px;
   padding: 0;
-  margin: 0;
+}
+
+.values > li {
+  box-sizing: border-box;
+  padding: 10px 0 0 17px;
+  float: left;
+  width: 50%;
+}
+
+.values::after {
+  content: '';
+  display: block;
+  height: 0;
+  clear: both;
+}
+
+@supports (display: grid) {
+  .values {
+    display: grid;
+    grid-template-columns: auto auto;
+    grid-gap: 10px 17px;
+    margin: 8px 0 0;
+    width: auto;
+  }
+
+  .values > li {
+    padding: 0;
+    float: none;
+    width: auto;
+  }
+
+  .values::after {
+    display: none;
+  }
 }
 
 .price {

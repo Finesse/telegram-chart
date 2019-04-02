@@ -122,6 +122,7 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
     applyMainMaxValue(lines, state.lines, state.startIndex, state.endIndex);
     applyDatesRange(dates, state.startIndex, state.endIndex);
     applyDetailsPosition(state.detailsScreenPosition, state.startIndex, state.endIndex);
+    applyDetailsLinesState(state.lines);
     applyTheme(state.theme);
     applyCanvasSize(state.canvasWidth, state.canvasHeight, state.pixelRatio);
   }
@@ -178,6 +179,10 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
     });
   });
 
+  const applyDetailsLinesState = memoizeOne(linesState => {
+    transitions.updateOnNextFrame();
+  });
+
   const applyTheme = memoizeOne(theme => {
     transitions.setTargets({
       theme: theme === 'day' ? 0 : 1
@@ -201,12 +206,12 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
       dateNotchScale,
       detailsScreenPosition: [detailsScreenPosition, detailsOpacity],
       theme,
-      ...linesState
+      ...linesAnimatedState
     } = transitions.getState();
 
     const linesOpacity = {};
     for (const key of Object.keys(lines)) {
-      linesOpacity[key] = linesState[`line_${key}_opacity`];
+      linesOpacity[key] = linesAnimatedState[`line_${key}_opacity`];
     }
 
     const detailsIndex = state.startIndex + detailsScreenPosition * (state.endIndex - state.startIndex);
@@ -227,7 +232,7 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
     }, linesOpacity);
     pixiApplication.render();
 
-    setDetailsState(detailsScreenPosition, detailsOpacity, Math.round(detailsIndex));
+    setDetailsState(detailsScreenPosition, detailsOpacity, Math.round(detailsIndex), state.lines);
   }
 
   return {
@@ -280,7 +285,9 @@ function createTransitionGroup({startIndex, endIndex, lines}, mapMaxValue, mainM
         easing: easeQuadOut,
         duration: 300
       }),
-      makeTransition(0)
+      makeTransition(0, {
+        duration: 300
+      })
     ),
     theme: makeTransition(theme === 'day' ? 0 : 1, {duration: themeTransitionDuration}),
   };
