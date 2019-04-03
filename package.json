@@ -49,8 +49,8 @@
     "last 2 Edge major versions",
     "last 2 Firefox major versions",
     "last 2 FirefoxAndroid major versions",
-    "last 4 iOS major versions",
+    "last 5 iOS major versions",
     "last 2 Opera major versions",
-    "last 4 Safari major versions"
+    "last 5 Safari major versions"
   ]
 }
