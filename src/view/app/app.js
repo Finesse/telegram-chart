@@ -11,12 +11,14 @@ const template = `
     style="${themeTransitionCSS}"
     id="showBigData"
   >Show BIG data</button>
+  ${/*
   <a
     href="http://github.com/Finesse/telegram-chart"
     target="_blank"
     class="${styles.button}"
     style="${themeTransitionCSS}"
   >See the source code</a>
+  */''}
 </div>
 <div class="${styles.themeSwitcherHolder}"></div>
 <div class="${styles.themeSwitcher}" style="${themeTransitionCSS}">

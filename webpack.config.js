@@ -62,7 +62,7 @@ module.exports = (env, argv) => {
   return {
     entry: `./${sourceDirectory}/index.js`,
     mode,
-    devtool: isDevelopment ? 'inline-source-map' : 'source-map',
+    devtool: isDevelopment ? 'inline-source-map' : undefined,
     resolve: {
       alias: getAliases(isDevelopment)
     },
