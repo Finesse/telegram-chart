@@ -1,3 +1,5 @@
+import {hexColorToNumber} from './helpers/color';
+
 const msInDay = 86400 * 1000;
 const colors = ['#3cc23f', '#f34c44', '#65b9ac', '#4682b4', '#c8f344', '#e044f3'];
 const maxRandomColumns = 500;
@@ -28,7 +30,7 @@ export default function makeRandomChartData(daysCount, linesCount = 6) {
   for (let i = 0; i < linesCount; ++i) {
     linesData[`y${i}`] = {
       name: `Series #${i}`,
-      color: colors[i % colors.length],
+      color: hexColorToNumber(colors[i % colors.length]),
       values: linesValues[i]
     };
   }

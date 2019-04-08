@@ -1,75 +1,49 @@
-import * as PIXI from '../../../pixi';
-import {hexToNumber} from '../../../helpers/color';
-import memoizeObjectArguments from '../../../helpers/memoizeObjectArguments';
-import interpolateLinear from '../../../helpers/interpolateLinear';
+import {numberColorToRGBA} from '../../../helpers/color';
 
 /**
- * Makes an a chart line with linear interpolation. The line is rendered from the left edge of the canvas to the right
- * edge. You need to specify the anchor rectangle so that the component knows where to place the line.
+ * Makes an a chart line with linear interpolation. You need to specify the anchor rectangle so that the component knows
+ * where to place the line. Use `drawFromX` and `drawToX` to set where to really start drawing.
  *
- * X and Y are the SVG coordinates, `values` are the data Ys and its indices are the Xs.
+ * X and Y are the canvas coordinates, `values` are the data Ys and its indices are the Xs.
  */
-export default function makeLine({values, color, width}) {
-  const path = new PIXI.Graphics();
+export default function drawLine({
+  ctx,
+  values,
+  fromX, toX, fromIndex, toIndex,
+  fromY, toY, fromValue, toValue,
+  drawFromX = fromX, drawToX = toX,
+  color,
+  lineWidth,
+  opacity = 1
+}) {
+  if (opacity <= 0 || fromIndex === toIndex || fromValue === toValue) {
+    return;
+  }
 
-  return {
-    stageChild: path,
-    update: memoizeObjectArguments(({
-      canvasWidth,
-      fromIndex,
-      toIndex,
-      fromX = 0,
-      toX = canvasWidth,
-      fromValue,
-      toValue,
-      fromY,
-      toY,
-      opacity = 1,
-      roundCorners = false
-    }) => {
-      path.clear();
+  ctx.lineJoin = 'bevel';
+  ctx.lineCap = 'square';
+  ctx.lineWidth = lineWidth;
+  ctx.strokeStyle = numberColorToRGBA(color, opacity);
+  ctx.beginPath();
 
-      if (opacity <= 0 || fromIndex === toIndex || fromValue === toValue) {
-        return;
-      }
+  const xPerIndex = (toX - fromX) / (toIndex - fromIndex);
+  const yPerValue = (toY - fromY) / (toValue - fromValue);
+  const xOffset = fromX - fromIndex * xPerIndex;
+  const yOffset = fromY - fromValue * yPerValue;
+  const realFromIndex = Math.floor(Math.max(0, fromIndex - (fromX - drawFromX + lineWidth / 2) / (xPerIndex || 1)));
+  const realToIndex = Math.ceil(Math.min(values.length - 1, toIndex + (drawToX - toX + lineWidth / 2) / (xPerIndex || 1)));
 
-      const xPerIndex = (toX - fromX) / (toIndex - fromIndex);
-      const yPerValue = (toY - fromY) / (toValue - fromValue);
-      const realFromIndex = Math.floor(Math.max(0, fromIndex - (xPerIndex === 0 ? 0 : (fromX + width / 2) / xPerIndex)));
-      const realToIndex = Math.ceil(Math.min(values.length - 1, toIndex + (xPerIndex === 0 ? 0 : (canvasWidth - toX + width / 2) / xPerIndex)));
-      const roundCornerXOffset = roundCorners ? Math.min(0.5, 0.01 * xPerIndex) : 0;
+  for (let i = realFromIndex; i <= realToIndex; ++i) {
+    const x = xOffset + i * xPerIndex;
+    const y = yOffset + values[i] * yPerValue;
 
-      path.lineStyle(width, hexToNumber(color), opacity, 0.5);
+    if (i === realFromIndex) {
+      ctx.moveTo(x, y);
+    } else {
+      ctx.lineTo(x, y);
+    }
+  }
 
-      for (let i = realFromIndex; i <= realToIndex; ++i) {
-        const x = fromX + (i - fromIndex) * xPerIndex;
-        const y = fromY + (values[i] - fromValue) * yPerValue;
-
-        if (i === realFromIndex) {
-          path.moveTo(x, y);
-          continue;
-        }
-
-        // Don't need to round the corner if...
-        if (
-          i === realToIndex || // It is the last point
-          roundCornerXOffset <= 0 || // The rounding is disabled
-          (values[i - 1] > values[i]) === (values[i] > values[i + 1]) // Or the corner is not sharp
-        ) {
-          path.lineTo(x, y);
-          continue;
-        }
-
-        // This flat rounding is almost indistinguishable from the real bezier rounding and much faster
-        const x1 = x - roundCornerXOffset;
-        const y1 = fromY + interpolateLinear(values, i - roundCornerXOffset / xPerIndex) * yPerValue;
-        const x2 = x + roundCornerXOffset;
-        const y2 = fromY + interpolateLinear(values, i + roundCornerXOffset / xPerIndex) * yPerValue;
-        const y12 = y1 * 0.3 + y2 * 0.3 + y * 0.4;
-        path
-          .lineTo(x1, y12)
-          .lineTo(x2, y12);
-      }
-    })
-  };
+  ctx.stroke();
+  ctx.closePath();
 }

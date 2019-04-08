@@ -1,3 +1,5 @@
+import {easeQuadInOut} from 'd3-ease';
+
 /**
  * A passive animation for an animation group
  * @typedef {{}} AnimationGroup~Animation
@@ -78,14 +80,6 @@ export function makeAnimationGroup(animations, onUpdate) {
   };
 
   return {setTargets, getState, destroy, updateOnNextFrame};
-}
-
-export function easeQuadInOut(t) {
-  return ((t *= 2) <= 1 ? t * t : --t * (2 - t) + 1) / 2;
-}
-
-export function easeQuadOut(t) {
-  return 1 - (1 - t) * (1 - t);
 }
 
 /**

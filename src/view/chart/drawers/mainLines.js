@@ -1,39 +1,42 @@
-import memoizeObjectArguments from '../../../helpers/memoizeObjectArguments';
-import makeLine from './line';
+import {chartMainLineWidth} from '../../../style';
+import drawLine from './line';
 
-export default function makeMainLines(linesData) {
-  const lines = {};
-  for (const [key, {values, color}] of Object.entries(linesData)) {
-    lines[key] = makeLine({values, color, width: 2});
+export default function drawMainLines({
+  ctx,
+  linesData,
+  linesOpacity,
+  canvasWidth,
+  x, y,
+  width, height,
+  minValue,
+  maxValue,
+  fromIndex,
+  toIndex,
+  pixelRatio
+}) {
+  const lineWidth = chartMainLineWidth * pixelRatio;
+
+  for (let key in linesData) {
+    if (linesData.hasOwnProperty(key)) {
+      const {values, color} = linesData[key];
+
+      drawLine({
+        ctx,
+        values,
+        fromX: x,
+        toX: x + width,
+        fromY: y + height,
+        toY: y,
+        drawFromX: 0,
+        drawToX: canvasWidth,
+        fromIndex,
+        toIndex,
+        fromValue: minValue,
+        toValue: maxValue,
+        color,
+        lineWidth,
+        opacity: linesOpacity[key]
+      });
+    }
   }
-
-  return {
-    stageChildren: Object.values(lines).map(line => line.stageChild),
-    update: memoizeObjectArguments(({
-      canvasWidth,
-      x,
-      y,
-      width,
-      height,
-      maxValue,
-      fromIndex,
-      toIndex
-    }, linesOpacity) => {
-      for (const [key, line] of Object.entries(lines)) {
-        line.update({
-          canvasWidth,
-          fromIndex,
-          toIndex,
-          fromX: x,
-          toX: x + width,
-          fromValue: 0,
-          toValue: maxValue,
-          fromY: y + height,
-          toY: y,
-          opacity: linesOpacity[key],
-          roundCorners: true
-        });
-      }
-    })
-  };
 }

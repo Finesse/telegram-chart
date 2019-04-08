@@ -1,9 +1,12 @@
+import {hexColorToNumber} from './helpers/color';
+
 /**
  * Converts the input JSON into a more convenient format
  *
  * @param {{}[]} data The input data in the original contest JSON format
  * @return {{}[]}
  */
+
 export default function convertChartData(data) {
   return data.map(({columns, types, names, colors}, index) => {
     // Determine what columns are Xs and what are Ys
@@ -36,7 +39,7 @@ export default function convertChartData(data) {
     for (const yKey of valuesKeys) {
       lines[yKey] = {
         name: names[yKey],
-        color: colors[yKey],
+        color: hexColorToNumber(colors[yKey]),
         values: indexedColumns[yKey]
       };
     }

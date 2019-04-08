@@ -1,5 +1,5 @@
 import * as PIXI from '../../../pixi';
-import {hexToNumber} from '../../../helpers/color';
+import {hexColorToNumber} from '../../../helpers/color';
 import memoizeObjectArguments from '../../../helpers/memoizeObjectArguments';
 import interpolateLinear from "../../../helpers/interpolateLinear";
 import {mixNumberColors} from '../../../helpers/color';
@@ -61,7 +61,7 @@ export default function makeDetailsPointer(linesData) {
           const y = fromY + (value - fromValue) * yPerValue;
           const scale = 0.3 + opacity * 0.7;
 
-          graphics.lineStyle(pointBorderWidth, hexToNumber(color), dataLineOpacity, 1);
+          graphics.lineStyle(pointBorderWidth, hexColorToNumber(color), dataLineOpacity, 1);
           graphics.beginFill(pointBackgroundColor, dataLineOpacity);
           graphics.drawCircle(x, y, pointRadius * scale);
           graphics.endFill();

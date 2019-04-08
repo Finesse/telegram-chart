@@ -1,11 +1,10 @@
 import memoizeOne from 'memoize-one';
-import * as PIXI from '../../pixi';
+import {easeQuadOut} from 'd3-ease';
 import {
   makeAnimationGroup,
   makeExponentialTransition,
   makeInstantWhenHiddenTransition,
-  makeTransition,
-  easeQuadOut
+  makeTransition
 } from '../../helpers/animationGroup';
 import getMaxOnRange from '../../helpers/getMaxOnRange';
 import {themeTransitionDuration} from '../../style';
@@ -15,13 +14,16 @@ import watchGestures from './watchGestures';
 import styles from './chart.css?module';
 import makeChartDrawer from './drawers/chart';
 
-const minMapSelectionLength = 2;
+const minMapSelectionLength = 5;
 
 const template = `
 <div class="${styles.root}">
   <h3 class="${styles.name}"></h3>
-  <div class="${styles.chart}">
-    <canvas class="${styles.canvas}"></canvas>
+  <div class="${styles.chartMain}">
+    <canvas></canvas>
+  </div>
+  <div class="${styles.chartMap}">
+    <canvas></canvas>
   </div>
   <div class="${styles.toggles}"></div>
 </div>
@@ -32,6 +34,7 @@ const template = `
  *
  * @todo Round the elements positions considering the device pixel density
  * @todo Try to optimize the theme switch by not animating the charts that are not visible
+ * @todo Cache the lines max values
  */
 export default function makeChart(element, {name, dates, lines}, initialTheme = 'day') {
   // The arguments store the unaltered chart state
@@ -53,8 +56,8 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
   );
 
   // Creating a DOM and a WebGL renderer
-  const {chartBox, canvas, setDetailsState} = createDOM(element, name, lines, dates, state.lines, handleToggleLine);
-  const {app: pixiApplication, chartDrawer} = createPixiApplication(canvas, lines, dates);
+  const {chartBox, mainCanvas, mapCanvas, setDetailsState} = createDOM(element, name, lines, dates, state.lines, handleToggleLine);
+  const updateCanvases = makeChartDrawer(mainCanvas, mapCanvas, lines, dates);
   const gesturesWatcher = watchGestures(chartBox, getStateForGestureWatcher(dates, state.startIndex, state.endIndex), {
     mapSelectorStart: handleStartIndexChange,
     mapSelectorMiddle: handleIndexMove,
@@ -72,8 +75,10 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
 
   function handleWindowResize() {
     setState({
-      canvasWidth: canvas.clientWidth,
-      canvasHeight: canvas.clientHeight,
+      mainCanvasWidth: mainCanvas.clientWidth,
+      mainCanvasHeight: mainCanvas.clientHeight,
+      mapCanvasWidth: mapCanvas.clientWidth,
+      mapCanvasHeight: mapCanvas.clientHeight,
       pixelRatio: window.devicePixelRatio || 1
     });
   }
@@ -111,8 +116,7 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
    * Every state change must come here. This function decides what to update when the state changes.
    *
    * Data flow:
-   * event -> setState -> (updateView, transitions)
-   * transitions -> updateView
+   * event -> setState -> transitions -> updateView
    */
   function setState(newState) {
     Object.assign(state, newState);
@@ -122,9 +126,9 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
     applyMainMaxValue(lines, state.lines, state.startIndex, state.endIndex);
     applyDatesRange(dates, state.startIndex, state.endIndex);
     applyDetailsPosition(state.detailsScreenPosition, state.startIndex, state.endIndex);
-    applyDetailsLinesState(state.lines);
     applyTheme(state.theme);
-    applyCanvasSize(state.canvasWidth, state.canvasHeight, state.pixelRatio);
+
+    transitions.updateOnNextFrame();
   }
 
   const applyMapMaxValue = memoizeOne((linesData, linesState) => {
@@ -157,9 +161,6 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
       dateNotchScale: getDateNotchScale(endIndex - startIndex)
     });
 
-    // It works much smoother if you update on the next frame but not immediately
-    transitions.updateOnNextFrame();
-
     gesturesWatcher.setChartState(getStateForGestureWatcher(dates, startIndex, endIndex));
   });
 
@@ -179,26 +180,27 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
     });
   });
 
-  const applyDetailsLinesState = memoizeOne(linesState => {
-    transitions.updateOnNextFrame();
-  });
-
   const applyTheme = memoizeOne(theme => {
     transitions.setTargets({
       theme: theme === 'day' ? 0 : 1
     });
   });
 
-  const applyCanvasSize = memoizeOne((canvasWidth, canvasHeight, pixelRatio) => {
-    pixiApplication.renderer.resolution = pixelRatio;
-    pixiApplication.renderer.resize(canvasWidth, canvasHeight);
-    transitions.updateOnNextFrame();
-  });
-
   /**
    * Applies the current dist chart state to the chart
    */
   function updateView() {
+    const {
+      startIndex,
+      endIndex,
+      mainCanvasWidth,
+      mainCanvasHeight,
+      mapCanvasWidth,
+      mapCanvasHeight,
+      pixelRatio,
+      lines: linedState
+    } = state;
+
     const {
       mapMaxValue,
       mainMaxValue,
@@ -214,25 +216,26 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
       linesOpacity[key] = linesAnimatedState[`line_${key}_opacity`];
     }
 
-    const detailsIndex = state.startIndex + detailsScreenPosition * (state.endIndex - state.startIndex);
+    const detailsIndex = startIndex + detailsScreenPosition * (endIndex - startIndex);
 
-    chartDrawer.update({
-      canvasWidth: state.canvasWidth,
-      canvasHeight: state.canvasHeight,
-      pixelRatio: state.pixelRatio,
+    updateCanvases({
+      mainCanvasWidth: mainCanvasWidth * pixelRatio,
+      mainCanvasHeight: mainCanvasHeight * pixelRatio,
+      mapCanvasWidth: mapCanvasWidth * pixelRatio,
+      mapCanvasHeight: mapCanvasHeight * pixelRatio,
+      pixelRatio,
       mapMaxValue,
       mainMaxValue,
       mainMaxValueNotchScale,
       dateNotchScale,
-      startIndex: state.startIndex,
-      endIndex: state.endIndex,
-      detailsIndex: detailsIndex,
+      startIndex,
+      endIndex,
+      detailsIndex,
       detailsOpacity,
       theme
     }, linesOpacity);
-    pixiApplication.render();
 
-    setDetailsState(detailsScreenPosition, detailsOpacity, Math.round(detailsIndex), state.lines);
+    setDetailsState(detailsScreenPosition, detailsOpacity, Math.round(detailsIndex), linedState);
   }
 
   return {
@@ -258,8 +261,10 @@ function getInitialState(lines, dates, theme) {
   }
 
   return {
-    canvasWidth: 0,
-    canvasHeight: 0,
+    mainCanvasWidth: 0,
+    mainCanvasHeight: 0,
+    mapCanvasWidth: 0,
+    mapCanvasHeight: 0,
     pixelRatio: 1,
     startIndex: Math.max((dates.length - 1) * 0.73, dates.length - 1000),
     endIndex: (dates.length - 1),
@@ -356,7 +361,7 @@ function createDOM(root, name, linesData, dates, linesState, onToggle) {
   nameBox.textContent = name;
 
   const columnDetails = makeColumnDetails(linesData, dates, styles.details);
-  const chartBox = root.querySelector(`.${styles.chart}`);
+  const chartBox = root.querySelector(`.${styles.chartMain}`);
   chartBox.appendChild(columnDetails.element);
 
   const togglesBox = root.querySelector(`.${styles.toggles}`);
@@ -372,26 +377,10 @@ function createDOM(root, name, linesData, dates, linesState, onToggle) {
 
   return {
     chartBox,
-    canvas: root.querySelector(`.${styles.canvas}`),
+    mainCanvas: root.querySelector(`.${styles.chartMain} canvas`),
+    mapCanvas: root.querySelector(`.${styles.chartMap} canvas`),
     setDetailsState: columnDetails.setState
   };
-}
-
-/**
- * Creates the chart WebGL renderer
- */
-function createPixiApplication(canvas, linesData, dates) {
-  const app = new PIXI.Application({
-    view: canvas,
-    autoStart: false,
-    antialias: true,
-    transparent: true
-  });
-
-  const chartDrawer = makeChartDrawer(linesData, dates);
-  app.stage.addChild(...chartDrawer.stageChildren);
-
-  return {app, chartDrawer};
 }
 
 function getStateForGestureWatcher(dates, startIndex, endIndex) {

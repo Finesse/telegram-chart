@@ -1,5 +1,10 @@
-import {chartSidePadding, chartMapHeight, chartMainLinesTopMargin, chartMainLinesBottomMargin} from '../../../style';
-import makeMapLines from './mapLines';
+import memoizeOne from 'memoize-one';
+import {chartSidePadding, chartMainLinesTopMargin, chartMainLinesBottomMargin} from '../../../style';
+import makeChartMainWithoutX from './chartMainWithoutX';
+import makeDateScale from './dateScale';
+import makeChartMap from './chartMap';
+
+/*
 import makeMapSelector from './mapSelector';
 import makeMainLines from './mainLines';
 import makeValueScale from './valueScale';
@@ -7,8 +12,84 @@ import makeDateScale from './dateScale';
 import makeDetailsPointer from './detailsPointer';
 import makeTopFade from './topFade';
 import textFactory from './textFactory';
+*/
 
-export default function makeChart(linesData, dates) {
+export default function makeChart(mainCanvas, mapCanvas, linesData, dates) {
+  const mainCtx = mainCanvas.getContext('2d');
+  const mapCtx = mapCanvas.getContext('2d');
+
+  const updateMainCanvasSize = memoizeOne((width, height) => {
+    mainCanvas.width = width;
+    mainCanvas.height = height;
+  });
+
+  const updateMapCanvasSize = memoizeOne((width, height) => {
+    mapCanvas.width = width;
+    mapCanvas.height = height;
+  });
+
+  // The parts of the chart that can be updated independently
+  const drawChartMainWithoutX = makeChartMainWithoutX(mainCtx, linesData);
+  const drawDateScale = makeDateScale(mainCtx, dates);
+  const drawChartMap = makeChartMap(mapCtx, linesData);
+
+  return ({
+    mainCanvasWidth,
+    mainCanvasHeight,
+    mapCanvasWidth,
+    mapCanvasHeight,
+    pixelRatio = 1,
+    mapMaxValue,
+    mainMaxValue,
+    mainMaxValueNotchScale,
+    dateNotchScale,
+    startIndex,
+    endIndex,
+    detailsIndex,
+    detailsOpacity,
+    theme // Goes from 0 (day) to 1 (night)
+  }, linesOpacity) => {
+    const fromValue = 0;
+
+    updateMainCanvasSize(mainCanvasWidth, mainCanvasHeight, pixelRatio);
+    updateMapCanvasSize(mapCanvasWidth, mapCanvasHeight, pixelRatio);
+
+    drawChartMainWithoutX({
+      x: 0,
+      y: 0,
+      width: mainCanvasWidth,
+      height: mainCanvasHeight - chartMainLinesBottomMargin * pixelRatio,
+      minValue: fromValue,
+      maxValue: mainMaxValue,
+      maxValueNotchScale: mainMaxValueNotchScale,
+      startIndex,
+      endIndex,
+      pixelRatio,
+      theme
+    }, linesOpacity);
+
+    drawDateScale({
+      x: 0,
+      y: mainCanvasHeight - chartMainLinesBottomMargin * pixelRatio,
+      width: mainCanvasWidth,
+      height: chartMainLinesBottomMargin * pixelRatio,
+      fromIndex: startIndex,
+      toIndex: endIndex,
+      notchScale: dateNotchScale,
+      pixelRatio,
+      theme
+    });
+
+    drawChartMap({
+      canvasWidth: mapCanvasWidth,
+      canvasHeight: mapCanvasHeight,
+      maxValue: mapMaxValue,
+      pixelRatio
+    }, linesOpacity);
+  };
+}
+
+function _makeChart(linesData, dates) {
   const mapLines = makeMapLines(linesData);
   const mapSelector = makeMapSelector();
   const mainLines = makeMainLines(linesData);

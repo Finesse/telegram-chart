@@ -37,24 +37,6 @@ function makeCSSLoaders(useCSSModules, isDevelopment) {
   ];
 }
 
-function getAliases(isDevelopment) {
-  const emptyFile = path.resolve(__dirname, sourceDirectory, 'pixi/mocks/empty.js');
-
-  const aliases = {
-    '@pixi/ticker': emptyFile,
-    'earcut': emptyFile
-  };
-
-  if (!isDevelopment) {
-    // Required for webpack-dev-server
-    Object.assign(aliases, {
-      url: emptyFile
-    });
-  }
-
-  return aliases;
-}
-
 module.exports = (env, argv) => {
   const {mode, analyze} = argv;
   const isDevelopment = mode !== 'production';
@@ -63,9 +45,6 @@ module.exports = (env, argv) => {
     entry: `./${sourceDirectory}/index.js`,
     mode,
     devtool: isDevelopment ? 'inline-source-map' : undefined,
-    resolve: {
-      alias: getAliases(isDevelopment)
-    },
     module: {
       rules: [
         {

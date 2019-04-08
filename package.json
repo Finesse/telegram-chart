@@ -13,23 +13,18 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@babel/core": "^7.3.4",
-    "@babel/plugin-proposal-class-properties": "^7.3.4",
-    "@babel/plugin-transform-runtime": "^7.3.4",
-    "@babel/preset-env": "^7.3.4",
-    "@babel/runtime": "^7.3.4",
-    "@pixi/app": "^5.0.0-rc.3",
-    "@pixi/core": "^5.0.0-rc.3",
-    "@pixi/display": "^5.0.0-rc.3",
-    "@pixi/graphics": "^5.0.0-rc.3",
-    "@pixi/sprite": "^5.0.0-rc.3",
-    "@pixi/text": "^5.0.0-rc.3",
-    "autoprefixer": "^9.5.0",
+    "@babel/core": "^7.4.3",
+    "@babel/plugin-proposal-class-properties": "^7.4.0",
+    "@babel/plugin-transform-runtime": "^7.4.3",
+    "@babel/preset-env": "^7.4.3",
+    "@babel/runtime": "^7.4.3",
+    "autoprefixer": "^9.5.1",
     "babel-loader": "^8.0.5",
     "clean-webpack-plugin": "^2.0.1",
     "css-loader": "^2.1.1",
+    "d3-ease": "^1.0.5",
     "html-webpack-plugin": "^3.2.0",
-    "memoize-one": "^5.0.0",
+    "memoize-one": "^5.0.4",
     "mini-css-extract-plugin": "^0.5.0",
     "postcss-csso": "^3.0.0",
     "postcss-loader": "^3.0.0",
@@ -41,16 +36,10 @@
     "webpack-dev-server": "^3.2.1"
   },
   "devDependencies": {
-    "webpack-bundle-analyzer": "^3.1.0"
+    "webpack-bundle-analyzer": "^3.2.0"
   },
   "browserslist": [
-    "last 2 Chrome major versions",
-    "last 2 ChromeAndroid major versions",
-    "last 2 Edge major versions",
-    "last 2 Firefox major versions",
-    "last 2 FirefoxAndroid major versions",
-    "last 5 iOS major versions",
-    "last 2 Opera major versions",
-    "last 5 Safari major versions"
+    "last 5 years",
+    "not < 0.1%"
   ]
 }
