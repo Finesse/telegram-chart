@@ -4,8 +4,13 @@ export function hexColorToNumber(color) {
   return parseInt(color.slice(1), 16);
 }
 
-export function numberColorToRGBA(color, opacity = 1) {
-  return `rgba(${(color >> 16) % 0x100}, ${(color >> 8) % 0x100}, ${color % 0x100}, ${opacity})`;
+export function numberColorToRGBA(color, opacity) {
+  return 'rgba('
+    + (color >> 16) % 0x100 + ', '
+    + (color >> 8) % 0x100 + ', '
+    + color % 0x100 + ', '
+    + (opacity === undefined ? 1 : opacity)
+    + ')';
 }
 
 /**

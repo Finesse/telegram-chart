@@ -9,3 +9,7 @@ export function htmlToElement(html) {
   tempBlock.innerHTML = html;
   return tempBlock.firstElementChild;
 }
+
+export function setCSSTransform(element, value) {
+  element.style.webkitTransform = element.style.transform = value;
+}

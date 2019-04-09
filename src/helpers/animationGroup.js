@@ -1,4 +1,4 @@
-import {easeQuadInOut} from 'd3-ease';
+import {quadInOut} from 'd3-ease/src/quad';
 
 /**
  * A passive animation for an animation group
@@ -89,7 +89,7 @@ export function makeAnimationGroup(animations, onUpdate) {
  */
 export function makeTransition(initialValue, {
   duration = 500,
-  easing = easeQuadInOut,
+  easing = quadInOut,
   maxDistance = Infinity
 } = {}) {
   let startValue = initialValue;

@@ -36,7 +36,7 @@
 .icon > polyline,
 .icon > circle:nth-child(2) {
   transform-origin: 50% 50%;
-  transition: all 0.4s ease-in-out;
+  /* transition: all 0.4s ease-in-out; */
 }
 .on .icon > circle:nth-child(2) {
   transform: scale(0);

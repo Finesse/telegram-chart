@@ -18,6 +18,7 @@ export const chartScaleLabelColors = [0x96a2aa, 0x546778];
 export const chartScaleLabelFontSize = 10;
 export const chartValueScaleLabelMargin = 4;
 export const chartDateScaleLabelMargin = 7;
+export const chartSelectorGripWidth = 10;
 
 export const themeTransitionDuration = 300; // ms
 export const themeTransitionStyle = {

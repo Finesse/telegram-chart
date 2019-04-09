@@ -25,5 +25,7 @@ export const weekDays = [
 
 export function formatDate(timestamp, withWeekDay) {
   const date = new Date(timestamp);
-  return `${withWeekDay ? `${weekDays[date.getUTCDay()]}, ` : ''}${months[date.getUTCMonth()]} ${date.getUTCDate()}`;
+  return (withWeekDay ? (weekDays[date.getUTCDay()] + ', ') : '')
+    + months[date.getUTCMonth()]
+    + ' ' + date.getUTCDate();
 }

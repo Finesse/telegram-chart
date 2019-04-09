@@ -1,5 +1,5 @@
 import memoizeOne from 'memoize-one';
-import {easeQuadOut} from 'd3-ease';
+import {quadOut} from 'd3-ease/src/quad';
 import {
   makeAnimationGroup,
   makeExponentialTransition,
@@ -7,7 +7,8 @@ import {
   makeTransition
 } from '../../helpers/animationGroup';
 import getMaxOnRange from '../../helpers/getMaxOnRange';
-import {themeTransitionDuration} from '../../style';
+import {setCSSTransform} from '../../helpers/dom';
+import {themeTransitionDuration, themeTransitionCSS, chartSelectorGripWidth} from '../../style';
 import makeToggleButton from '../toggleButton/toggleButton';
 import makeColumnDetails from '../columnDetails/columnDetails';
 import watchGestures from './watchGestures';
@@ -23,7 +24,15 @@ const template = `
     <canvas></canvas>
   </div>
   <div class="${styles.chartMap}">
-    <canvas></canvas>
+    <div class="${styles.chartMapRoundBox}">
+      <canvas></canvas>
+      <div class="${styles.selectorOutside} ${styles.right}" style="${themeTransitionCSS}"></div>
+      <div class="${styles.selectorOutside} ${styles.left}" style="${themeTransitionCSS}"></div>
+    </div>
+    <div class="${styles.selectorBorder} ${styles.top}" style="${themeTransitionCSS}"></div>
+    <div class="${styles.selectorBorder} ${styles.right}" style="${themeTransitionCSS} width: ${chartSelectorGripWidth}px;"></div>
+    <div class="${styles.selectorBorder} ${styles.bottom}" style="${themeTransitionCSS}"></div>
+    <div class="${styles.selectorBorder} ${styles.left}" style="${themeTransitionCSS} width: ${chartSelectorGripWidth}px;"></div>
   </div>
   <div class="${styles.toggles}"></div>
 </div>
@@ -56,7 +65,13 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
   );
 
   // Creating a DOM and a WebGL renderer
-  const {chartBox, mainCanvas, mapCanvas, setDetailsState} = createDOM(element, name, lines, dates, state.lines, handleToggleLine);
+  const {
+    chartBox,
+    mainCanvas,
+    mapCanvas,
+    setMapSelectorState,
+    setDetailsState
+  } = createDOM(element, name, lines, dates, state.lines, handleToggleLine);
   const updateCanvases = makeChartDrawer(mainCanvas, mapCanvas, lines, dates);
   const gesturesWatcher = watchGestures(chartBox, getStateForGestureWatcher(dates, state.startIndex, state.endIndex), {
     mapSelectorStart: handleStartIndexChange,
@@ -235,6 +250,8 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
       theme
     }, linesOpacity);
 
+    setMapSelectorState(startIndex, endIndex, mapCanvasWidth);
+
     setDetailsState(detailsScreenPosition, detailsOpacity, Math.round(detailsIndex), linedState);
   }
 
@@ -287,7 +304,7 @@ function createTransitionGroup({startIndex, endIndex, lines}, mapMaxValue, mainM
     }),
     detailsScreenPosition: makeInstantWhenHiddenTransition(
       makeTransition(0.5, {
-        easing: easeQuadOut,
+        easing: quadOut,
         duration: 300
       }),
       makeTransition(0, {
@@ -354,11 +371,35 @@ function getMainMaxValue(linesData, linesState, startIndex, endIndex) {
  * Creates the chart DOM
  */
 function createDOM(root, name, linesData, dates, linesState, onToggle) {
+  const chartLength = dates.length - 1;
+
   root.innerHTML = template;
   root.querySelector(`.${styles.name}`).textContent = name;
 
   const nameBox = root.querySelector(`.${styles.name}`);
   nameBox.textContent = name;
+
+  const [selectorOutsideRight, selectorOutsideLeft] = root.querySelectorAll(`.${styles.selectorOutside}`);
+  const [selectorBorderTop, selectorBorderRight, selectorBorderBottom, selectorBorderLeft] = root.querySelectorAll(`.${styles.selectorBorder}`);
+  const setMapSelectorState = memoizeOne((startIndex, endIndex, selectorWidth) => {
+    const pxPerIndex = selectorWidth / chartLength;
+    let leftOffset = Math.round(startIndex * pxPerIndex);
+    let rightOffset = Math.round(endIndex * pxPerIndex);
+    if (rightOffset - leftOffset < chartSelectorGripWidth * 2) {
+      const middleOffset = Math.round((leftOffset + rightOffset) / 2);
+      leftOffset = middleOffset - chartSelectorGripWidth;
+      rightOffset = middleOffset + chartSelectorGripWidth;
+    }
+
+    setCSSTransform(selectorOutsideLeft, `scaleX(${leftOffset + chartSelectorGripWidth})`);
+    setCSSTransform(selectorOutsideRight, `scaleX(${selectorWidth - rightOffset + chartSelectorGripWidth})`);
+    setCSSTransform(selectorBorderLeft, `translateX(${leftOffset}px)`);
+    setCSSTransform(selectorBorderRight, `translateX(${selectorWidth - rightOffset}px)`);
+
+    const horizontalBordersTransform = `translateX(${leftOffset + chartSelectorGripWidth}px) scaleX(${rightOffset - leftOffset - chartSelectorGripWidth * 2})`;
+    setCSSTransform(selectorBorderTop, horizontalBordersTransform);
+    setCSSTransform(selectorBorderBottom, horizontalBordersTransform);
+  });
 
   const columnDetails = makeColumnDetails(linesData, dates, styles.details);
   const chartBox = root.querySelector(`.${styles.chartMain}`);
@@ -379,6 +420,7 @@ function createDOM(root, name, linesData, dates, linesState, onToggle) {
     chartBox,
     mainCanvas: root.querySelector(`.${styles.chartMain} canvas`),
     mapCanvas: root.querySelector(`.${styles.chartMap} canvas`),
+    setMapSelectorState,
     setDetailsState: columnDetails.setState
   };
 }

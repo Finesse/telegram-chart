@@ -73,21 +73,20 @@ export default function drawValueScale({
       notch2 += notchValue2;
     }
 
-    const notchY = y + height - (value - fromValue) * yPerValue;
-    const lineY = Math.round(notchY - lineWidth);
+    const notchY = Math.round(y + height - (value - fromValue) * yPerValue);
     const isPrimary = value === 0;
 
     ctx.strokeStyle = isPrimary
       ? numberColorToRGBA(primaryLineColor, primaryLineOpacity * opacity)
       : numberColorToRGBA(secondaryLineColor, secondaryLineOpacity * opacity);
     ctx.beginPath();
-    ctx.moveTo(x, lineY);
-    ctx.lineTo(x + width, lineY);
+    ctx.moveTo(x, notchY - lineWidth / 2);
+    ctx.lineTo(x + width, notchY - lineWidth / 2);
     ctx.stroke();
     ctx.closePath();
 
     ctx.fillStyle = numberColorToRGBA(labelColor, opacity);
-    ctx.fillText(value, x, lineY - labelOffset);
+    ctx.fillText(value, x, notchY - labelOffset);
   }
 }
 
