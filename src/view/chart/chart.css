@@ -59,7 +59,6 @@
 .selectorOutside {
   position: absolute;
   top: 0;
-  width: 1px;
   height: 100%;
   transition-property: background-color;
 }
@@ -124,7 +123,6 @@
 }
 .selectorBorder.top,
 .selectorBorder.bottom {
-  width: 1px;
   height: 1px;
   transform-origin: 0 0;
 }

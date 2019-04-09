@@ -371,35 +371,11 @@ function getMainMaxValue(linesData, linesState, startIndex, endIndex) {
  * Creates the chart DOM
  */
 function createDOM(root, name, linesData, dates, linesState, onToggle) {
-  const chartLength = dates.length - 1;
-
   root.innerHTML = template;
   root.querySelector(`.${styles.name}`).textContent = name;
 
   const nameBox = root.querySelector(`.${styles.name}`);
   nameBox.textContent = name;
-
-  const [selectorOutsideRight, selectorOutsideLeft] = root.querySelectorAll(`.${styles.selectorOutside}`);
-  const [selectorBorderTop, selectorBorderRight, selectorBorderBottom, selectorBorderLeft] = root.querySelectorAll(`.${styles.selectorBorder}`);
-  const setMapSelectorState = memoizeOne((startIndex, endIndex, selectorWidth) => {
-    const pxPerIndex = selectorWidth / chartLength;
-    let leftOffset = Math.round(startIndex * pxPerIndex);
-    let rightOffset = Math.round(endIndex * pxPerIndex);
-    if (rightOffset - leftOffset < chartSelectorGripWidth * 2) {
-      const middleOffset = Math.round((leftOffset + rightOffset) / 2);
-      leftOffset = middleOffset - chartSelectorGripWidth;
-      rightOffset = middleOffset + chartSelectorGripWidth;
-    }
-
-    setCSSTransform(selectorOutsideLeft, `scaleX(${leftOffset + chartSelectorGripWidth})`);
-    setCSSTransform(selectorOutsideRight, `scaleX(${selectorWidth - rightOffset + chartSelectorGripWidth})`);
-    setCSSTransform(selectorBorderLeft, `translateX(${leftOffset}px)`);
-    setCSSTransform(selectorBorderRight, `translateX(${selectorWidth - rightOffset}px)`);
-
-    const horizontalBordersTransform = `translateX(${leftOffset + chartSelectorGripWidth}px) scaleX(${rightOffset - leftOffset - chartSelectorGripWidth * 2})`;
-    setCSSTransform(selectorBorderTop, horizontalBordersTransform);
-    setCSSTransform(selectorBorderBottom, horizontalBordersTransform);
-  });
 
   const columnDetails = makeColumnDetails(linesData, dates, styles.details);
   const chartBox = root.querySelector(`.${styles.chartMain}`);
@@ -420,9 +396,44 @@ function createDOM(root, name, linesData, dates, linesState, onToggle) {
     chartBox,
     mainCanvas: root.querySelector(`.${styles.chartMain} canvas`),
     mapCanvas: root.querySelector(`.${styles.chartMap} canvas`),
-    setMapSelectorState,
+    setMapSelectorState: makeSetMapSelectorState(root, dates.length - 1),
     setDetailsState: columnDetails.setState
   };
+}
+
+/**
+ * Makes a function that updates the map selector DOM state
+ */
+function makeSetMapSelectorState(domRoot, chartLength) {
+  const [selectorOutsideRight, selectorOutsideLeft] = domRoot.querySelectorAll(`.${styles.selectorOutside}`);
+  const [
+    selectorBorderTop,
+    selectorBorderRight,
+    selectorBorderBottom,
+    selectorBorderLeft
+  ] = domRoot.querySelectorAll(`.${styles.selectorBorder}`);
+
+  return memoizeOne((startIndex, endIndex, selectorWidth) => {
+    const pxPerIndex = selectorWidth / chartLength;
+    let leftOffset = Math.round(startIndex * pxPerIndex);
+    let rightOffset = Math.round(endIndex * pxPerIndex);
+    if (rightOffset - leftOffset < chartSelectorGripWidth * 2) {
+      const middleOffset = Math.round((leftOffset + rightOffset) / 2);
+      leftOffset = middleOffset - chartSelectorGripWidth;
+      rightOffset = middleOffset + chartSelectorGripWidth;
+    }
+
+    selectorOutsideLeft.style.width = leftOffset + chartSelectorGripWidth + 'px'; // Using transform scaleX is unreliable when the page is zoomed
+    selectorOutsideRight.style.width = selectorWidth - rightOffset + chartSelectorGripWidth + 'px';
+    setCSSTransform(selectorBorderLeft, `translateX(${leftOffset}px)`);
+    setCSSTransform(selectorBorderRight, `translateX(${selectorWidth - rightOffset}px)`);
+
+    const horizontalBordersTransform = `translateX(${leftOffset + chartSelectorGripWidth}px)`;
+    setCSSTransform(selectorBorderTop, horizontalBordersTransform);
+    setCSSTransform(selectorBorderBottom, horizontalBordersTransform);
+    selectorBorderTop.style.width =
+      selectorBorderBottom.style.width = rightOffset - leftOffset - chartSelectorGripWidth * 2 + 'px';
+  });
 }
 
 function getStateForGestureWatcher(dates, startIndex, endIndex) {
