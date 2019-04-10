@@ -11,6 +11,7 @@ import {setCSSTransform} from '../../helpers/dom';
 import {themeTransitionDuration, themeTransitionCSS, chartSelectorGripWidth} from '../../style';
 import makeToggleButton from '../toggleButton/toggleButton';
 import makeColumnDetails from '../columnDetails/columnDetails';
+import makeSafariAssKicker from '../safariAssKicker/safariAssKicker';
 import watchMapGestures from './watchMapGestures';
 import styles from './chart.css?module';
 import makeChartDrawer from './drawers/chart';
@@ -68,7 +69,8 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
     mainCanvas,
     mapCanvas,
     setMapSelectorState,
-    setDetailsState
+    setDetailsState,
+    kickSafariAss
   } = createDOM(element, name, lines, dates, state.lines, handleToggleLine);
   const updateCanvases = makeChartDrawer(mainCanvas, mapCanvas, lines, dates);
   const mapGesturesWatcher = watchMapGestures(
@@ -254,6 +256,8 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
     setMapSelectorState(startIndex, endIndex, mapCanvasWidth);
 
     setDetailsState(detailsScreenPosition, detailsOpacity, Math.round(detailsIndex), linedState);
+
+    kickSafariAss();
   }
 
   return {
@@ -395,12 +399,16 @@ function createDOM(root, name, linesData, dates, linesState, onToggle) {
     ));
   }
 
+  const {element: safariAssKickerElement, kick: kickSafariAss} = makeSafariAssKicker();
+  root.appendChild(safariAssKickerElement);
+
   return {
     chartMapBox,
     mainCanvas: root.querySelector(`.${styles.chartMain} canvas`),
     mapCanvas: root.querySelector(`.${styles.chartMap} canvas`),
     setMapSelectorState: makeSetMapSelectorState(root, dates.length - 1),
-    setDetailsState: columnDetails.setState
+    setDetailsState: columnDetails.setState,
+    kickSafariAss
   };
 }
 

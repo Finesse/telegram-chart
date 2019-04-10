@@ -83,7 +83,6 @@ export default function drawValueScale({
     ctx.moveTo(x, notchY - lineWidth / 2);
     ctx.lineTo(x + width, notchY - lineWidth / 2);
     ctx.stroke();
-    ctx.closePath();
 
     ctx.fillStyle = numberColorToRGBA(labelColor, opacity);
     ctx.fillText(value, x, notchY - labelOffset);

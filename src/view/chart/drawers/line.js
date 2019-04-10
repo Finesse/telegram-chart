@@ -20,11 +20,11 @@ export default function drawLine({
     return;
   }
 
+  ctx.beginPath();
   ctx.lineJoin = 'bevel';
   ctx.lineCap = 'square';
   ctx.lineWidth = lineWidth;
   ctx.strokeStyle = numberColorToRGBA(color, opacity);
-  ctx.beginPath();
 
   const xPerIndex = (toX - fromX) / (toIndex - fromIndex);
   const yPerValue = (toY - fromY) / (toValue - fromValue);
@@ -45,5 +45,4 @@ export default function drawLine({
   }
 
   ctx.stroke();
-  ctx.closePath();
 }

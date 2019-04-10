@@ -23,7 +23,7 @@ export function makeAnimationGroup(animations, onUpdate) {
    *
    * @param {Record<string, *>} targets The keys are the animation ids. May contain not all the animations.
    */
-  const setTargets = targets => {
+  function setTargets(targets) {
     for (const [key, target] of Object.entries(targets)) {
       if (key in animations) {
         animations[key].setTarget(target);
@@ -33,14 +33,14 @@ export function makeAnimationGroup(animations, onUpdate) {
         }
       }
     }
-  };
+  }
 
   /**
    * Returns the current animations states
    *
    * @returns {Record<string, *>} The keys are the animation ids
    */
-  const getState = () => {
+  function getState() {
     const state = {};
 
     for (const [key, animation] of Object.entries(animations)) {
@@ -48,27 +48,28 @@ export function makeAnimationGroup(animations, onUpdate) {
     }
 
     return state;
-  };
+  }
 
   /**
    * Cancels the animations
    */
-  const destroy = () => {
+  function destroy() {
     if (animationFrameId !== null) {
       window.cancelAnimationFrame(animationFrameId);
+      animationFrameId = null;
     }
-  };
+  }
 
   /**
    * Calls the update callback on the next browser animation frame
    */
-  const updateOnNextFrame = () => {
+  function updateOnNextFrame() {
     if (animationFrameId === null) {
       animationFrameId = window.requestAnimationFrame(handleAnimationFrame);
     }
-  };
+  }
 
-  const handleAnimationFrame = () => {
+  function handleAnimationFrame() {
     animationFrameId = null;
 
     const areAllFinished = Object.values(animations).every(animation => animation.isFinished());
@@ -77,7 +78,7 @@ export function makeAnimationGroup(animations, onUpdate) {
     }
 
     onUpdate();
-  };
+  }
 
   return {setTargets, getState, destroy, updateOnNextFrame};
 }
@@ -88,7 +89,7 @@ export function makeAnimationGroup(animations, onUpdate) {
  * @returns AnimationGroup~Animation
  */
 export function makeTransition(initialValue, {
-  duration = 500,
+  duration = 400,
   easing = quadInOut,
   maxDistance = Infinity
 } = {}) {

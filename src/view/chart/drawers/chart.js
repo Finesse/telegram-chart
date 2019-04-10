@@ -51,8 +51,8 @@ export default function makeChart(mainCanvas, mapCanvas, linesData, dates) {
   }, linesOpacity) => {
     const fromValue = 0;
 
-    updateMainCanvasSize(mainCanvasWidth, mainCanvasHeight, pixelRatio);
-    updateMapCanvasSize(mapCanvasWidth, mapCanvasHeight, pixelRatio);
+    updateMainCanvasSize(mainCanvasWidth, mainCanvasHeight);
+    updateMapCanvasSize(mapCanvasWidth, mapCanvasHeight);
 
     drawChartMainWithoutX({
       x: 0,
