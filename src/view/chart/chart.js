@@ -443,6 +443,7 @@ function makeSetMapSelectorState(domRoot, chartLength) {
     const outsideLeftOffset = leftOffset + chartSelectorGripWidth;
     const outsideRightOffset = rightOffset - chartSelectorGripWidth;
 
+    // todo: Try plain width and left instead of transform
     setCSSTransform(selectorOutsideLeft, `scaleX(${outsideLeftOffset / selectorWidth})`);
     setCSSTransform(selectorOutsideRight, `scaleX(${(selectorWidth - outsideRightOffset) / selectorWidth})`);
 

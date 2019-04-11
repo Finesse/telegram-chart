@@ -1,35 +1,35 @@
-import {themeTransitionCSS} from '../../style';
 import {htmlToElement} from '../../helpers/dom';
 import {numberColorToRGBA} from '../../helpers/color';
 import styles from './toggleButton.css?module';
-import iconSVG from './icon.svg?raw';
 
 const template = `
-<button class="${styles.button}" style="${themeTransitionCSS}">
-  ${iconSVG}
+<button class="${styles.button}">
+  <span class="${styles.checkmark}"><i></i><i></i></span>
   <span class="${styles.name}"></span>
 </button>
 `;
 
-// todo: The icon animation makes the whole page repaint. Optimize it.
 export default function makeToggleButton(color, name, isOn, onToggle, className) {
+  const solidColor = numberColorToRGBA(color, 1);
+  const transparentColor = numberColorToRGBA(color, 0);
   const button = htmlToElement(template);
+  const nameElement = button.querySelector(`.${styles.name}`);
+  button.style.borderColor = solidColor;
+  nameElement.textContent = name;
 
   if (className) {
     button.classList.add(className);
   }
 
-  const iconElement = button.querySelector('svg');
-  iconElement.classList.add(styles.icon);
-  iconElement.querySelector('circle').style.fill = numberColorToRGBA(color);
-
-  button.querySelector(`.${styles.name}`).textContent = name;
-
   function applyState() {
     if (isOn) {
       button.classList.add(styles.on);
+      button.style.backgroundColor = solidColor;
+      nameElement.style.color = '';
     } else {
       button.classList.remove(styles.on);
+      button.style.backgroundColor = transparentColor;
+      nameElement.style.color = solidColor;
     }
   }
 

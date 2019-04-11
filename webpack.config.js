@@ -20,7 +20,7 @@ function makeCSSLoaders(useCSSModules, isDevelopment) {
 
         ...(useCSSModules && {
           modules: true,
-          localIdentName: isDevelopment ? '[name]__[local]__[hash:base64:5]' : '[hash:base64:10]',
+          localIdentName: isDevelopment ? '[name]__[local]__[hash:base64:5]' : '[hash:base64:6]',
         })
       }
     },

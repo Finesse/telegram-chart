@@ -1,51 +1,59 @@
 .button {
+  position: relative;
   display: flex;
   align-items: center;
+  justify-content: center;
   box-sizing: border-box;
-  height: 34px;
-  min-width: 34px;
-  padding: 0 6px;
-  border: 1px solid;
-  border-radius: 17px;
+  height: 36px;
+  min-width: 36px;
+  border: 1.5px solid;
+  border-radius: 18px;
+  padding: 0;
   cursor: pointer;
   outline: none;
   font: inherit;
-  font-size: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
   background: none;
-  transition-property: color, border-color;
-}
-:global(.dayTheme) .button {
-  color: #43484b;
-  border-color: #e6ecf0;
-}
-:global(.nightTheme) .button {
-  color: #e8ecee;
-  border-color: #344658;
+  transition: all 0.4s ease-in-out;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.icon {
-  flex: none;
-  width: 20px;
-  height: 20px;
+.checkmark > i {
+  position: absolute;
+  top: 50%;
+  left: 10px;
+  height: 2px;
+  border-radius: 1px;
+  background: #fff;
+  transform-origin: 1px 1px;
 }
-.icon > polyline {
-  stroke-dasharray: 12 20;
-  stroke-dashoffset: 12;
-  transform: scale(0.3);
+.checkmark > i:nth-child(1) {
+  width: 6px;
+  transform: rotate(45deg) scaleX(0);
+  transition: transform 0.15s ease-out 0.25s;
 }
-.icon > polyline,
-.icon > circle:nth-child(2) {
-  transform-origin: 50% 50%;
-  transition: transform 0.4s ease-in-out;
+.on .checkmark > i:nth-child(1) {
+  transform: rotate(45deg) scaleX(1);
+  transition: transform 0.15s ease-in;
 }
-.on .icon > circle:nth-child(2) {
-  transform: scale(0);
+.checkmark > i:nth-child(2) {
+  width: 12.5px;
+  transform: translate(2.8284px, 2.8284px) rotate(-45deg) scaleX(0);
+  transition: transform 0.25s ease-in;
 }
-.on .icon > polyline {
-  transform: scale(1);
-  stroke-dashoffset: 0;
+.on .checkmark > i:nth-child(2) {
+  transform: translate(2.8284px, 2.8284px) rotate(-45deg) scaleX(1);
+  transition: transform 0.25s ease-out 0.15s;
 }
 
 .name {
-  margin: 0 9px 0 13px;
+  color: #fff;
+  margin: 0 21px;
+  transform: translateX(0);
+  transition: all 0.4s ease-in-out;
+}
+.on .name {
+  transform: translateX(8px);
 }
