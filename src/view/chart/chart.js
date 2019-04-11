@@ -25,6 +25,7 @@ const template = `
     <canvas></canvas>
   </div>
   <div class="${styles.chartMap}">
+    <div class="${styles.touchCatcher}"></div>
     <canvas></canvas>
     <div class="${styles.selectorOutsideBox}">
       <div class="${styles.selectorOutside} ${styles.right}" style="${themeTransitionCSS}"></div>
