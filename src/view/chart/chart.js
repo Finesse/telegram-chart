@@ -8,9 +8,11 @@ import {
 } from '../../helpers/animationGroup';
 import getMaxOnRange from '../../helpers/getMaxOnRange';
 import {setCSSTransform} from '../../helpers/dom';
+import {formatDate} from '../../helpers/date';
 import {themeTransitionDuration, themeTransitionCSS, chartSelectorGripWidth} from '../../style';
 import makeToggleButton from '../toggleButton/toggleButton';
 import makeColumnDetails from '../columnDetails/columnDetails';
+import makeRotatingDisplay from '../rotatingDisplay/rotatingDisplay';
 import makeSafariAssKicker from '../safariAssKicker/safariAssKicker';
 import watchMapGestures from './watchMapGestures';
 import styles from './chart.css?module';
@@ -19,8 +21,11 @@ import makeChartDrawer from './drawers/chart';
 const minMapSelectionLength = 5;
 
 const template = `
-<div class="${styles.root}">
-  <h3 class="${styles.name}"></h3>
+<section class="${styles.root}">
+  <header class="${styles.header}">
+    <h3 class="${styles.name}"></h3>
+    <div class="${styles.range}"></div>
+  </header>
   <div class="${styles.chartMain}">
     <canvas></canvas>
   </div>
@@ -37,7 +42,7 @@ const template = `
     <div class="${styles.selectorBorder} ${styles.left}" style="${themeTransitionCSS} width: ${chartSelectorGripWidth}px;"></div>
   </div>
   <div class="${styles.toggles}"></div>
-</div>
+</section>
 `;
 
 /**
@@ -71,6 +76,7 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
     chartMapBox,
     mainCanvas,
     mapCanvas,
+    setRangeStartDateIndex,
     setMapSelectorState,
     setDetailsState,
     kickSafariAss
@@ -256,6 +262,8 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
       theme
     }, linesOpacity);
 
+    setRangeStartDateIndex(startIndex);
+
     setMapSelectorState(startIndex, endIndex, mapCanvasWidth);
 
     setDetailsState(detailsScreenPosition, detailsOpacity, Math.round(detailsIndex), linedState);
@@ -385,6 +393,17 @@ function createDOM(root, name, linesData, dates, linesState, onToggle) {
   const nameBox = root.querySelector(`.${styles.name}`);
   nameBox.textContent = name;
 
+  function formatRangeDate(index) {
+    if (index < 0 || index > dates.length - 1) {
+      return '';
+    }
+    return formatDate(dates[index]);
+  }
+
+  const rangeBox = root.querySelector(`.${styles.range}`);
+  const {element: rangeStartElement, setPosition: setRangeStartDateIndex} = makeRotatingDisplay(formatRangeDate, 1, 1);
+  rangeBox.appendChild(rangeStartElement);
+
   const columnDetails = makeColumnDetails(linesData, dates, styles.details);
   const chartMainBox = root.querySelector(`.${styles.chartMain}`);
   chartMainBox.appendChild(columnDetails.element);
@@ -409,6 +428,7 @@ function createDOM(root, name, linesData, dates, linesState, onToggle) {
     chartMapBox,
     mainCanvas: root.querySelector(`.${styles.chartMain} canvas`),
     mapCanvas: root.querySelector(`.${styles.chartMap} canvas`),
+    setRangeStartDateIndex,
     setMapSelectorState: makeSetMapSelectorState(root, dates.length - 1),
     setDetailsState: columnDetails.setState,
     kickSafariAss
