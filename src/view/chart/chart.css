@@ -19,18 +19,17 @@
 .chartMain,
 .chartMap {
   position: relative;
+  user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
 
 .chartMain canvas,
 .chartMap canvas {
   position: absolute;
-  z-index: 0;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  user-select: none;
 }
 
 .chartMain {
@@ -48,9 +47,21 @@
   border-radius: 5px;
 }
 
+.selectorOutsideBox {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 5px;
+  overflow: hidden;
+  transform: translate3d(0, 0, 0); /* Forces the round corners in Safari */
+}
 .selectorOutside {
   position: absolute;
   top: 0;
+  left: 0;
+  width: 100%;
   height: 100%;
   transition-property: background-color;
 }
@@ -61,13 +72,9 @@
   background-color: rgba(48, 66, 89, 0.6);
 }
 .selectorOutside.left {
-  border-radius: 5px 0 0 5px;
-  left: 0;
   transform-origin: 0 0;
 }
 .selectorOutside.right {
-  border-radius: 0 5px 5px 0;
-  right: 0;
   transform-origin: 100% 0;
 }
 
@@ -118,6 +125,7 @@
 .selectorBorder.top,
 .selectorBorder.bottom {
   height: 1px;
+  width: 100%;
   transform-origin: 0 0;
 }
 
@@ -133,7 +141,6 @@
 
 .details {
   position: absolute;
-  z-index: 2;
   bottom: 83%;
   left: 6px;
   right: 6px;

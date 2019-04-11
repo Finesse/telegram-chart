@@ -26,8 +26,10 @@ const template = `
   </div>
   <div class="${styles.chartMap}">
     <canvas></canvas>
-    <div class="${styles.selectorOutside} ${styles.right}" style="${themeTransitionCSS}"></div>
-    <div class="${styles.selectorOutside} ${styles.left}" style="${themeTransitionCSS}"></div>
+    <div class="${styles.selectorOutsideBox}">
+      <div class="${styles.selectorOutside} ${styles.right}" style="${themeTransitionCSS}"></div>
+      <div class="${styles.selectorOutside} ${styles.left}" style="${themeTransitionCSS}"></div>
+    </div>
     <div class="${styles.selectorBorder} ${styles.top}" style="${themeTransitionCSS}"></div>
     <div class="${styles.selectorBorder} ${styles.right}" style="${themeTransitionCSS} width: ${chartSelectorGripWidth}px;"></div>
     <div class="${styles.selectorBorder} ${styles.bottom}" style="${themeTransitionCSS}"></div>
@@ -425,6 +427,10 @@ function makeSetMapSelectorState(domRoot, chartLength) {
   ] = domRoot.querySelectorAll(`.${styles.selectorBorder}`);
 
   return memoizeOne((startIndex, endIndex, selectorWidth) => {
+    if (selectorWidth === 0 || chartLength === 0) {
+      return;
+    }
+
     const pxPerIndex = selectorWidth / chartLength;
     let leftOffset = Math.round(startIndex * pxPerIndex);
     let rightOffset = Math.round(endIndex * pxPerIndex);
@@ -433,17 +439,17 @@ function makeSetMapSelectorState(domRoot, chartLength) {
       leftOffset = middleOffset - chartSelectorGripWidth;
       rightOffset = middleOffset + chartSelectorGripWidth;
     }
+    const outsideLeftOffset = leftOffset + chartSelectorGripWidth;
+    const outsideRightOffset = rightOffset - chartSelectorGripWidth;
 
-    selectorOutsideLeft.style.width = leftOffset + chartSelectorGripWidth + 'px'; // Using transform scaleX is unreliable when the page is zoomed
-    selectorOutsideRight.style.width = selectorWidth - rightOffset + chartSelectorGripWidth + 'px';
+    setCSSTransform(selectorOutsideLeft, `scaleX(${outsideLeftOffset / selectorWidth})`);
+    setCSSTransform(selectorOutsideRight, `scaleX(${(selectorWidth - outsideRightOffset) / selectorWidth})`);
+
+    const horizontalBordersTransform = `translateX(${outsideLeftOffset}px) scaleX(${(outsideRightOffset - outsideLeftOffset) / selectorWidth})`;
     setCSSTransform(selectorBorderLeft, `translateX(${leftOffset}px)`);
     setCSSTransform(selectorBorderRight, `translateX(${rightOffset - selectorWidth}px)`);
-
-    const horizontalBordersTransform = `translateX(${leftOffset + chartSelectorGripWidth}px)`;
     setCSSTransform(selectorBorderTop, horizontalBordersTransform);
     setCSSTransform(selectorBorderBottom, horizontalBordersTransform);
-    selectorBorderTop.style.width =
-      selectorBorderBottom.style.width = rightOffset - leftOffset - chartSelectorGripWidth * 2 + 'px';
   });
 }
 
