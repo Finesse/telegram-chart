@@ -2,10 +2,8 @@ import {modulo} from '../../../helpers/number';
 import {mixNumberColors, numberColorToRGBA} from '../../../helpers/color';
 import {
   fontFamily,
-  chartScalePrimaryLineColors,
-  chartScalePrimaryLineOpacities,
-  chartScaleSecondaryLineColors,
-  chartScaleSecondaryLineOpacities,
+  chartScaleLineColors,
+  chartScaleLineOpacities,
   chartScaleLineWidth,
   chartScaleLabelColors,
   chartScaleLabelFontSize,
@@ -30,10 +28,8 @@ export default function drawValueScale({
 }) {
   const lineWidth = chartScaleLineWidth * pixelRatio;
   const labelOffset = chartValueScaleLabelMargin * pixelRatio;
-  const primaryLineColor = mixNumberColors(chartScalePrimaryLineColors[0], chartScalePrimaryLineColors[1], theme);
-  const primaryLineOpacity = mixNumbers(chartScalePrimaryLineOpacities[0], chartScalePrimaryLineOpacities[1], theme);
-  const secondaryLineColor = mixNumberColors(chartScaleSecondaryLineColors[0], chartScaleSecondaryLineColors[1], theme);
-  const secondaryLineOpacity = mixNumbers(chartScaleSecondaryLineOpacities[0], chartScaleSecondaryLineOpacities[1], theme);
+  const lineColor = mixNumberColors(chartScaleLineColors[0], chartScaleLineColors[1], theme);
+  const lineOpacity = mixNumbers(chartScaleLineOpacities[0], chartScaleLineOpacities[1], theme);
   const labelColor = mixNumberColors(chartScaleLabelColors[0], chartScaleLabelColors[1], theme);
 
   const {
@@ -74,11 +70,8 @@ export default function drawValueScale({
     }
 
     const notchY = Math.round(y + height - (value - fromValue) * yPerValue);
-    const isPrimary = value === 0;
 
-    ctx.strokeStyle = isPrimary
-      ? numberColorToRGBA(primaryLineColor, primaryLineOpacity * opacity)
-      : numberColorToRGBA(secondaryLineColor, secondaryLineOpacity * opacity);
+    ctx.strokeStyle = numberColorToRGBA(lineColor, lineOpacity * opacity);
     ctx.beginPath();
     ctx.moveTo(x, notchY - lineWidth / 2);
     ctx.lineTo(x + width, notchY - lineWidth / 2);

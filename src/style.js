@@ -1,4 +1,5 @@
 export const fontFamily = 'Helvetica Neue, Helvetica, Roboto, Arial, sans-serif';
+export const textColors = [0x000000, 0xffffff];
 export const backgroundColors = [0xffffff, 0x242f3e];
 
 export const chartSidePadding = 12;
@@ -21,21 +22,19 @@ export const chartSelectorNotchWidth = 2;
 export const chartSelectorNotchHeight = 10;
 export const chartSelectorNotchCornerRadius = 1;
 export const chartMainLineWidth = 2;
-export const chartScalePrimaryLineColors = [0x5b7589, 0x8391a3];
-export const chartScalePrimaryLineOpacities = [0.11, 0.15];
-export const chartScaleSecondaryLineColors = [0x5b7589, 0x8391a3];
-export const chartScaleSecondaryLineOpacities = [0.09, 0.06];
+export const chartScaleLineColors = [0x182D3B, 0xFFFFFF];
+export const chartScaleLineOpacities = [0.1, 0.1];
 export const chartScaleLineWidth = 1;
-export const chartScaleLabelColors = [0x96a2aa, 0x546778];
-export const chartScaleLabelFontSize = 10;
+export const chartScaleLabelColors = [0x8e8e93, 0x87909a];
+export const chartScaleLabelFontSize = 11;
 export const chartValueScaleLabelMargin = 4;
-export const chartDateScaleLabelMargin = 7;
+export const chartDateScaleLabelMargin = 8;
 export const chartSelectorGripWidth = 10;
 
 export const themeTransitionDuration = 300; // ms
 export const themeTransitionStyle = {
   transitionDuration: `${themeTransitionDuration}ms`,
-  transitionTimingFunction: 'cubic-bezier(0.455, 0.03, 0.515, 0.955)'
+  transitionTimingFunction: 'ease-in-out'
 };
 export const themeTransitionCSS = `transition-duration: ${themeTransitionStyle.transitionDuration};`
   + `transition-timing-function: ${themeTransitionStyle.transitionTimingFunction};`;

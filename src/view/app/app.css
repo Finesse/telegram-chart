@@ -7,7 +7,7 @@
 
 :global(.dayTheme) {
   background: #fff;
-  color: #222222;
+  color: #000;
 }
 
 :global(.nightTheme) {

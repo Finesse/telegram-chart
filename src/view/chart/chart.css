@@ -34,11 +34,11 @@
   flex: auto;
   min-height: 160px;
   position: relative;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .chart canvas {
   user-select: none;
-  -webkit-tap-highlight-color: transparent;
   position: absolute;
 }
 .chart .mapCanvas {
