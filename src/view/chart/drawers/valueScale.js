@@ -43,7 +43,7 @@ export default function drawValueScale({
 
   ctx.lineWidth = lineWidth;
   ctx.lineCap = 'butt';
-  ctx.font = `${chartScaleLabelFontSize * pixelRatio}px/1 ${fontFamily}`;
+  ctx.font = `${Math.round(chartScaleLabelFontSize * pixelRatio)}px/1 ${fontFamily}`;
   ctx.textBaseline = 'bottom';
   ctx.textAlign = 'left';
 

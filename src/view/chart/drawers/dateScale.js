@@ -26,7 +26,7 @@ export default function drawDateScale({
     return;
   }
 
-  ctx.font = `${chartScaleLabelFontSize * pixelRatio}px/1 ${fontFamily}`;
+  ctx.font = `${Math.round(chartScaleLabelFontSize * pixelRatio)}px/1 ${fontFamily}`;
   ctx.textBaseline = 'top';
   ctx.textAlign = 'center';
 
@@ -62,6 +62,6 @@ export default function drawDateScale({
     }
 
     ctx.fillStyle = numberColorToRGBA(textColor, opacity);
-    ctx.fillText(formatDateForDateScale(dates[index]), x, y);
+    ctx.fillText(formatDateForDateScale(dates[index]), Math.round(x), y);
   }
 }

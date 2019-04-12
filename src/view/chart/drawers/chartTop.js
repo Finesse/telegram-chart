@@ -61,7 +61,7 @@ export default function makeChartTop(ctx) {
       position: endMonth,
       getItemText: getMonthText
     });
-    rightPosition -= Math.max(1.46 * fontSize, drawRotatingDisplay({
+    rightPosition -= Math.max(1.39 * fontSize, drawRotatingDisplay({
       ...commonArguments,
       x: rightPosition,
       position: endDay,

@@ -40,8 +40,9 @@ export default function drawRotatingDisplay({
     }
 
     // Measure the text width
+    // todo: Measuring takes much time. Try to optimize it by precomputing.
     const itemText = getItemText(itemIndex);
-    ctx.font = fontStringBeforeSize + ' ' + fontSize + fontStringAfterSize;
+    ctx.font = fontStringBeforeSize + Math.round(fontSize) + fontStringAfterSize;
     const itemWidth = ctx.measureText(itemText).width;
     averageWidth += itemWidth * (1 - distanceToCenter);
 
@@ -66,9 +67,10 @@ export default function drawRotatingDisplay({
     const itemY = y + (itemIndex - position) * fontSize * lineHeight * edgeYRelativeOffset;
 
     // Draw the text
-    ctx.font = fontStringBeforeSize + ' ' + (fontSize * scale) + fontStringAfterSize;
+    // The text is drawn MUCH faster when the font size is integer
+    ctx.font = fontStringBeforeSize + Math.round(fontSize * scale) + fontStringAfterSize;
     ctx.fillStyle = numberColorToRGBA(color, opacity * (1 - distanceToCenter));
-    ctx.fillText(itemText, itemX, itemY);
+    ctx.fillText(itemText, Math.round(itemX), Math.round(itemY));
   }
 
   return averageWidth;

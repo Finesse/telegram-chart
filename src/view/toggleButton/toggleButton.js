@@ -22,6 +22,7 @@ export default function makeToggleButton(color, name, isOn, onToggle, className)
   }
 
   function applyState() {
+    // todo: Eliminate the painting stage by not changing the text color
     if (isOn) {
       button.classList.add(styles.on);
       button.style.backgroundColor = solidColor;
