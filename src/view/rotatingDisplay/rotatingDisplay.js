@@ -27,12 +27,11 @@ export default function makeRotatingDisplay(getItemText, topAlign = 0.5, bottomA
   function getItemElementStyle(itemIndex, displayIndex) {
     const distanceToCenter = Math.abs(itemIndex - displayIndex);
     const scale = 1 - distanceToCenter * 0.5;
-    const relativeTotalSize = 1 / scale;
-    const relativeMoveToEdgeDistance = relativeTotalSize / 2 - 0.5;
+    const moveToEdgeDistance = 0.5 - scale / 2;
     const align = itemIndex > displayIndex ? bottomAlign : topAlign;
 
     return {
-      transform: `scale(${scale}) translate(${(align - 0.5) * 2 * relativeMoveToEdgeDistance * 100}%, ${(itemIndex - displayIndex) * 80}%)`,
+      transform: `translate(${(align - 0.5) * 2 * moveToEdgeDistance * 100}%, ${(itemIndex - displayIndex) * 60}%) scale(${scale})`,
       opacity: 1 - distanceToCenter
     };
   }

@@ -53,6 +53,6 @@ export default function makeChartMainWithoutX(ctx, linesData) {
       pixelRatio
     });
 
-    drawTopFade(x, y, width, chartTopFadeHeight * pixelRatio, theme);
+    drawTopFade(x, y, width, chartTopFadeHeight * pixelRatio);
   });
 }
