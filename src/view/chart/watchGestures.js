@@ -1,4 +1,17 @@
-import {chartMapHeight, chartSidePadding, chartMainLinesTopMargin, chartMainLinesBottomMargin} from '../../style';
+import {
+  chartMapHeight,
+  chartSidePadding,
+  chartMainLinesTopMargin,
+  chartMainLinesBottomMargin,
+  chartMapBottom,
+  chartSelectorGripWidth,
+} from '../../style';
+import {watchMouseDrag, watchTouchDrag, watchHover} from '../../helpers/gesture';
+import {isInRectangle} from '../../helpers/geometry';
+
+const mapGripOutsideOffset = 30;
+const mapGripInsideOffset = Math.max(chartSelectorGripWidth, 15);
+const mapGripVerticalOffset = 10;
 
 /**
  * Watches for different gestures on the chart (drag the map, hover the lines, etc.)
@@ -7,6 +20,39 @@ export default function watchGestures(element, chartState, callbacks) {
   let startMapSelectorDrag = null;
   let middleMapSelectorDrag = null;
   let endMapSelectorDrag = null;
+
+  element.addEventListener('mousedown', handleMouseDown);
+  element.addEventListener('touchstart', handleTouchStart, {passive: false});
+
+  const detailsHoverWatcher = watchHover({
+    element,
+    checkHover: event => {
+      const {x, y} = getEventRelativeCoordinates(event);
+      return isInMapLines(x, y);
+    },
+    onMove: event => {
+      const {x} = getEventRelativeCoordinates(event);
+      const {x: linesX, width: linesWidth} = getMainLinesBounds();
+      callbacks.detailsPosition((x - linesX) / (linesWidth || 1))
+    },
+    onEnd: () => callbacks.detailsPosition(null)
+  });
+
+  return {
+    setChartState(newState) {
+      chartState = {...chartState, ...newState};
+    },
+    destroy() {
+      element.removeEventListener('mousedown', handleMouseDown);
+      element.removeEventListener('touchstart', handleTouchStart);
+
+      for (const watcher of [detailsHoverWatcher, startMapSelectorDrag, middleMapSelectorDrag, endMapSelectorDrag]) {
+        if (watcher) {
+          watcher.destroy();
+        }
+      }
+    }
+  };
 
   function handleMouseDown(event) {
     event.preventDefault();
@@ -116,7 +162,11 @@ export default function watchGestures(element, chartState, callbacks) {
   function isInMapSelectionStart(targetX, targetY) {
     const {x, y, width, height} = getMapBounds();
 
-    return isInRectangle(targetX, targetY, x + width * chartState.mapSelectorStart - 30, y - 10, 40, height + 20);
+    return isInRectangle(
+      targetX, targetY,
+      x + width * chartState.mapSelectorStart - mapGripOutsideOffset, y - mapGripVerticalOffset,
+      mapGripInsideOffset + mapGripOutsideOffset, height + mapGripVerticalOffset * 2
+    );
   }
 
   /**
@@ -125,7 +175,11 @@ export default function watchGestures(element, chartState, callbacks) {
   function isInMapSelectionEnd(targetX, targetY) {
     const {x, y, width, height} = getMapBounds();
 
-    return isInRectangle(targetX, targetY, x + width * chartState.mapSelectorEnd - 10, y - 10, 40, height + 20);
+    return isInRectangle(
+      targetX, targetY,
+      x + width * chartState.mapSelectorEnd - mapGripInsideOffset, y - mapGripVerticalOffset,
+      mapGripInsideOffset + mapGripOutsideOffset, height + mapGripVerticalOffset * 2
+    );
   }
 
   /**
@@ -136,8 +190,8 @@ export default function watchGestures(element, chartState, callbacks) {
 
     return isInRectangle(
       targetX, targetY,
-      x + width * chartState.mapSelectorStart, y - 10,
-      width * (chartState.mapSelectorEnd - chartState.mapSelectorStart), height + 20
+      x + width * chartState.mapSelectorStart, y - mapGripVerticalOffset,
+      width * (chartState.mapSelectorEnd - chartState.mapSelectorStart), height + mapGripVerticalOffset * 2
     );
   }
 
@@ -169,7 +223,7 @@ export default function watchGestures(element, chartState, callbacks) {
 
     return {
       x: chartSidePadding,
-      y: clientHeight - chartMapHeight,
+      y: clientHeight - chartMapHeight - chartMapBottom,
       width: clientWidth - chartSidePadding * 2,
       height: chartMapHeight
     };
@@ -185,171 +239,4 @@ export default function watchGestures(element, chartState, callbacks) {
       height: clientHeight - chartMainLinesTopMargin - chartMainLinesBottomMargin - chartMapHeight
     };
   }
-
-  element.addEventListener('mousedown', handleMouseDown);
-  element.addEventListener('touchstart', handleTouchStart, {passive: false});
-
-  const detailsHoverWatcher = watchHover({
-    element,
-    checkHover: event => {
-      const {x, y} = getEventRelativeCoordinates(event);
-      return isInMapLines(x, y);
-    },
-    onMove: event => {
-      const {x} = getEventRelativeCoordinates(event);
-      const {x: linesX, width: linesWidth} = getMainLinesBounds();
-      callbacks.detailsPosition((x - linesX) / (linesWidth || 1))
-    },
-    onEnd: () => callbacks.detailsPosition(null)
-  });
-
-  return {
-    setChartState(newState) {
-      chartState = {...chartState, ...newState};
-    },
-    destroy() {
-      element.removeEventListener('mousedown', handleMouseDown);
-      element.removeEventListener('touchstart', handleTouchStart);
-
-      for (const watcher of [detailsHoverWatcher, startMapSelectorDrag, middleMapSelectorDrag, endMapSelectorDrag]) {
-        if (watcher) {
-          watcher.destroy();
-        }
-      }
-    }
-  };
-}
-
-function isInRectangle(targetX, targetY, rectX, rectY, rectWidth, rectHeight) {
-  return targetX >= rectX && targetX < rectX + rectWidth
-    && targetY >= rectY && targetY < rectY + rectHeight;
-}
-
-/**
- * Triggers the move callback until the mouse drag is finished. Create in a mousedown event handler.
- */
-function watchMouseDrag({onMove, onEnd}) {
-  const handleMove = event => {
-    onMove(event);
-  };
-
-  const handleEnd = event => {
-    destroy();
-    onEnd(event);
-  };
-
-  window.addEventListener('mousemove', handleMove);
-  window.addEventListener('mouseup', handleEnd);
-  window.addEventListener('mouseleave', handleEnd);
-
-  const destroy = () => {
-    window.removeEventListener('mousemove', handleMove);
-    window.removeEventListener('mouseup', handleEnd);
-    window.removeEventListener('mouseleave', handleEnd);
-  };
-
-  return {destroy};
-}
-
-/**
- * Triggers the move callback until the touch move is finished. Create in a touchstart event handler.
- */
-function watchTouchDrag({startTouch, eventTarget = window, onMove, onEnd}) {
-  const getTouch = event => {
-    for (const touch of event.changedTouches) {
-      if (touch.identifier === startTouch.identifier) {
-        return touch;
-      }
-    }
-
-    return null;
-  };
-
-  const handleMove = event => {
-    const touch = getTouch(event);
-    if (touch) {
-      onMove(touch);
-    }
-  };
-
-  const handleEnd = event => {
-    const touch = getTouch(event);
-    if (touch) {
-      destroy();
-      onEnd(touch);
-    }
-  };
-
-  window.addEventListener('touchmove', handleMove);
-  window.addEventListener('touchend', handleEnd);
-  window.addEventListener('touchcancel', handleEnd);
-
-  const destroy = () => {
-    window.removeEventListener('touchmove', handleMove);
-    window.removeEventListener('touchend', handleEnd);
-    window.removeEventListener('touchcancel', handleEnd);
-  };
-
-  return {destroy};
-}
-
-/**
- *
- */
-function watchHover({element, onMove, onEnd, checkHover = event => true}) {
-  let hoverId = null;
-
-  const eachSubEvent = (event, callback) => {
-    if (event.type.startsWith('mouse')) {
-      callback('mouse', event);
-    } else if (event.type.startsWith('touch')) {
-      for (const touch of event.changedTouches) {
-        callback(`touch${touch.identifier}`, touch);
-      }
-    }
-  };
-
-  const handleMove = event => {
-    eachSubEvent(event, (id, event) => {
-      if ((hoverId === null || id === hoverId)) {
-        if (checkHover(event)) {
-          hoverId = id;
-          onMove(event);
-        } else if (hoverId !== null) {
-          hoverId = null;
-          onEnd(event);
-        }
-      }
-    });
-  };
-
-  const handleEnd = event => {
-    eachSubEvent(event, (id, event) => {
-      if (hoverId === id) {
-        hoverId = null;
-        onEnd(event);
-      }
-    });
-  };
-
-  const moveEvents = ['mouseenter', 'mousemove', 'touchstart', 'touchmove'];
-  const endEvents = ['mouseleave', 'touchend', 'touchcancel'];
-
-  for (const name of moveEvents) {
-    element.addEventListener(name, handleMove);
-  }
-  for (const name of endEvents) {
-    element.addEventListener(name, handleEnd);
-  }
-
-  return {
-    destroy() {
-      for (const name of moveEvents) {
-        element.removeEventListener(name, handleMove);
-      }
-      for (const name of endEvents) {
-        element.removeEventListener(name, handleEnd);
-      }
-    }
-  };
 }

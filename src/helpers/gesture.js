@@ -65,3 +65,61 @@ export function watchTouchDrag({startTouch, eventTarget = window, onMove, onEnd}
 
   return {destroy};
 }
+
+export function watchHover({element, onMove, onEnd, checkHover = event => true}) {
+  let hoverId = null;
+
+  const eachSubEvent = (event, callback) => {
+    if (event.type.startsWith('mouse')) {
+      callback('mouse', event);
+    } else if (event.type.startsWith('touch')) {
+      for (const touch of event.changedTouches) {
+        callback(`touch${touch.identifier}`, touch);
+      }
+    }
+  };
+
+  const handleMove = event => {
+    eachSubEvent(event, (id, event) => {
+      if ((hoverId === null || id === hoverId)) {
+        if (checkHover(event)) {
+          hoverId = id;
+          onMove(event);
+        } else if (hoverId !== null) {
+          hoverId = null;
+          onEnd(event);
+        }
+      }
+    });
+  };
+
+  const handleEnd = event => {
+    eachSubEvent(event, (id, event) => {
+      if (hoverId === id) {
+        hoverId = null;
+        onEnd(event);
+      }
+    });
+  };
+
+  const moveEvents = ['mouseenter', 'mousemove', 'touchstart', 'touchmove'];
+  const endEvents = ['mouseleave', 'touchend', 'touchcancel'];
+
+  for (const name of moveEvents) {
+    element.addEventListener(name, handleMove);
+  }
+  for (const name of endEvents) {
+    element.addEventListener(name, handleEnd);
+  }
+
+  return {
+    destroy() {
+      for (const name of moveEvents) {
+        element.removeEventListener(name, handleMove);
+      }
+      for (const name of endEvents) {
+        element.removeEventListener(name, handleEnd);
+      }
+    }
+  };
+}

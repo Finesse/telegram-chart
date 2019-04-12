@@ -7,14 +7,13 @@ import {
   makeTransition
 } from '../../helpers/animationGroup';
 import getMaxOnRange from '../../helpers/getMaxOnRange';
-import {setCSSTransform} from '../../helpers/dom';
 import {formatDate} from '../../helpers/date';
-import {themeTransitionDuration, themeTransitionCSS, chartSelectorGripWidth} from '../../style';
+import {themeTransitionDuration, chartMapHeight, chartMapBottom, chartSidePadding} from '../../style';
 import makeToggleButton from '../toggleButton/toggleButton';
 import makeColumnDetails from '../columnDetails/columnDetails';
 import makeRotatingDisplay from '../rotatingDisplay/rotatingDisplay';
 import makeSafariAssKicker from '../safariAssKicker/safariAssKicker';
-import watchMapGestures from './watchMapGestures';
+import watchGestures from './watchGestures';
 import styles from './chart.css?module';
 import makeChartDrawer from './drawers/chart';
 
@@ -26,20 +25,9 @@ const template = `
     <h3 class="${styles.name}"></h3>
     <div class="${styles.range}"></div>
   </header>
-  <div class="${styles.chartMain}">
-    <canvas></canvas>
-  </div>
-  <div class="${styles.chartMap}">
-    <div class="${styles.touchCatcher}"></div>
-    <canvas></canvas>
-    <div class="${styles.selectorOutsideBox}">
-      <div class="${styles.selectorOutside} ${styles.right}" style="${themeTransitionCSS}"></div>
-      <div class="${styles.selectorOutside} ${styles.left}" style="${themeTransitionCSS}"></div>
-    </div>
-    <div class="${styles.selectorBorder} ${styles.top}" style="${themeTransitionCSS}"></div>
-    <div class="${styles.selectorBorder} ${styles.right}" style="${themeTransitionCSS} width: ${chartSelectorGripWidth}px;"></div>
-    <div class="${styles.selectorBorder} ${styles.bottom}" style="${themeTransitionCSS}"></div>
-    <div class="${styles.selectorBorder} ${styles.left}" style="${themeTransitionCSS} width: ${chartSelectorGripWidth}px;"></div>
+  <div class="${styles.chart}">
+    <canvas class="${styles.mapCanvas}" style="left: ${chartSidePadding}px; bottom: ${chartMapBottom}px; width: calc(100% - ${chartSidePadding * 2}px); height: ${chartMapHeight}px;"></canvas>
+    <canvas class="${styles.mainCanvas}"></canvas>
   </div>
   <div class="${styles.toggles}"></div>
 </section>
@@ -73,24 +61,20 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
 
   // Creating a DOM and a WebGL renderer
   const {
-    chartMapBox,
+    chartBox,
     mainCanvas,
     mapCanvas,
     setRangeStartDateIndex,
-    setMapSelectorState,
     setDetailsState,
     kickSafariAss
   } = createDOM(element, name, lines, dates, state.lines, handleToggleLine);
   const updateCanvases = makeChartDrawer(mainCanvas, mapCanvas, lines, dates);
-  const mapGesturesWatcher = watchMapGestures(
-    chartMapBox,
-    getStateForMapGestureWatcher(dates, state.startIndex, state.endIndex),
-    {
-      selectorStart: handleStartIndexChange,
-      selectorMiddle: handleIndexMove,
-      selectorEnd: handleEndIndexChange,
-    }
-  );
+  const gesturesWatcher = watchGestures(chartBox, getStateForGestureWatcher(dates, state.startIndex, state.endIndex), {
+    mapSelectorStart: handleStartIndexChange,
+    mapSelectorMiddle: handleIndexMove,
+    mapSelectorEnd: handleEndIndexChange,
+    detailsPosition: handleDetailsPositionChange
+  });
 
   function handleToggleLine(key, enabled) {
     const {lines} = state;
@@ -188,7 +172,7 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
       dateNotchScale: getDateNotchScale(endIndex - startIndex)
     });
 
-    mapGesturesWatcher.setChartState(getStateForMapGestureWatcher(dates, startIndex, endIndex));
+    gesturesWatcher.setChartState(getStateForGestureWatcher(dates, startIndex, endIndex));
   });
 
   const applyDetailsPosition = memoizeOne((detailsScreenPosition, startIndex, endIndex) => {
@@ -262,9 +246,9 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
       theme
     }, linesOpacity);
 
-    setRangeStartDateIndex(startIndex);
+    // setRangeStartDateIndex(startIndex);
 
-    setMapSelectorState(startIndex, endIndex, mapCanvasWidth);
+    // setMapSelectorState(startIndex, endIndex, mapCanvasWidth);
 
     setDetailsState(detailsScreenPosition, detailsOpacity, Math.round(detailsIndex), linedState);
 
@@ -405,10 +389,8 @@ function createDOM(root, name, linesData, dates, linesState, onToggle) {
   rangeBox.appendChild(rangeStartElement);
 
   const columnDetails = makeColumnDetails(linesData, dates, styles.details);
-  const chartMainBox = root.querySelector(`.${styles.chartMain}`);
-  chartMainBox.appendChild(columnDetails.element);
-
-  const chartMapBox = root.querySelector(`.${styles.chartMap}`);
+  const chartBox = root.querySelector(`.${styles.chart}`);
+  chartBox.appendChild(columnDetails.element);
 
   const togglesBox = root.querySelector(`.${styles.toggles}`);
   for (const [key, {color, name}] of Object.entries(linesData)) {
@@ -425,59 +407,18 @@ function createDOM(root, name, linesData, dates, linesState, onToggle) {
   root.appendChild(safariAssKickerElement);
 
   return {
-    chartMapBox,
-    mainCanvas: root.querySelector(`.${styles.chartMain} canvas`),
-    mapCanvas: root.querySelector(`.${styles.chartMap} canvas`),
+    chartBox,
+    mainCanvas: root.querySelector(`.${styles.mainCanvas}`),
+    mapCanvas: root.querySelector(`.${styles.mapCanvas}`),
     setRangeStartDateIndex,
-    setMapSelectorState: makeSetMapSelectorState(root, dates.length - 1),
     setDetailsState: columnDetails.setState,
     kickSafariAss
   };
 }
 
-/**
- * Makes a function that updates the map selector DOM state
- */
-function makeSetMapSelectorState(domRoot, chartLength) {
-  const [selectorOutsideRight, selectorOutsideLeft] = domRoot.querySelectorAll(`.${styles.selectorOutside}`);
-  const [
-    selectorBorderTop,
-    selectorBorderRight,
-    selectorBorderBottom,
-    selectorBorderLeft
-  ] = domRoot.querySelectorAll(`.${styles.selectorBorder}`);
-
-  return memoizeOne((startIndex, endIndex, selectorWidth) => {
-    if (selectorWidth === 0 || chartLength === 0) {
-      return;
-    }
-
-    const pxPerIndex = selectorWidth / chartLength;
-    let leftOffset = Math.round(startIndex * pxPerIndex);
-    let rightOffset = Math.round(endIndex * pxPerIndex);
-    if (rightOffset - leftOffset < chartSelectorGripWidth * 2) {
-      const middleOffset = Math.round((leftOffset + rightOffset) / 2);
-      leftOffset = middleOffset - chartSelectorGripWidth;
-      rightOffset = middleOffset + chartSelectorGripWidth;
-    }
-    const outsideLeftOffset = leftOffset + chartSelectorGripWidth;
-    const outsideRightOffset = rightOffset - chartSelectorGripWidth;
-
-    // todo: Try plain width and left instead of transform
-    setCSSTransform(selectorOutsideLeft, `scaleX(${outsideLeftOffset / selectorWidth})`);
-    setCSSTransform(selectorOutsideRight, `scaleX(${(selectorWidth - outsideRightOffset) / selectorWidth})`);
-
-    const horizontalBordersTransform = `translateX(${outsideLeftOffset}px) scaleX(${(outsideRightOffset - outsideLeftOffset) / selectorWidth})`;
-    setCSSTransform(selectorBorderLeft, `translateX(${leftOffset}px)`);
-    setCSSTransform(selectorBorderRight, `translateX(${rightOffset - selectorWidth}px)`);
-    setCSSTransform(selectorBorderTop, horizontalBordersTransform);
-    setCSSTransform(selectorBorderBottom, horizontalBordersTransform);
-  });
-}
-
-function getStateForMapGestureWatcher(dates, startIndex, endIndex) {
+function getStateForGestureWatcher(dates, startIndex, endIndex) {
   return {
-    selectorStart: startIndex / ((dates.length - 1) || 1),
-    selectorEnd: endIndex / ((dates.length - 1) || 1)
+    mapSelectorStart: startIndex / ((dates.length - 1) || 1),
+    mapSelectorEnd: endIndex / ((dates.length - 1) || 1)
   };
 }

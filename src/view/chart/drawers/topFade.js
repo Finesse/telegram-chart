@@ -1,6 +1,6 @@
 import memoizeOne from 'memoize-one';
+import {rectanglePath} from '../../../helpers/canvas';
 
-// todo: Check the performance impact
 export default function makeTopFade(ctx) {
   const getGradient = memoizeOne(height => {
     const gradient = ctx.createLinearGradient(0, 0, 0, height);
@@ -12,10 +12,7 @@ export default function makeTopFade(ctx) {
   return (x, y, width, height) => {
     ctx.save();
     ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.lineTo(x + width, y);
-    ctx.lineTo(x + width, y + height);
-    ctx.lineTo(x, y + height);
+    rectanglePath(ctx, x, y, width, height);
     ctx.clip();
     ctx.globalCompositeOperation = 'destination-in';
     ctx.fillStyle = getGradient(height);
