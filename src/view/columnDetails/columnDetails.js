@@ -1,7 +1,7 @@
 import memoizeOne from 'memoize-one';
 import {themeTransitionCSS} from '../../style';
 import {htmlToElement} from '../../helpers/dom';
-import {formatDate} from '../../helpers/date';
+import {formatDateForDetails} from '../../helpers/date';
 import styles from './columnDetails.css?module';
 
 const template = `
@@ -54,7 +54,7 @@ export default function makeToggleButton(linesData, dates, className) {
     contentBlock.style.opacity = opacity;
     contentBlock.style.transform = `translateY(${(opacity - 1) * 10}px)`;
 
-    header.textContent = formatDate(dates[dateIndex], true);
+    header.textContent = formatDateForDetails(dates[dateIndex]);
 
     let isAnyLineEnabled = false;
 

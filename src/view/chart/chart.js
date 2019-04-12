@@ -7,11 +7,10 @@ import {
   makeTransition
 } from '../../helpers/animationGroup';
 import getMaxOnRange from '../../helpers/getMaxOnRange';
-import {formatDate} from '../../helpers/date';
+import {getDateComponentsForRange} from '../../helpers/date';
 import {themeTransitionDuration, chartMapHeight, chartMapBottom, chartSidePadding} from '../../style';
 import makeToggleButton from '../toggleButton/toggleButton';
 import makeColumnDetails from '../columnDetails/columnDetails';
-import makeRotatingDisplay from '../rotatingDisplay/rotatingDisplay';
 import makeSafariAssKicker from '../safariAssKicker/safariAssKicker';
 import watchGestures from './watchGestures';
 import styles from './chart.css?module';
@@ -21,10 +20,7 @@ const minMapSelectionLength = 5;
 
 const template = `
 <section class="${styles.root}">
-  <header class="${styles.header}">
-    <h3 class="${styles.name}"></h3>
-    <div class="${styles.range}"></div>
-  </header>
+  <h3 class="${styles.name}"></h3>
   <div class="${styles.chart}">
     <canvas class="${styles.mapCanvas}" style="left: ${chartSidePadding}px; bottom: ${chartMapBottom}px; width: calc(100% - ${chartSidePadding * 2}px); height: ${chartMapHeight}px;"></canvas>
     <canvas class="${styles.mainCanvas}"></canvas>
@@ -51,20 +47,13 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
   /**
    * Stores the animated chart state
    */
-  const transitions = createTransitionGroup(
-    state,
-    getMapMaxValue(lines, state.lines),
-    getMainMaxValue(lines, state.lines, state.startIndex, state.endIndex),
-    state.theme,
-    updateView
-  );
+  const transitions = createTransitionGroup(lines, dates, state, updateView);
 
   // Creating a DOM and a WebGL renderer
   const {
     chartBox,
     mainCanvas,
     mapCanvas,
-    setRangeStartDateIndex,
     setDetailsState,
     kickSafariAss
   } = createDOM(element, name, lines, dates, state.lines, handleToggleLine);
@@ -168,8 +157,17 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
   });
 
   const applyDatesRange = memoizeOne((dates, startIndex, endIndex) => {
+    const startDate = getDataDateComponentsForRange(dates, startIndex);
+    const endDate = getDataDateComponentsForRange(dates, endIndex);
+
     transitions.setTargets({
-      dateNotchScale: getDateNotchScale(endIndex - startIndex)
+      dateNotchScale: getDateNotchScale(endIndex - startIndex),
+      rangeStartDay: startDate.day,
+      rangeStartMonth: startDate.month,
+      rangeStartYear: startDate.year,
+      rangeEndDay: endDate.day,
+      rangeEndMonth: endDate.month,
+      rangeEndYear: endDate.year,
     });
 
     gesturesWatcher.setChartState(getStateForGestureWatcher(dates, startIndex, endIndex));
@@ -219,6 +217,12 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
       dateNotchScale,
       detailsScreenPosition: [detailsScreenPosition, detailsOpacity],
       theme,
+      rangeStartDay,
+      rangeStartMonth,
+      rangeStartYear,
+      rangeEndDay,
+      rangeEndMonth,
+      rangeEndYear,
       ...linesAnimatedState
     } = transitions.getState();
 
@@ -243,6 +247,12 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
       endIndex,
       detailsIndex,
       detailsOpacity,
+      rangeStartDay,
+      rangeStartMonth,
+      rangeStartYear,
+      rangeEndDay,
+      rangeEndMonth,
+      rangeEndYear,
       theme
     }, linesOpacity);
 
@@ -294,7 +304,12 @@ function getInitialState(lines, dates, theme) {
 /**
  * Makes the animatable state of the chart
  */
-function createTransitionGroup({startIndex, endIndex, lines}, mapMaxValue, mainMaxValue, theme, onUpdate) {
+function createTransitionGroup(lines, dates, {startIndex, endIndex, theme, lines: linesState}, onUpdate) {
+  const mapMaxValue = getMapMaxValue(lines, linesState);
+  const mainMaxValue = getMainMaxValue(lines, linesState, startIndex, endIndex);
+  const startDate = getDataDateComponentsForRange(dates, startIndex);
+  const endDate = getDataDateComponentsForRange(dates, endIndex);
+
   const transitions = {
     mapMaxValue: makeExponentialTransition(mapMaxValue),
     mainMaxValue: makeExponentialTransition(mainMaxValue),
@@ -311,6 +326,12 @@ function createTransitionGroup({startIndex, endIndex, lines}, mapMaxValue, mainM
         duration: 300
       })
     ),
+    rangeStartDay: makeTransition(startDate.day, { easing: quadOut }),
+    rangeStartMonth: makeTransition(startDate.month, { easing: quadOut }),
+    rangeStartYear: makeTransition(startDate.year, { easing: quadOut }),
+    rangeEndDay: makeTransition(endDate.day, { easing: quadOut }),
+    rangeEndMonth: makeTransition(endDate.month, { easing: quadOut }),
+    rangeEndYear: makeTransition(endDate.year, { easing: quadOut }),
     theme: makeTransition(theme === 'day' ? 0 : 1, {duration: themeTransitionDuration}),
   };
 
@@ -377,17 +398,6 @@ function createDOM(root, name, linesData, dates, linesState, onToggle) {
   const nameBox = root.querySelector(`.${styles.name}`);
   nameBox.textContent = name;
 
-  function formatRangeDate(index) {
-    if (index < 0 || index > dates.length - 1) {
-      return '';
-    }
-    return formatDate(dates[index]);
-  }
-
-  const rangeBox = root.querySelector(`.${styles.range}`);
-  const {element: rangeStartElement, setPosition: setRangeStartDateIndex} = makeRotatingDisplay(formatRangeDate, 1, 1);
-  rangeBox.appendChild(rangeStartElement);
-
   const columnDetails = makeColumnDetails(linesData, dates, styles.details);
   const chartBox = root.querySelector(`.${styles.chart}`);
   chartBox.appendChild(columnDetails.element);
@@ -410,7 +420,6 @@ function createDOM(root, name, linesData, dates, linesState, onToggle) {
     chartBox,
     mainCanvas: root.querySelector(`.${styles.mainCanvas}`),
     mapCanvas: root.querySelector(`.${styles.mapCanvas}`),
-    setRangeStartDateIndex,
     setDetailsState: columnDetails.setState,
     kickSafariAss
   };
@@ -421,4 +430,9 @@ function getStateForGestureWatcher(dates, startIndex, endIndex) {
     mapSelectorStart: startIndex / ((dates.length - 1) || 1),
     mapSelectorEnd: endIndex / ((dates.length - 1) || 1)
   };
+}
+
+function getDataDateComponentsForRange(dates, index) {
+  const timestamp = dates[Math.max(0, Math.min(Math.round(index), dates.length - 1))];
+  return getDateComponentsForRange(timestamp);
 }

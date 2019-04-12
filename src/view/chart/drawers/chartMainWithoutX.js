@@ -1,6 +1,6 @@
 import memoizeObjectArguments from '../../../helpers/memoizeObjectArguments';
 import {rectanglePath} from '../../../helpers/canvas';
-import {chartSidePadding, chartMainLinesTopMargin, chartTopFadeHeight} from '../../../style';
+import {chartSidePadding, chartMainLinesTopMargin, chartMainFadeHeight} from '../../../style';
 import drawMainLines from './mainLines';
 import drawValueScale from './valueScale';
 import makeTopFade from './topFade';
@@ -58,7 +58,7 @@ export default function makeChartMainWithoutX(ctx, linesData) {
       pixelRatio
     });
 
-    drawTopFade(x, y, width, chartTopFadeHeight * pixelRatio);
+    drawTopFade(x, y, width, chartMainFadeHeight * pixelRatio);
 
     ctx.restore();
   });

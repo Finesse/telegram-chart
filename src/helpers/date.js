@@ -1,31 +1,54 @@
 export const months = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
+  'January',
+  'February',
+  'March',
+  'April',
   'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec'
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December'
 ];
 
 export const weekDays = [
-  'Sun',
-  'Mon',
-  'Tue',
-  'Wen',
-  'Thu',
-  'Fri',
-  'Sat'
+  'Sunday',
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday'
 ];
 
-export function formatDate(timestamp, withWeekDay) {
+export const timestampInDay = 86400000;
+
+export function formatDateForDateScale(timestamp) {
   const date = new Date(timestamp);
-  return (withWeekDay ? (weekDays[date.getUTCDay()] + ', ') : '')
-    + months[date.getUTCMonth()]
+  return months[date.getUTCMonth()].slice(0, 3) + ' ' + date.getUTCDate();
+}
+
+export function formatDateForDetails(timestamp) {
+  const date = new Date(timestamp);
+  return weekDays[date.getUTCDay()].slice(0, 3)
+    + months[date.getUTCMonth()].slice(0, 3)
     + ' ' + date.getUTCDate();
+}
+
+export function getDayInMonth(timestamp) {
+  return new Date(timestamp).getUTCDate();
+}
+
+export function getDateComponentsForRange(timestamp) {
+  const date = new Date(timestamp);
+  const year = date.getUTCFullYear();
+  const monthIndex = date.getUTCMonth();
+
+  return {
+    year,
+    month: year * 12 + monthIndex,
+    day: Math.floor(timestamp / timestampInDay)
+  };
 }

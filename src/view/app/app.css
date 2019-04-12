@@ -2,6 +2,7 @@
   margin: 0;
   padding: 0;
   transition-property: background, color;
+  line-height: 1.4;
   /* font-family is set through the JS */
 }
 

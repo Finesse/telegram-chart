@@ -1,5 +1,12 @@
 import memoizeOne from 'memoize-one';
-import {chartMainLinesBottomMargin, chartMapHeight, chartMapBottom} from '../../../style';
+import {
+  chartMainLinesBottomMargin,
+  chartMapHeight,
+  chartMapBottom,
+  chartMainTopMargin,
+  chartSidePadding
+} from '../../../style';
+import makeChartTop from './chartTop';
 import makeChartMainWithoutX from './chartMainWithoutX';
 import makeChartX from './chartX';
 import makeMapLines from './mapLines';
@@ -19,6 +26,7 @@ export default function makeChart(mainCanvas, mapCanvas, linesData, dates) {
   });
 
   // The parts of the chart that can be updated independently
+  const drawChartTop = makeChartTop(mainCtx);
   const drawChartMainWithoutX = makeChartMainWithoutX(mainCtx, linesData);
   const drawChartX = makeChartX(mainCtx, dates);
   const drawMapLines = makeMapLines(mapCtx, linesData);
@@ -37,19 +45,42 @@ export default function makeChart(mainCanvas, mapCanvas, linesData, dates) {
     endIndex,
     detailsIndex,
     detailsOpacity,
+    rangeStartDay,
+    rangeStartMonth,
+    rangeStartYear,
+    rangeEndDay,
+    rangeEndMonth,
+    rangeEndYear,
     theme // Goes from 0 (day) to 1 (night)
   }, linesOpacity) => {
     const fromValue = 0;
-    const mainLinesY = mainCanvasHeight - (chartMainLinesBottomMargin + chartMapHeight + chartMapBottom) * pixelRatio;
+    const mainSectionY = chartMainTopMargin * pixelRatio;
+    const mainSectionHeight = mainCanvasHeight - (chartMainLinesBottomMargin + chartMapHeight + chartMapBottom) * pixelRatio - mainSectionY;
 
     updateMainCanvasSize(mainCanvasWidth, mainCanvasHeight);
     updateMapCanvasSize(mapCanvasWidth, mapCanvasHeight);
 
-    drawChartMainWithoutX({
+    drawChartTop({
       x: 0,
       y: 0,
       width: mainCanvasWidth,
-      height: mainLinesY,
+      height: mainSectionY,
+      rightMargin: chartSidePadding * pixelRatio,
+      startDay: rangeStartDay,
+      startMonth: rangeStartMonth,
+      startYear: rangeStartYear,
+      endDay: rangeEndDay,
+      endMonth: rangeEndMonth,
+      endYear: rangeEndYear,
+      pixelRatio,
+      theme
+    });
+
+    drawChartMainWithoutX({
+      x: 0,
+      y: mainSectionY,
+      width: mainCanvasWidth,
+      height: mainSectionHeight,
       minValue: fromValue,
       maxValue: mainMaxValue,
       maxValueNotchScale: mainMaxValueNotchScale,
@@ -61,9 +92,9 @@ export default function makeChart(mainCanvas, mapCanvas, linesData, dates) {
 
     drawChartX({
       x: 0,
-      y: mainLinesY,
+      y: mainSectionY + mainSectionHeight,
       width: mainCanvasWidth,
-      height: mainCanvasHeight - mainLinesY,
+      height: mainCanvasHeight - mainSectionY - mainSectionHeight,
       startIndex,
       endIndex,
       dateNotchScale,

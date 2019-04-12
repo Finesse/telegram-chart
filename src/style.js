@@ -3,9 +3,10 @@ export const textColors = [0x000000, 0xffffff];
 export const backgroundColors = [0xffffff, 0x242f3e];
 
 export const chartSidePadding = 12;
-export const chartTopFadeHeight = 18;
-export const chartMainLinesTopMargin = 20;
-export const chartMainLinesBottomMargin = 31;
+export const chartMainTopMargin = 32;
+export const chartMainFadeHeight = 16;
+export const chartMainLinesTopMargin = 18;
+export const chartMainLinesBottomMargin = 35;
 export const chartMapHeight = 40;
 export const chartMapBottom = 1;
 export const chartMapCornersRadius = 5;
@@ -30,6 +31,10 @@ export const chartScaleLabelFontSize = 11;
 export const chartValueScaleLabelMargin = 4;
 export const chartDateScaleLabelMargin = 8;
 export const chartSelectorGripWidth = 10;
+
+export const chartHeaderFontSize = 13;
+export const chartHeaderFontWeight = 'bold';
+export const chartHeaderBaselineOffset = 23;
 
 export const themeTransitionDuration = 300; // ms
 export const themeTransitionStyle = {

@@ -1,4 +1,4 @@
-import {formatDate} from '../../../helpers/date';
+import {formatDateForDateScale} from '../../../helpers/date';
 import {mixNumberColors, numberColorToRGBA} from '../../../helpers/color';
 import {chartScaleLabelColors, chartScaleLabelFontSize, fontFamily} from '../../../style';
 
@@ -62,6 +62,6 @@ export default function drawDateScale({
     }
 
     ctx.fillStyle = numberColorToRGBA(textColor, opacity);
-    ctx.fillText(formatDate(dates[index]), x, y);
+    ctx.fillText(formatDateForDateScale(dates[index]), x, y);
   }
 }
