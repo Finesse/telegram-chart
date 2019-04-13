@@ -34,6 +34,7 @@ export default function makeChartTop(ctx) {
     rectanglePath(ctx, x, y, width, height);
     ctx.clip();
 
+    // todo: Decrease the header font sizes on narrow devices
     const fontSize = chartHeaderFontSize * pixelRatio;
     const spaceWidth = 4 / 13 * fontSize;
     const commonArguments = {

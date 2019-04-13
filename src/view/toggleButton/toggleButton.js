@@ -1,5 +1,6 @@
 import {htmlToElement} from '../../helpers/dom';
 import {numberColorToRGBA} from '../../helpers/color';
+import {watchLongTap} from '../../helpers/gesture';
 import styles from './toggleButton.css?module';
 
 const template = `
@@ -9,7 +10,7 @@ const template = `
 </button>
 `;
 
-export default function makeToggleButton(color, name, isOn, onToggle, className) {
+export default function makeToggleButton(color, name, onClick, onLongClick, className) {
   const solidColor = numberColorToRGBA(color, 1);
   const transparentColor = numberColorToRGBA(color, 0);
   const button = htmlToElement(template);
@@ -21,9 +22,19 @@ export default function makeToggleButton(color, name, isOn, onToggle, className)
     button.classList.add(className);
   }
 
-  function applyState() {
+  let currentState = null;
+
+  function setState(state) {
+    state = !!state;
+
+    if (state === currentState) {
+      return;
+    }
+
+    currentState = state;
+
     // todo: Eliminate the painting stage by not changing the text color
-    if (isOn) {
+    if (currentState) {
       button.classList.add(styles.on);
       button.style.backgroundColor = solidColor;
       nameElement.style.color = '';
@@ -34,17 +45,7 @@ export default function makeToggleButton(color, name, isOn, onToggle, className)
     }
   }
 
-  button.addEventListener('click', event => {
-    event.preventDefault();
-    isOn = !isOn;
-    try {
-      onToggle(isOn);
-    } finally {
-      applyState();
-    }
-  });
+  watchLongTap(button, onClick, onLongClick);
 
-  applyState();
-
-  return button;
+  return {element: button, setState};
 }

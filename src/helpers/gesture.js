@@ -69,16 +69,6 @@ export function watchTouchDrag({startTouch, eventTarget = window, onMove, onEnd}
 export function watchHover({element, onMove, onEnd, checkHover = event => true}) {
   let hoverId = null;
 
-  const eachSubEvent = (event, callback) => {
-    if (event.type.startsWith('mouse')) {
-      callback('mouse', event);
-    } else if (event.type.startsWith('touch')) {
-      for (const touch of event.changedTouches) {
-        callback(`touch${touch.identifier}`, touch);
-      }
-    }
-  };
-
   const handleMove = event => {
     eachSubEvent(event, (id, event) => {
       if ((hoverId === null || id === hoverId)) {
@@ -122,4 +112,111 @@ export function watchHover({element, onMove, onEnd, checkHover = event => true})
       }
     }
   };
+}
+
+export function watchLongTap(element, onShortTap, onLongTap, longTapTime = 500, maxTapDistance = 10) {
+  let tapId;
+  let tapStartCoordinates;
+  let timeoutId;
+
+  const permanentEventHandlers = {
+    mousedown: handleTapStart,
+    touchstart: handleTapStart,
+    touchmove: handleTapMove,
+    touchend: handleTapEnd,
+    touchcancel: handleTapEnd
+  };
+
+  for (const event in permanentEventHandlers) {
+    if (permanentEventHandlers.hasOwnProperty(event)) {
+      element.addEventListener(event, permanentEventHandlers[event]);
+    }
+  }
+
+  return {
+    destroy() {
+      clearAfterTap();
+      for (const event in permanentEventHandlers) {
+        if (permanentEventHandlers.hasOwnProperty(event)) {
+          element.removeEventListener(event, permanentEventHandlers[event]);
+        }
+      }
+    }
+  };
+
+  function handleTapStart(event) {
+    event.preventDefault();
+
+    eachSubEvent(event, (id, subEvent) => {
+      clearAfterTap();
+      tapId = id;
+      tapStartCoordinates = getEventCoordinates(subEvent);
+      timeoutId = setTimeout(handleTapTimeout, longTapTime);
+
+      if (id === 'mouse') {
+        window.addEventListener('mousemove', handleTapMove);
+        window.addEventListener('mouseup', handleTapEnd);
+      }
+    });
+  }
+
+  function handleTapMove(event) {
+    eachSubEvent(event, (id, subEvent) => {
+      if (id === tapId) {
+        if (!isInTapDistance(getEventCoordinates(subEvent))) {
+          clearAfterTap();
+        }
+      }
+    });
+  }
+
+  function handleTapEnd(event) {
+    eachSubEvent(event, id => {
+      if (id === tapId) {
+        clearAfterTap();
+        onShortTap();
+      }
+    });
+  }
+
+  function handleTapTimeout() {
+    clearAfterTap();
+    onLongTap();
+  }
+
+  function clearAfterTap() {
+    if (tapId === 'mouse') {
+      window.removeEventListener('mousemove', handleTapMove);
+      window.removeEventListener('mouseup', handleTapEnd);
+    }
+    if (timeoutId !== undefined) {
+      clearTimeout(timeoutId);
+      timeoutId = undefined;
+    }
+    tapId = undefined;
+    tapStartCoordinates = undefined;
+  }
+
+  function isInTapDistance(coordinates) {
+    if (!tapStartCoordinates) {
+      return false;
+    }
+
+    return (coordinates[0] - tapStartCoordinates[0]) ** 2 + (coordinates[1] - tapStartCoordinates[1]) ** 2
+      <= maxTapDistance ** 2;
+  }
+
+  function getEventCoordinates(event) {
+    return [event.clientX, event.clientY];
+  }
+}
+
+function eachSubEvent(event, callback) {
+  if (event.type.startsWith('mouse')) {
+    callback('mouse', event);
+  } else if (event.type.startsWith('touch')) {
+    for (const touch of event.changedTouches) {
+      callback(`touch${touch.identifier}`, touch);
+    }
+  }
 }

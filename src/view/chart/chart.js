@@ -32,9 +32,7 @@ const template = `
 /**
  * Draws and operates one chart
  *
- * @todo Round the elements positions considering the device pixel density
  * @todo Try to optimize the theme switch by not animating the charts that are not visible
- * @todo Cache the lines max values
  */
 export default function makeChart(element, {name, dates, lines}, initialTheme = 'day') {
   // The arguments store the unaltered chart state
@@ -55,8 +53,9 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
     mainCanvas,
     mapCanvas,
     setDetailsState,
+    setTogglesState,
     kickSafariAss
-  } = createDOM(element, name, lines, dates, state.lines, handleToggleLine);
+  } = createDOM(element, name, lines, dates, state.lines, handleToggleLine, handleLineToggleOther);
   const updateCanvases = makeChartDrawer(mainCanvas, mapCanvas, lines, dates);
   const gesturesWatcher = watchGestures(chartBox, getStateForGestureWatcher(dates, state.startIndex, state.endIndex), {
     mapSelectorStart: handleStartIndexChange,
@@ -65,12 +64,33 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
     detailsPosition: handleDetailsPositionChange
   });
 
-  function handleToggleLine(key, enabled) {
+  function handleToggleLine(key) {
     const {lines} = state;
 
     setState({
-      lines: {...lines, [key]: {...lines[key], enabled}}
+      lines: {
+        ...lines,
+        [key]: {
+          ...lines[key],
+          enabled: !lines[key].enabled
+        }
+      }
     });
+  }
+
+  function handleLineToggleOther(leaveKey) {
+    const {lines} = state;
+    const newLinesState = {};
+    const enableAll = areAllLinesExceptOneDisabled(lines, leaveKey);
+
+    for (const key of Object.keys(lines)) {
+      newLinesState[key] = {
+        ...lines[key],
+        enabled: enableAll || key === leaveKey
+      };
+    }
+
+    setState({ ...state, lines: newLinesState });
   }
 
   function handleWindowResize() {
@@ -207,7 +227,7 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
       mapCanvasWidth,
       mapCanvasHeight,
       pixelRatio,
-      lines: linedState
+      lines: linesState
     } = state;
 
     const {
@@ -256,11 +276,9 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
       theme
     }, linesOpacity);
 
-    // setRangeStartDateIndex(startIndex);
+    setDetailsState(detailsScreenPosition, detailsOpacity, Math.round(detailsIndex), linesState);
 
-    // setMapSelectorState(startIndex, endIndex, mapCanvasWidth);
-
-    setDetailsState(detailsScreenPosition, detailsOpacity, Math.round(detailsIndex), linedState);
+    setTogglesState(linesState);
 
     kickSafariAss();
   }
@@ -391,7 +409,7 @@ function getMainMaxValue(linesData, linesState, startIndex, endIndex) {
 /**
  * Creates the chart DOM
  */
-function createDOM(root, name, linesData, dates, linesState, onToggle) {
+function createDOM(root, name, linesData, dates, linesState, onLineToggle, onLineToggleOther) {
   root.innerHTML = template;
   root.querySelector(`.${styles.name}`).textContent = name;
 
@@ -403,15 +421,24 @@ function createDOM(root, name, linesData, dates, linesState, onToggle) {
   chartBox.appendChild(columnDetails.element);
 
   const togglesBox = root.querySelector(`.${styles.toggles}`);
+  const togglesStateSetters = {};
   for (const [key, {color, name}] of Object.entries(linesData)) {
-    togglesBox.appendChild(makeToggleButton(
+    const {element, setState} = makeToggleButton(
       color,
       name,
-      linesState[key].enabled,
-      enabled => onToggle(key, enabled),
+      () => onLineToggle(key),
+      () => onLineToggleOther(key),
       styles.toggle
-    ));
+    );
+    togglesStateSetters[key] = setState;
+    togglesBox.appendChild(element);
   }
+  const setTogglesState = memoizeOne(linesState => {
+    for (const key of Object.keys(linesState)) {
+      togglesStateSetters[key](linesState[key].enabled);
+    }
+  });
+  setTogglesState(linesState);
 
   const {element: safariAssKickerElement, kick: kickSafariAss} = makeSafariAssKicker();
   root.appendChild(safariAssKickerElement);
@@ -421,6 +448,7 @@ function createDOM(root, name, linesData, dates, linesState, onToggle) {
     mainCanvas: root.querySelector(`.${styles.mainCanvas}`),
     mapCanvas: root.querySelector(`.${styles.mapCanvas}`),
     setDetailsState: columnDetails.setState,
+    setTogglesState,
     kickSafariAss
   };
 }
@@ -435,4 +463,14 @@ function getStateForGestureWatcher(dates, startIndex, endIndex) {
 function getDataDateComponentsForRange(dates, index) {
   const timestamp = dates[Math.max(0, Math.min(Math.round(index), dates.length - 1))];
   return getDateComponentsForRange(timestamp);
+}
+
+function areAllLinesExceptOneDisabled(linesState, theKey) {
+  for (const [key, {enabled}] of Object.entries(linesState)) {
+    if (key === theKey && !enabled || key !== theKey && enabled) {
+      return false;
+    }
+  }
+
+  return true;
 }
