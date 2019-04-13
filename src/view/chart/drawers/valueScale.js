@@ -1,5 +1,6 @@
-import {modulo} from '../../../helpers/number';
+import {mixNumbers, ceilWithBase} from '../../../helpers/number';
 import {mixNumberColors, numberColorToRGBA} from '../../../helpers/color';
+import {subDecimalScaleToNumber} from '../../../helpers/scale';
 import {
   fontFamily,
   chartScaleLineColors,
@@ -9,7 +10,6 @@ import {
   chartScaleLabelFontSize,
   chartValueScaleLabelMargin
 } from '../../../style';
-import {mixNumbers} from '../../../helpers/number';
 
 /**
  * `notchScale` determines the distance between the notches measured in the value units.
@@ -23,34 +23,44 @@ export default function drawValueScale({
   x, y, width, height,
   fromValue, toValue,
   notchScale,
+  topPadding = 0,
   pixelRatio,
-  theme = 0
+  theme
 }) {
+  if (isNaN(fromValue) || isNaN(toValue) || !isFinite(fromValue) || !isFinite(toValue) || height === topPadding) {
+    return;
+  }
+
   const lineWidth = chartScaleLineWidth * pixelRatio;
   const labelOffset = chartValueScaleLabelMargin * pixelRatio;
   const lineColor = mixNumberColors(chartScaleLineColors[0], chartScaleLineColors[1], theme);
   const lineOpacity = mixNumbers(chartScaleLineOpacities[0], chartScaleLineOpacities[1], theme);
   const labelColor = mixNumberColors(chartScaleLabelColors[0], chartScaleLabelColors[1], theme);
+  const fontSize = Math.round(chartScaleLabelFontSize * pixelRatio);
+  const labelBottomExtraSpace = fontSize + labelOffset;
 
   const {
     value1: notchValue1,
     value2: notchValue2,
     transition: notchValuesTransition
   } = getNotchValues(notchScale);
-  const yPerValue = height / ((toValue - fromValue) || 1);
-  const start1Notch = Math.ceil(fromValue / notchValue1) * notchValue1;
-  const start2Notch = Math.ceil(fromValue / notchValue2) * notchValue2;
+  const yPerValue = (height - topPadding) / ((toValue - fromValue) || 1);
+  const realFromValue = fromValue - labelBottomExtraSpace / yPerValue;
+  const realToValue = toValue + topPadding / yPerValue;
+  const start1Notch = ceilWithBase(realFromValue, notchValue1);
+  const start2Notch = ceilWithBase(realFromValue, notchValue2);
 
-  ctx.lineWidth = lineWidth;
-  ctx.lineCap = 'butt';
-  ctx.font = `${Math.round(chartScaleLabelFontSize * pixelRatio)}px/1 ${fontFamily}`;
+  ctx.font = `${fontSize}px/1 ${fontFamily}`;
   ctx.textBaseline = 'bottom';
   ctx.textAlign = 'left';
+
+  ctx.fillStyle = numberColorToRGBA(lineColor, lineOpacity);
+  ctx.fillRect(x, y + height - lineWidth, width, lineWidth);
 
   let notchIndex = 0;
 
   // There is the 0.1 + 0.2 problem here but it is not applicable for the input data so I haven't solved it
-  for (let notch1 = start1Notch, notch2 = start2Notch; notch1 < toValue || notch2 < toValue; ++notchIndex) {
+  for (let notch1 = start1Notch, notch2 = start2Notch; notch1 < realToValue || notch2 < realToValue; ++notchIndex) {
     let value;
     let opacity;
 
@@ -71,11 +81,10 @@ export default function drawValueScale({
 
     const notchY = Math.round(y + height - (value - fromValue) * yPerValue);
 
-    ctx.strokeStyle = numberColorToRGBA(lineColor, lineOpacity * opacity);
-    ctx.beginPath();
-    ctx.moveTo(x, notchY - lineWidth / 2);
-    ctx.lineTo(x + width, notchY - lineWidth / 2);
-    ctx.stroke();
+    if (notchY < y + height) {
+      ctx.fillStyle = numberColorToRGBA(lineColor, lineOpacity * opacity);
+      ctx.fillRect(x, notchY - lineWidth, width, lineWidth);
+    }
 
     ctx.fillStyle = numberColorToRGBA(labelColor, opacity);
     ctx.fillText(value, x, notchY - labelOffset);
@@ -84,22 +93,8 @@ export default function drawValueScale({
 
 function getNotchValues(scale) {
   return {
-    value1: getNotchValue(Math.floor(scale)),
-    value2: getNotchValue(Math.ceil(scale)),
+    value1: subDecimalScaleToNumber(Math.floor(scale)),
+    value2: subDecimalScaleToNumber(Math.ceil(scale)),
     transition: scale % 1
   };
-}
-
-function getNotchValue(scale) {
-  const scalePrimaryLevel = Math.floor(scale / 3);
-  const scaleSecondaryLevel = modulo(scale, 3);
-  let scaleMultiplier;
-
-  switch (scaleSecondaryLevel) {
-    case 0: scaleMultiplier = 1; break;
-    case 1: scaleMultiplier = 2; break;
-    case 2: scaleMultiplier = 5; break;
-  }
-
-  return (10 ** scalePrimaryLevel) * scaleMultiplier;
 }

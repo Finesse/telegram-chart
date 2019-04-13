@@ -1,10 +1,3 @@
-export function rectanglePath(ctx, x, y, width, height) {
-  ctx.moveTo(x, y);
-  ctx.lineTo(x + width, y);
-  ctx.lineTo(x + width, y + height);
-  ctx.lineTo(x, y + height);
-}
-
 export function roundedRectanglePath(ctx, x, y, width, height, borderRadius) {
   let topLeftRadius, topRightRadius, bottomRightRadius, bottomLeftRadius;
 

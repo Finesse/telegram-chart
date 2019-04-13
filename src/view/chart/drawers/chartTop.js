@@ -31,7 +31,7 @@ export default function makeChartTop(ctx) {
     ctx.save();
     ctx.clearRect(x, y, width, height);
     ctx.beginPath();
-    rectanglePath(ctx, x, y, width, height);
+    ctx.rect(x, y, width, height);
     ctx.clip();
 
     // todo: Decrease the header font sizes on narrow devices

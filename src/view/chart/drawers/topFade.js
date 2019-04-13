@@ -1,5 +1,4 @@
 import memoizeOne from 'memoize-one';
-import {rectanglePath} from '../../../helpers/canvas';
 
 export default function makeTopFade(ctx) {
   const getGradient = memoizeOne((y, height) => {
@@ -12,7 +11,7 @@ export default function makeTopFade(ctx) {
   return (x, y, width, height) => {
     ctx.save();
     ctx.beginPath();
-    rectanglePath(ctx, x, y, width, height);
+    ctx.rect(x, y, width, height);
     ctx.clip();
     ctx.globalCompositeOperation = 'destination-in';
     ctx.fillStyle = getGradient(y, height);

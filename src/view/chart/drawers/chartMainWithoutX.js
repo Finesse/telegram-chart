@@ -1,5 +1,4 @@
 import memoizeObjectArguments from '../../../helpers/memoizeObjectArguments';
-import {rectanglePath} from '../../../helpers/canvas';
 import {chartSidePadding, chartMainLinesTopMargin, chartMainFadeHeight} from '../../../style';
 import drawMainLines from './mainLines';
 import drawValueScale from './valueScale';
@@ -26,7 +25,7 @@ export default function makeChartMainWithoutX(ctx, linesData) {
     ctx.save();
     ctx.clearRect(x, y, width, height);
     ctx.beginPath();
-    rectanglePath(ctx, x, y, width, height);
+    ctx.rect(x, y, width, height);
     ctx.clip();
 
     drawMainLines({
@@ -52,8 +51,9 @@ export default function makeChartMainWithoutX(ctx, linesData) {
       width: mainLinesWidth,
       height,
       fromValue: minValue,
-      toValue: maxValue * height / mainLinesHeight,
+      toValue: maxValue,
       notchScale: valueNotchScale,
+      topPadding: mainLinesY - y,
       theme,
       pixelRatio
     });

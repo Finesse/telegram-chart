@@ -1,8 +1,7 @@
 import {formatDateForDateScale} from '../../../helpers/date';
 import {mixNumberColors, numberColorToRGBA} from '../../../helpers/color';
+import {dateNotchScaleBase} from '../../../helpers/scale';
 import {chartScaleLabelColors, chartScaleLabelFontSize, fontFamily} from '../../../style';
-
-const notchScaleBase = 2;
 
 /**
  * `notchScale` determines the number of date items between to labels. 0 is 1, 1 is 2, 2 is 4, 3 is 8 and so on.
@@ -35,7 +34,7 @@ export default function drawDateScale({
 
   notchScale = Math.max(0, notchScale);
 
-  const notchRange = notchScaleBase ** Math.floor(notchScale);
+  const notchRange = dateNotchScaleBase ** Math.floor(notchScale);
   const secondaryNotchOpacity = 1 - (notchScale % 1);
 
   const realFromX = x - approximateLabelMaxWidth / 2;
@@ -54,7 +53,7 @@ export default function drawDateScale({
       continue;
     }
 
-    const isPrimary = (index / notchRange) % notchScaleBase === 0;
+    const isPrimary = (index / notchRange) % dateNotchScaleBase === 0;
     const opacity = isPrimary ? 1 : secondaryNotchOpacity;
 
     if (opacity <= 0) {

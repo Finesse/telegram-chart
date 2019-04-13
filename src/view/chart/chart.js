@@ -8,6 +8,7 @@ import {
 } from '../../helpers/animationGroup';
 import {getMinAndMaxOnRange} from '../../helpers/data';
 import {getDateComponentsForRange} from '../../helpers/date';
+import {getDateNotchScale, getValueRangeAndNotchScale} from '../../helpers/scale';
 import {themeTransitionDuration, chartMapHeight, chartMapBottom, chartSidePadding} from '../../style';
 import makeToggleButton from '../toggleButton/toggleButton';
 import makeColumnDetails from '../columnDetails/columnDetails';
@@ -176,10 +177,12 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
 
     // Don't shrink the chart when all the lines are disabled
     if (min < max) {
+      const {min: mainMinValue, max: mainMaxValue, notchScale: mainValueNotchScale} = getValueRangeAndNotchScale(min, max);
+
       transitions.setTargets({
-        mainMinValue: min,
-        mainMaxValue: max,
-        mainValueNotchScale: valueRangeToNotchScale(max - min)
+        mainMinValue,
+        mainMaxValue,
+        mainValueNotchScale
       });
     }
   });
@@ -336,7 +339,8 @@ function getInitialState(lines, dates, theme) {
  */
 function createTransitionGroup(lines, dates, {startIndex, endIndex, theme, lines: linesState}, linesMinAndMax, onUpdate) {
   const {min: mapMinValue, max: mapMaxValue} = getMapMinAndMaxValue(linesMinAndMax, linesState);
-  const {min: mainMinValue, max: mainMaxValue} = getMainMinAndMaxValue(lines, linesState, startIndex, endIndex);
+  const {min: mainMinRawValue, max: mainMaxRawValue} = getMainMinAndMaxValue(lines, linesState, startIndex, endIndex);
+  const {min: mainMinValue, max: mainMaxValue, notchScale: mainValueNotchScale} = getValueRangeAndNotchScale(mainMinRawValue, mainMaxRawValue);
   const startDate = getDataDateComponentsForRange(dates, startIndex);
   const endDate = getDataDateComponentsForRange(dates, endIndex);
 
@@ -345,7 +349,7 @@ function createTransitionGroup(lines, dates, {startIndex, endIndex, theme, lines
     mapMaxValue: makeExponentialTransition(mapMaxValue),
     mainMinValue: makeExponentialTransition(mainMinValue),
     mainMaxValue: makeExponentialTransition(mainMaxValue),
-    mainValueNotchScale: makeTransition(valueRangeToNotchScale(mainMaxValue - mainMinValue)),
+    mainValueNotchScale: makeTransition(mainValueNotchScale),
     dateNotchScale: makeTransition(getDateNotchScale(endIndex - startIndex), {
       maxDistance: 1.5
     }),
@@ -372,27 +376,6 @@ function createTransitionGroup(lines, dates, {startIndex, endIndex, theme, lines
   }
 
   return makeAnimationGroup(transitions, onUpdate);
-}
-
-/**
- * @see The valueScale.js file
- * @todo Adjust the edge values and scale to have integer number of Y-lines
- */
-function valueRangeToNotchScale(value) {
-  return Math.floor(Math.log10(value) * 3 - 1.7);
-}
-
-/**
- * @see The dateScale.js file
- */
-function getDateNotchScale(datesCount) {
-  if (datesCount <= 0) {
-    return 1e9;
-  }
-
-  const maxDatesCount = 6;
-
-  return Math.max(0, Math.ceil(Math.log2(datesCount / maxDatesCount)));
 }
 
 /**
