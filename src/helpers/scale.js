@@ -27,6 +27,10 @@ export function getSubDecimalScale(value, doRoundUp) {
   const log10Base = Math.floor(log10);
   const log10Remainder = modulo(log10, 1);
 
+  if (log10 === -Infinity) {
+    return -Infinity;
+  }
+
   if (log10Remainder === 0 || !doRoundUp && log10Remainder < log10Of2) {
     return log10Base * 3;
   }
@@ -68,7 +72,7 @@ export function subDecimalScaleToNumber(scale) {
  * @returns {{min: number, max: number, notchScale: number}} Turn the notch scale to a plain number using the
  *  `subDecimalScaleToNumber` function
  */
-export function getValueRangeAndNotchScale(minValue, maxValue, notchCount = 5.3) {
+export function getValueRangeAndNotchScale(minValue, maxValue, notchCount = 5) {
   function getValueRange(notchScale) {
     const notchValue = subDecimalScaleToNumber(notchScale);
     const alignedMinValue = floorWithBase(minValue, notchValue);
@@ -76,7 +80,7 @@ export function getValueRangeAndNotchScale(minValue, maxValue, notchCount = 5.3)
     return [alignedMinValue, alignedMaxValue];
   }
 
-  let notchScale = getSubDecimalScale(Math.max(1e-9, Math.abs((maxValue - minValue) / notchCount)), true);
+  let notchScale = Math.max(-1e9, getSubDecimalScale(Math.max(1e-9, Math.abs((maxValue - minValue) / notchCount)), true));
   let [min, max] = getValueRange(notchScale);
 
   if (max < maxValue) {

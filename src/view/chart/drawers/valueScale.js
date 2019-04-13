@@ -23,19 +23,30 @@ export default function drawValueScale({
   notchScale,
   topPadding = 0,
   pixelRatio,
-  theme
+  theme,
+  drawLines = true,
+  labelColor,
+  labelOpacity = 1,
+  labelOnRight
 }) {
   if (isNaN(fromValue) || isNaN(toValue) || !isFinite(fromValue) || !isFinite(toValue) || height === topPadding) {
     return;
   }
 
+  if (!drawLines && labelOpacity <= 0) {
+    return;
+  }
+
   const lineWidth = chartScaleLineWidth * pixelRatio;
-  const labelOffset = chartValueScaleLabelMargin * pixelRatio;
   const lineColor = mixNumberColors(chartScaleLineColors[0], chartScaleLineColors[1], theme);
   const lineOpacity = mixNumbers(chartScaleLineOpacities[0], chartScaleLineOpacities[1], theme);
-  const labelColor = mixNumberColors(chartScaleLabelColors[0], chartScaleLabelColors[1], theme);
   const fontSize = Math.round(chartScaleLabelFontSize * pixelRatio);
+  const labelOffset = chartValueScaleLabelMargin * pixelRatio;
   const labelBottomExtraSpace = fontSize + labelOffset;
+  const labelX = x + (labelOnRight ? width : 0);
+  if (labelColor === undefined) {
+    labelColor = mixNumberColors(chartScaleLabelColors[0], chartScaleLabelColors[1], theme);
+  }
 
   const {
     value1: notchValue1,
@@ -50,10 +61,12 @@ export default function drawValueScale({
 
   ctx.font = `${fontSize}px/1 ${fontFamily}`;
   ctx.textBaseline = 'bottom';
-  ctx.textAlign = 'left';
+  ctx.textAlign = labelOnRight ? 'right' : 'left';
 
-  ctx.fillStyle = numberColorToRGBA(lineColor, lineOpacity);
-  ctx.fillRect(x, y + height - lineWidth, width, lineWidth);
+  if (drawLines) {
+    ctx.fillStyle = numberColorToRGBA(lineColor, lineOpacity);
+    ctx.fillRect(x, y + height - lineWidth, width, lineWidth);
+  }
 
   let notchIndex = 0;
 
@@ -79,14 +92,14 @@ export default function drawValueScale({
 
     const notchY = Math.round(y + height - (value - fromValue) * yPerValue);
 
-    if (notchY < y + height) {
+    if (drawLines && notchY < y + height) {
       ctx.fillStyle = numberColorToRGBA(lineColor, lineOpacity * opacity);
       ctx.fillRect(x, notchY - lineWidth, width, lineWidth);
     }
 
-    if (notchY > y + labelOffset) {
-      ctx.fillStyle = numberColorToRGBA(labelColor, opacity);
-      ctx.fillText(formatNumberToShortForm(value), x, notchY - labelOffset);
+    if (labelOpacity > 0 && notchY > y + labelOffset) {
+      ctx.fillStyle = numberColorToRGBA(labelColor, labelOpacity * opacity);
+      ctx.fillText(formatNumberToShortForm(value), labelX, notchY - labelOffset);
     }
   }
 }

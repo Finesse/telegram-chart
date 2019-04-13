@@ -31,6 +31,8 @@ export const chartScaleLabelFontSize = 11;
 export const chartValueScaleLabelMargin = 4;
 export const chartDateScaleLabelMargin = 8;
 export const chartSelectorGripWidth = 10;
+export const chartValueScaleMaxNotchCount = 6;
+export const chartValue2YScaleNotchCount = 5.3;
 
 export const chartHeaderFontSize = 13;
 export const chartHeaderFontWeight = 'bold';

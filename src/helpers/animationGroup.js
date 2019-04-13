@@ -24,9 +24,9 @@ export function makeAnimationGroup(animations, onUpdate) {
    * @param {Record<string, *>} targets The keys are the animation ids. May contain not all the animations.
    */
   function setTargets(targets) {
-    for (const [key, target] of Object.entries(targets)) {
-      if (key in animations) {
-        animations[key].setTarget(target);
+    for (const key in targets) {
+      if (animations.hasOwnProperty(key)) {
+        animations[key].setTarget(targets[key]);
 
         if (!animations[key].isFinished()) {
           updateOnNextFrame();
@@ -43,8 +43,10 @@ export function makeAnimationGroup(animations, onUpdate) {
   function getState() {
     const state = {};
 
-    for (const [key, animation] of Object.entries(animations)) {
-      state[key] = animation.getState();
+    for (const key in animations) {
+      if (animations.hasOwnProperty(key)) {
+        state[key] = animations[key].getState();
+      }
     }
 
     return state;
@@ -72,7 +74,15 @@ export function makeAnimationGroup(animations, onUpdate) {
   function handleAnimationFrame() {
     animationFrameId = null;
 
-    const areAllFinished = Object.values(animations).every(animation => animation.isFinished());
+    let areAllFinished = true;
+    for (const key in animations) {
+      if (animations.hasOwnProperty(key)) {
+        if (!animations[key].isFinished()) {
+          areAllFinished = false;
+          break;
+        }
+      }
+    }
     if (!areAllFinished) {
       updateOnNextFrame();
     }
@@ -88,7 +98,7 @@ export function makeAnimationGroup(animations, onUpdate) {
  *
  * @returns AnimationGroup~Animation
  */
-export function makeTransition(initialValue, {
+export function makeTransition(initialValue = 0, {
   duration = 400,
   easing = quadInOut,
   maxDistance = Infinity
@@ -158,7 +168,7 @@ export function makeInstantWhenHiddenTransition(valueTransition, opacityTransiti
  *
  * @returns AnimationGroup~Animation
  */
-export function makeExponentialTransition(initialValue, {minPlainValue = 1e-9, ...options} = {}) {
+export function makeExponentialTransition(initialValue = 0, {minPlainValue = 1e-9, ...options} = {}) {
   function plainValueToPower(value) {
     return Math.max(Math.log(value), minPlainValue);
   }

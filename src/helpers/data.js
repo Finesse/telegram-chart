@@ -8,7 +8,7 @@
  */
 export function getMinAndMaxOnRange(values, from, to) {
   from = Math.max(0, from);
-  to = Math.min(to, values.length);
+  to = Math.min(to, values.length - 1);
   let min, max;
 
   // Check the left edge

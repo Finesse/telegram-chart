@@ -9,9 +9,9 @@ import {
 import makeChartTop from './chartTop';
 import makeChartMainWithoutX from './chartMainWithoutX';
 import makeChartX from './chartX';
-import makeMapLines from './mapLines';
+import makeChartMap from './chartMap';
 
-export default function makeChart(mainCanvas, mapCanvas, linesData, dates) {
+export default function makeChart(mainCanvas, mapCanvas, type, linesData, dates) {
   const mainCtx = mainCanvas.getContext('2d');
   const mapCtx = mapCanvas.getContext('2d');
 
@@ -27,9 +27,9 @@ export default function makeChart(mainCanvas, mapCanvas, linesData, dates) {
 
   // The parts of the chart that can be updated independently
   const drawChartTop = makeChartTop(mainCtx);
-  const drawChartMainWithoutX = makeChartMainWithoutX(mainCtx, linesData);
+  const drawChartMainWithoutX = makeChartMainWithoutX(mainCtx, type, linesData);
   const drawChartX = makeChartX(mainCtx, dates);
-  const drawMapLines = makeMapLines(mapCtx, linesData);
+  const drawChartMap = makeChartMap(mapCtx, type, linesData);
 
   return ({
     mainCanvasWidth,
@@ -39,9 +39,14 @@ export default function makeChart(mainCanvas, mapCanvas, linesData, dates) {
     pixelRatio = 1,
     mapMinValue,
     mapMaxValue,
+    mapAltMinValue,
+    mapAltMaxValue,
     mainMinValue,
     mainMaxValue,
     mainValueNotchScale,
+    mainAltMinValue,
+    mainAltMaxValue,
+    mainAltValueNotchScale,
     dateNotchScale,
     startIndex,
     endIndex,
@@ -85,6 +90,9 @@ export default function makeChart(mainCanvas, mapCanvas, linesData, dates) {
       minValue: mainMinValue,
       maxValue: mainMaxValue,
       valueNotchScale: mainValueNotchScale,
+      altMinValue: mainAltMinValue,
+      altMaxValue: mainAltMaxValue,
+      altValueNotchScale: mainAltValueNotchScale,
       startIndex,
       endIndex,
       pixelRatio,
@@ -103,11 +111,13 @@ export default function makeChart(mainCanvas, mapCanvas, linesData, dates) {
       theme
     });
 
-    drawMapLines({
+    drawChartMap({
       canvasWidth: mapCanvasWidth,
       canvasHeight: mapCanvasHeight,
       minValue: mapMinValue,
       maxValue: mapMaxValue,
+      altMinValue: mapAltMinValue,
+      altMaxValue: mapAltMaxValue,
       pixelRatio
     }, linesOpacity);
   };

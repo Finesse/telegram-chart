@@ -8,11 +8,19 @@ import {
 } from '../../helpers/animationGroup';
 import {getMinAndMaxOnRange} from '../../helpers/data';
 import {getDateComponentsForRange} from '../../helpers/date';
-import {getDateNotchScale, getValueRangeAndNotchScale} from '../../helpers/scale';
-import {themeTransitionDuration, chartMapHeight, chartMapBottom, chartSidePadding} from '../../style';
+import {getDateNotchScale, getSubDecimalScale, getValueRangeAndNotchScale} from '../../helpers/scale';
+import {
+  themeTransitionDuration,
+  chartMapHeight,
+  chartMapBottom,
+  chartSidePadding,
+  chartValueScaleMaxNotchCount,
+  chartValue2YScaleNotchCount
+} from '../../style';
 import makeToggleButton from '../toggleButton/toggleButton';
 import makeColumnDetails from '../columnDetails/columnDetails';
 import makeSafariAssKicker from '../safariAssKicker/safariAssKicker';
+import {TYPE_LINE, TYPE_LINE_TWO_Y} from '../../namespace';
 import watchGestures from './watchGestures';
 import styles from './chart.css?module';
 import makeChartDrawer from './drawers/chart';
@@ -34,11 +42,16 @@ const template = `
  * Draws and operates one chart
  *
  * @todo Try to optimize the theme switch by not animating the charts that are not visible
+ * @todo Use classes and inheritance for different types of chart
  */
-export default function makeChart(element, {name, dates, lines}, initialTheme = 'day') {
+export default function makeChart(element, {name, type, dates, lines}, initialTheme = 'day') {
   // The arguments store the unaltered chart state
 
-  const linesMinAndMax = getLinesMinAndMaxValues(lines);
+  if (type !== TYPE_LINE_TWO_Y) {
+    type = TYPE_LINE;
+  }
+
+  const linesMinAndMax = type === TYPE_LINE || type === TYPE_LINE_TWO_Y ? getLinesMinAndMaxValues(lines) : {};
 
   /**
    * Stores the plain not animated chart state
@@ -48,7 +61,7 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
   /**
    * Stores the animated chart state
    */
-  const transitions = createTransitionGroup(lines, dates, state, linesMinAndMax, updateView);
+  const transitions = createTransitionGroup({type, lines, dates, state, linesMinAndMax, onUpdate: updateView});
 
   // Creating a DOM and a WebGL renderer
   const {
@@ -59,7 +72,7 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
     setTogglesState,
     kickSafariAss
   } = createDOM(element, name, lines, dates, state.lines, handleToggleLine, handleLineToggleOther);
-  const updateCanvases = makeChartDrawer(mainCanvas, mapCanvas, lines, dates);
+  const updateCanvases = makeChartDrawer(mainCanvas, mapCanvas, type, lines, dates);
   const gesturesWatcher = watchGestures(chartBox, getStateForGestureWatcher(dates, state.startIndex, state.endIndex), {
     mapSelectorStart: handleStartIndexChange,
     mapSelectorMiddle: handleIndexMove,
@@ -155,14 +168,19 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
   }
 
   const applyMapValueRange = memoizeOne((linesMinAndMax, linesState) => {
-    const {min, max} = getMapMinAndMaxValue(linesMinAndMax, linesState);
+    switch (type) {
+      case TYPE_LINE: {
+        const {min, max} = getMapMinAndMaxValue(linesMinAndMax, linesState);
 
-    // Don't shrink the chart when all the lines are disabled
-    if (min < max) {
-      transitions.setTargets({
-        mapMinValue: min,
-        mapMaxValue: max
-      });
+        // Don't shrink the chart when all the lines are disabled
+        if (isFinite(min) && isFinite(max)) {
+          transitions.setTargets({
+            mapMinValue: min,
+            mapMaxValue: max
+          });
+        }
+        break;
+      }
     }
   });
 
@@ -173,17 +191,37 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
   });
 
   const applyMainValueRange = memoizeOne((linesData, linesState, startIndex, endIndex) => {
-    const {min, max} = getMainMinAndMaxValue(linesData, linesState, startIndex, endIndex);
+    switch (type) {
+      case TYPE_LINE: {
+        const {min, max} = getMainMinAndMaxValue(linesData, linesState, startIndex, endIndex);
 
-    // Don't shrink the chart when all the lines are disabled
-    if (min < max) {
-      const {min: mainMinValue, max: mainMaxValue, notchScale: mainValueNotchScale} = getValueRangeAndNotchScale(min, max);
+        // Don't shrink the chart when all the lines are disabled
+        if (isFinite(min) && isFinite(max)) {
+          transitions.setTargets({
+            mainMinValue: min,
+            mainMaxValue: max,
+            mainValueNotchScale: getValueNotchScale(min, max)
+          });
+        }
+        break;
+      }
+      case TYPE_LINE_TWO_Y: {
+        const [mainLineKey, altLineKey] = Object.keys(lines);
+        const rawMinMax = getMinAndMaxOnRange(lines[mainLineKey].values, startIndex, endIndex);
+        const minMax = getValueRangeAndNotchScale(rawMinMax.min, rawMinMax.max, chartValue2YScaleNotchCount);
+        const rawAltMinMax = getMinAndMaxOnRange(lines[altLineKey].values, startIndex, endIndex);
+        const altMinMax = getValueRangeAndNotchScale(rawAltMinMax.min, rawAltMinMax.max, chartValue2YScaleNotchCount);
 
-      transitions.setTargets({
-        mainMinValue,
-        mainMaxValue,
-        mainValueNotchScale
-      });
+        transitions.setTargets({
+          mainMinValue: minMax.min,
+          mainMaxValue: minMax.max,
+          mainValueNotchScale: minMax.notchScale,
+          mainAltMinValue: altMinMax.min,
+          mainAltMaxValue: altMinMax.max,
+          mainAltValueNotchScale: altMinMax.notchScale
+        });
+        break;
+      }
     }
   });
 
@@ -244,9 +282,14 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
     const {
       mapMinValue,
       mapMaxValue,
+      mapAltMinValue,
+      mapAltMaxValue,
       mainMinValue,
       mainMaxValue,
       mainValueNotchScale,
+      mainAltMinValue,
+      mainAltMaxValue,
+      mainAltValueNotchScale,
       dateNotchScale,
       detailsScreenPosition: [detailsScreenPosition, detailsOpacity],
       theme,
@@ -274,9 +317,14 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
       pixelRatio,
       mapMinValue,
       mapMaxValue,
+      mapAltMinValue,
+      mapAltMaxValue,
       mainMinValue,
       mainMaxValue,
       mainValueNotchScale,
+      mainAltMinValue,
+      mainAltMaxValue,
+      mainAltValueNotchScale,
       dateNotchScale,
       startIndex,
       endIndex,
@@ -326,8 +374,8 @@ function getInitialState(lines, dates, theme) {
     mapCanvasWidth: 0,
     mapCanvasHeight: 0,
     pixelRatio: 1,
-    startIndex: Math.max((dates.length - 1) * 0.73, dates.length - 1000),
-    endIndex: (dates.length - 1),
+    startIndex: Math.max((dates.length - 1) * 0.73),
+    endIndex: dates.length - 1,
     lines: linesState,
     detailsScreenPosition: null,
     theme
@@ -337,19 +385,71 @@ function getInitialState(lines, dates, theme) {
 /**
  * Makes the animatable state of the chart
  */
-function createTransitionGroup(lines, dates, {startIndex, endIndex, theme, lines: linesState}, linesMinAndMax, onUpdate) {
-  const {min: mapMinValue, max: mapMaxValue} = getMapMinAndMaxValue(linesMinAndMax, linesState);
-  const {min: mainMinRawValue, max: mainMaxRawValue} = getMainMinAndMaxValue(lines, linesState, startIndex, endIndex);
-  const {min: mainMinValue, max: mainMaxValue, notchScale: mainValueNotchScale} = getValueRangeAndNotchScale(mainMinRawValue, mainMaxRawValue);
+function createTransitionGroup({
+  type,
+  lines,
+  dates,
+  state: {startIndex, endIndex, theme, lines: linesState},
+  linesMinAndMax,
+  onUpdate
+}) {
   const startDate = getDataDateComponentsForRange(dates, startIndex);
   const endDate = getDataDateComponentsForRange(dates, endIndex);
+  let mapMinValue;
+  let mapMaxValue;
+  let mapAltMinValue;
+  let mapAltMaxValue;
+  let mainMinValue;
+  let mainMaxValue;
+  let mainValueNotchScale;
+  let mainAltMinValue;
+  let mainAltMaxValue;
+  let mainAltValueNotchScale;
+
+  switch (type) {
+    case TYPE_LINE: {
+      const mapMinMax = getMapMinAndMaxValue(linesMinAndMax, linesState);
+      mapMinValue = mapMinMax.min;
+      mapMaxValue = mapMinMax.max;
+      const mainMinMax = getMainMinAndMaxValue(lines, linesState, startIndex, endIndex);
+      mainMinValue = mainMinMax.min;
+      mainMaxValue = mainMinMax.max;
+      mainValueNotchScale = getValueNotchScale(mainMinValue, mainMaxValue);
+      break;
+    }
+    case TYPE_LINE_TWO_Y: {
+      const [mainLineKey, altLineKey] = Object.keys(lines);
+      const mapMinMax = linesMinAndMax[mainLineKey];
+      mapMinValue = mapMinMax.min;
+      mapMaxValue = mapMinMax.max;
+      const mapAltMinMax = linesMinAndMax[altLineKey];
+      mapAltMinValue = mapAltMinMax.min;
+      mapAltMaxValue = mapAltMinMax.max;
+      const mainRawMinMax = getMinAndMaxOnRange(lines[mainLineKey].values, startIndex, endIndex);
+      const mainMinMax = getValueRangeAndNotchScale(mainRawMinMax.min, mainRawMinMax.max, chartValue2YScaleNotchCount);
+      mainMinValue = mainMinMax.min;
+      mainMaxValue = mainMinMax.max;
+      mainValueNotchScale = mainMinMax.notchScale;
+      const mainAltRawMinMax = getMinAndMaxOnRange(lines[altLineKey].values, startIndex, endIndex);
+      const mainAltMinMax = getValueRangeAndNotchScale(mainAltRawMinMax.min, mainAltRawMinMax.max, chartValue2YScaleNotchCount);
+      mainAltMinValue = mainAltMinMax.min;
+      mainAltMaxValue = mainAltMinMax.max;
+      mainAltValueNotchScale = mainAltMinMax.notchScale;
+      break;
+    }
+  }
 
   const transitions = {
     mapMinValue: makeExponentialTransition(mapMinValue),
     mapMaxValue: makeExponentialTransition(mapMaxValue),
+    mapAltMinValue: makeExponentialTransition(mapAltMinValue),
+    mapAltMaxValue: makeExponentialTransition(mapAltMaxValue),
     mainMinValue: makeExponentialTransition(mainMinValue),
     mainMaxValue: makeExponentialTransition(mainMaxValue),
     mainValueNotchScale: makeTransition(mainValueNotchScale),
+    mainAltMinValue: makeExponentialTransition(mainAltMinValue),
+    mainAltMaxValue: makeExponentialTransition(mainAltMaxValue),
+    mainAltValueNotchScale: makeTransition(mainAltValueNotchScale),
     dateNotchScale: makeTransition(getDateNotchScale(endIndex - startIndex), {
       maxDistance: 1.5
     }),
@@ -362,12 +462,12 @@ function createTransitionGroup(lines, dates, {startIndex, endIndex, theme, lines
         duration: 300
       })
     ),
-    rangeStartDay: makeTransition(startDate.day, { easing: quadOut }),
-    rangeStartMonth: makeTransition(startDate.month, { easing: quadOut }),
-    rangeStartYear: makeTransition(startDate.year, { easing: quadOut }),
-    rangeEndDay: makeTransition(endDate.day, { easing: quadOut }),
-    rangeEndMonth: makeTransition(endDate.month, { easing: quadOut }),
-    rangeEndYear: makeTransition(endDate.year, { easing: quadOut }),
+    rangeStartDay: makeTransition(startDate.day, {easing: quadOut}),
+    rangeStartMonth: makeTransition(startDate.month, {easing: quadOut}),
+    rangeStartYear: makeTransition(startDate.year, {easing: quadOut}),
+    rangeEndDay: makeTransition(endDate.day, {easing: quadOut}),
+    rangeEndMonth: makeTransition(endDate.month, {easing: quadOut}),
+    rangeEndYear: makeTransition(endDate.year, {easing: quadOut}),
     theme: makeTransition(theme === 'day' ? 0 : 1, {duration: themeTransitionDuration}),
   };
 
@@ -503,4 +603,8 @@ function areAllLinesExceptOneDisabled(linesState, theKey) {
   }
 
   return true;
+}
+
+function getValueNotchScale(minValue, maxValue) {
+  return Math.max(-1e9, getSubDecimalScale((maxValue - minValue) / chartValueScaleMaxNotchCount, true));
 }

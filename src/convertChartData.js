@@ -1,4 +1,5 @@
 import {hexColorToNumber} from './helpers/color';
+import {TYPE_LINE, TYPE_LINE_TWO_Y, TYPE_BAR, TYPE_AREA} from './namespace';
 
 /**
  * Converts the input JSON into a more convenient format
@@ -8,23 +9,37 @@ import {hexColorToNumber} from './helpers/color';
  */
 
 export default function convertChartData(data) {
-  return data.map(({name, columns, types, names, colors}, index) => {
+  return data.map(({name, columns, types, names, colors, y_scaled}, index) => {
+    let type;
+
     // Determine what columns are Xs and what are Ys
     let datesKey;
     const valuesKeys = [];
-    for (const [key, type] of Object.entries(types)) {
-      switch (type) {
-        case 'x':
-          datesKey = key;
-          break;
-        case 'line':
-          valuesKeys.push(key);
-          break;
-        default:
-          // todo: Support other types
-          valuesKeys.push(key);
-          // console.warn(`Unknown column type "${type}" under key "${key}"`);
+    for (const [key, lineType] of Object.entries(types)) {
+      if (lineType === 'x') {
+        datesKey = key;
+      } else {
+        valuesKeys.push(key);
+
+        if (!type) {
+          switch (lineType) {
+            case 'line':
+              type = y_scaled ? TYPE_LINE_TWO_Y : TYPE_LINE;
+              break;
+            case 'bar':
+              type = TYPE_BAR;
+              break;
+            case 'area':
+              type = TYPE_AREA;
+              break;
+          }
+        }
       }
+    }
+
+    if (!type) {
+      console.warn(`Unknown chart type under index ${index}`);
+      type = TYPE_LINE;
     }
 
     // Index the columns
@@ -48,6 +63,7 @@ export default function convertChartData(data) {
 
     return {
       name: name || `Data #${index + 1}`,
+      type,
       dates: indexedColumns[datesKey],
       lines
     };

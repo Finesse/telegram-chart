@@ -3,8 +3,11 @@ import {chartSidePadding, chartMainLinesTopMargin, chartMainFadeHeight} from '..
 import drawMainLines from './mainLines';
 import drawValueScale from './valueScale';
 import makeTopFade from './topFade';
+import {TYPE_LINE, TYPE_LINE_TWO_Y} from "../../../namespace";
 
-export default function makeChartMainWithoutX(ctx, linesData) {
+export default function makeChartMainWithoutX(ctx, type, linesData) {
+  const [mainLineKey, altLineKey] = Object.keys(linesData);
+
   const drawTopFade = makeTopFade(ctx);
 
   return memoizeObjectArguments(({
@@ -13,6 +16,9 @@ export default function makeChartMainWithoutX(ctx, linesData) {
     minValue,
     maxValue,
     valueNotchScale,
+    altMinValue,
+    altMaxValue,
+    altValueNotchScale,
     startIndex,
     endIndex,
     theme
@@ -28,35 +34,102 @@ export default function makeChartMainWithoutX(ctx, linesData) {
     ctx.rect(x, y, width, height);
     ctx.clip();
 
-    drawMainLines({
+    const commonArguments = {
       ctx,
-      linesData,
-      linesOpacity,
-      canvasWidth: width,
-      x: mainLinesX,
-      y: mainLinesY,
-      width: mainLinesWidth,
-      height: mainLinesHeight,
-      minValue,
-      maxValue,
-      fromIndex: startIndex,
-      toIndex: endIndex,
-      pixelRatio
-    });
+      pixelRatio,
+      theme
+    };
 
-    drawValueScale({
-      ctx,
+    // The plot
+    switch (type) {
+      case TYPE_LINE:
+        drawMainLines({
+          ...commonArguments,
+          linesData,
+          linesOpacity,
+          canvasWidth: width,
+          x: mainLinesX,
+          y: mainLinesY,
+          width: mainLinesWidth,
+          height: mainLinesHeight,
+          minValue,
+          maxValue,
+          fromIndex: startIndex,
+          toIndex: endIndex
+        });
+        break;
+
+      case TYPE_LINE_TWO_Y: {
+        const _commonArguments = {
+          linesOpacity,
+          canvasWidth: width,
+          x: mainLinesX,
+          y: mainLinesY,
+          width: mainLinesWidth,
+          height: mainLinesHeight,
+          fromIndex: startIndex,
+          toIndex: endIndex,
+        };
+        drawMainLines({
+          ...commonArguments,
+          ..._commonArguments,
+          linesData: {
+            [altLineKey]: linesData[altLineKey]
+          },
+          minValue: altMinValue,
+          maxValue: altMaxValue
+        });
+        drawMainLines({
+          ...commonArguments,
+          ..._commonArguments,
+          linesData: {
+            [mainLineKey]: linesData[mainLineKey]
+          },
+          minValue,
+          maxValue
+        });
+        break;
+      }
+    }
+
+    // The value scale
+    const commonScaleArguments = {
+      ...commonArguments,
       x: mainLinesX,
       y,
       width: mainLinesWidth,
       height,
-      fromValue: minValue,
-      toValue: maxValue,
-      notchScale: valueNotchScale,
-      topPadding: mainLinesY - y,
-      theme,
-      pixelRatio
-    });
+      topPadding: mainLinesY - y
+    };
+
+    if (type === TYPE_LINE_TWO_Y) {
+      drawValueScale({
+        ...commonScaleArguments,
+        fromValue: minValue,
+        toValue: maxValue,
+        notchScale: valueNotchScale,
+        drawLines: linesOpacity[mainLineKey] > 0,
+        labelColor: linesData[mainLineKey].color,
+        labelOpacity: linesOpacity[mainLineKey]
+      });
+      drawValueScale({
+        ...commonScaleArguments,
+        fromValue: altMinValue,
+        toValue: altMaxValue,
+        notchScale: altValueNotchScale,
+        drawLines: linesOpacity[mainLineKey] <= 0,
+        labelColor: linesData[altLineKey].color,
+        labelOpacity: linesOpacity[altLineKey],
+        labelOnRight: true
+      });
+    } else {
+      drawValueScale({
+        ...commonScaleArguments,
+        fromValue: minValue,
+        toValue: maxValue,
+        notchScale: valueNotchScale
+      });
+    }
 
     drawTopFade(x, y, width, chartMainFadeHeight * pixelRatio);
 
