@@ -13,7 +13,7 @@ export default function makeChartMainWithoutX(ctx, linesData) {
     pixelRatio,
     minValue,
     maxValue,
-    maxValueNotchScale,
+    valueNotchScale,
     startIndex,
     endIndex,
     theme
@@ -53,7 +53,7 @@ export default function makeChartMainWithoutX(ctx, linesData) {
       height,
       fromValue: minValue,
       toValue: maxValue * height / mainLinesHeight,
-      notchScale: maxValueNotchScale,
+      notchScale: valueNotchScale,
       theme,
       pixelRatio
     });

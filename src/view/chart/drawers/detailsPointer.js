@@ -1,7 +1,7 @@
 import * as PIXI from '../../../pixi';
 import {hexColorToNumber} from '../../../helpers/color';
 import memoizeObjectArguments from '../../../helpers/memoizeObjectArguments';
-import interpolateLinear from "../../../helpers/interpolateLinear";
+import {interpolateLinear} from '../../../helpers/data';
 import {mixNumberColors} from '../../../helpers/color';
 import {mixNumbers} from '../../../helpers/number';
 

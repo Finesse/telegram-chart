@@ -11,7 +11,7 @@ import drawLine from './line';
 export default function makeMapLines(ctx, linesData) {
   return memoizeObjectArguments(({
     canvasWidth, canvasHeight,
-    maxValue,
+    minValue, maxValue,
     pixelRatio
   }, linesOpacity) => {
     const lineWidth = chartMapLineWidth * pixelRatio;
@@ -41,7 +41,7 @@ export default function makeMapLines(ctx, linesData) {
           drawToX: canvasWidth,
           fromIndex: 0,
           toIndex: values.length - 1,
-          fromValue: 0,
+          fromValue: minValue,
           toValue: maxValue,
           color,
           lineWidth,

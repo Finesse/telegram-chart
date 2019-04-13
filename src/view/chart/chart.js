@@ -6,7 +6,7 @@ import {
   makeInstantWhenHiddenTransition,
   makeTransition
 } from '../../helpers/animationGroup';
-import getMaxOnRange from '../../helpers/getMaxOnRange';
+import {getMinAndMaxOnRange} from '../../helpers/data';
 import {getDateComponentsForRange} from '../../helpers/date';
 import {themeTransitionDuration, chartMapHeight, chartMapBottom, chartSidePadding} from '../../style';
 import makeToggleButton from '../toggleButton/toggleButton';
@@ -143,9 +143,9 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
   function setState(newState) {
     Object.assign(state, newState);
 
-    applyMapMaxValue(linesMinAndMax, state.lines);
+    applyMapValueRange(linesMinAndMax, state.lines);
     applyLinesOpacity(state.lines);
-    applyMainMaxValue(lines, state.lines, state.startIndex, state.endIndex);
+    applyMainValueRange(lines, state.lines, state.startIndex, state.endIndex);
     applyDatesRange(dates, state.startIndex, state.endIndex);
     applyDetailsPosition(state.detailsScreenPosition, state.startIndex, state.endIndex);
     applyTheme(state.theme);
@@ -153,11 +153,15 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
     transitions.updateOnNextFrame();
   }
 
-  const applyMapMaxValue = memoizeOne((linesMinAndMax, linesState) => {
-    const mapMaxValue = getMapMaxValue(linesMinAndMax, linesState);
-    if (mapMaxValue > 0) {
-      // Don't shrink the chart when all the lines are disabled
-      transitions.setTargets({mapMaxValue});
+  const applyMapValueRange = memoizeOne((linesMinAndMax, linesState) => {
+    const {min, max} = getMapMinAndMaxValue(linesMinAndMax, linesState);
+
+    // Don't shrink the chart when all the lines are disabled
+    if (min < max) {
+      transitions.setTargets({
+        mapMinValue: min,
+        mapMaxValue: max
+      });
     }
   });
 
@@ -167,13 +171,15 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
     }
   });
 
-  const applyMainMaxValue = memoizeOne((linesData, linesState, startIndex, endIndex) => {
-    const mainMaxValue = getMainMaxValue(linesData, linesState, startIndex, endIndex);
-    if (mainMaxValue > 0) {
-      // Don't shrink the chart when all the lines are disabled
+  const applyMainValueRange = memoizeOne((linesData, linesState, startIndex, endIndex) => {
+    const {min, max} = getMainMinAndMaxValue(linesData, linesState, startIndex, endIndex);
+
+    // Don't shrink the chart when all the lines are disabled
+    if (min < max) {
       transitions.setTargets({
-        mainMaxValue,
-        mainMaxValueNotchScale: maxValueToNotchScale(mainMaxValue)
+        mainMinValue: min,
+        mainMaxValue: max,
+        mainValueNotchScale: valueRangeToNotchScale(max - min)
       });
     }
   });
@@ -233,9 +239,11 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
     } = state;
 
     const {
+      mapMinValue,
       mapMaxValue,
+      mainMinValue,
       mainMaxValue,
-      mainMaxValueNotchScale,
+      mainValueNotchScale,
       dateNotchScale,
       detailsScreenPosition: [detailsScreenPosition, detailsOpacity],
       theme,
@@ -261,9 +269,11 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
       mapCanvasWidth: mapCanvasWidth * pixelRatio,
       mapCanvasHeight: mapCanvasHeight * pixelRatio,
       pixelRatio,
+      mapMinValue,
       mapMaxValue,
+      mainMinValue,
       mainMaxValue,
-      mainMaxValueNotchScale,
+      mainValueNotchScale,
       dateNotchScale,
       startIndex,
       endIndex,
@@ -325,15 +335,17 @@ function getInitialState(lines, dates, theme) {
  * Makes the animatable state of the chart
  */
 function createTransitionGroup(lines, dates, {startIndex, endIndex, theme, lines: linesState}, linesMinAndMax, onUpdate) {
-  const mapMaxValue = getMapMaxValue(linesMinAndMax, linesState);
-  const mainMaxValue = getMainMaxValue(lines, linesState, startIndex, endIndex);
+  const {min: mapMinValue, max: mapMaxValue} = getMapMinAndMaxValue(linesMinAndMax, linesState);
+  const {min: mainMinValue, max: mainMaxValue} = getMainMinAndMaxValue(lines, linesState, startIndex, endIndex);
   const startDate = getDataDateComponentsForRange(dates, startIndex);
   const endDate = getDataDateComponentsForRange(dates, endIndex);
 
   const transitions = {
+    mapMinValue: makeExponentialTransition(mapMinValue),
     mapMaxValue: makeExponentialTransition(mapMaxValue),
+    mainMinValue: makeExponentialTransition(mainMinValue),
     mainMaxValue: makeExponentialTransition(mainMaxValue),
-    mainMaxValueNotchScale: makeTransition(maxValueToNotchScale(mainMaxValue)),
+    mainValueNotchScale: makeTransition(valueRangeToNotchScale(mainMaxValue - mainMinValue)),
     dateNotchScale: makeTransition(getDateNotchScale(endIndex - startIndex), {
       maxDistance: 1.5
     }),
@@ -355,7 +367,7 @@ function createTransitionGroup(lines, dates, {startIndex, endIndex, theme, lines
     theme: makeTransition(theme === 'day' ? 0 : 1, {duration: themeTransitionDuration}),
   };
 
-  for (const [key, {enabled}] of Object.entries(lines)) {
+  for (const [key, {enabled}] of Object.entries(linesState)) {
     transitions[`line_${key}_opacity`] = makeTransition(enabled ? 1 : 0);
   }
 
@@ -364,8 +376,9 @@ function createTransitionGroup(lines, dates, {startIndex, endIndex, theme, lines
 
 /**
  * @see The valueScale.js file
+ * @todo Adjust the edge values and scale to have integer number of Y-lines
  */
-function maxValueToNotchScale(value) {
+function valueRangeToNotchScale(value) {
   return Math.floor(Math.log10(value) * 3 - 1.7);
 }
 
@@ -385,29 +398,59 @@ function getDateNotchScale(datesCount) {
 /**
  * Returns the maximum value of the data on the map
  */
-function getMapMaxValue(linesMinAndMax, linesState) {
-  let totalMax = 0;
+function getMapMinAndMaxValue(linesMinAndMax, linesState) {
+  let totalMin = Infinity;
+  let totalMax = -Infinity;
 
-  for (const [key, {max}] of Object.entries(linesMinAndMax)) {
-    if (linesState[key].enabled && max > totalMax) {
-      totalMax = max;
+  for (const [key, {min, max}] of Object.entries(linesMinAndMax)) {
+    if (linesState[key].enabled) {
+      if (min < totalMin) {
+        totalMin = min;
+      }
+      if (max > totalMax) {
+        totalMax = max;
+      }
     }
   }
 
-  return totalMax;
+  return {min: totalMin, max: totalMax};
 }
 
 /**
  * Returns the maximum value of the data on the main chart
  */
-function getMainMaxValue(linesData, linesState, startIndex, endIndex) {
-  const linesEntries = Object.entries(linesData);
+function getMainMinAndMaxValue(linesData, linesState, startIndex, endIndex) {
+  let totalMin = Infinity;
+  let totalMax = -Infinity;
 
-  return Math.max(0, ...linesEntries.map(([key, {values}]) => {
-    return linesState[key].enabled
-      ? getMaxOnRange(values, startIndex, endIndex)
-      : 0;
-  }));
+  for (const key in linesData) {
+    if (linesData.hasOwnProperty(key)) {
+      if (linesState[key].enabled) {
+        const {min, max} = getMinAndMaxOnRange(linesData[key].values, startIndex, endIndex);
+        if (min < totalMin) {
+          totalMin = min;
+        }
+        if (max > totalMax) {
+          totalMax = max;
+        }
+      }
+    }
+  }
+
+  return {min: totalMin, max: totalMax};
+}
+
+function getLinesMinAndMaxValues(lines) {
+  const result = {};
+
+  for (const [key, {values}] of Object.entries(lines)) {
+    result[key] = {
+      min: Math.min(...values),
+      max: Math.max(...values)
+    };
+  }
+
+  return result;
 }
 
 /**
@@ -477,17 +520,4 @@ function areAllLinesExceptOneDisabled(linesState, theKey) {
   }
 
   return true;
-}
-
-function getLinesMinAndMaxValues(lines) {
-  const result = {};
-
-  for (const [key, {values}] of Object.entries(lines)) {
-    result[key] = {
-      min: Math.min(...values),
-      max: Math.max(...values)
-    };
-  }
-
-  return result;
 }

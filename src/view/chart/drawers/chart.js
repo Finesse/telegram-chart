@@ -37,9 +37,11 @@ export default function makeChart(mainCanvas, mapCanvas, linesData, dates) {
     mapCanvasWidth,
     mapCanvasHeight,
     pixelRatio = 1,
+    mapMinValue,
     mapMaxValue,
+    mainMinValue,
     mainMaxValue,
-    mainMaxValueNotchScale,
+    mainValueNotchScale,
     dateNotchScale,
     startIndex,
     endIndex,
@@ -53,7 +55,6 @@ export default function makeChart(mainCanvas, mapCanvas, linesData, dates) {
     rangeEndYear,
     theme // Goes from 0 (day) to 1 (night)
   }, linesOpacity) => {
-    const fromValue = 0;
     const mainSectionY = chartMainTopMargin * pixelRatio;
     const mainSectionHeight = mainCanvasHeight - (chartMainLinesBottomMargin + chartMapHeight + chartMapBottom) * pixelRatio - mainSectionY;
 
@@ -81,9 +82,9 @@ export default function makeChart(mainCanvas, mapCanvas, linesData, dates) {
       y: mainSectionY,
       width: mainCanvasWidth,
       height: mainSectionHeight,
-      minValue: fromValue,
+      minValue: mainMinValue,
       maxValue: mainMaxValue,
-      maxValueNotchScale: mainMaxValueNotchScale,
+      valueNotchScale: mainValueNotchScale,
       startIndex,
       endIndex,
       pixelRatio,
@@ -105,6 +106,7 @@ export default function makeChart(mainCanvas, mapCanvas, linesData, dates) {
     drawMapLines({
       canvasWidth: mapCanvasWidth,
       canvasHeight: mapCanvasHeight,
+      minValue: mapMinValue,
       maxValue: mapMaxValue,
       pixelRatio
     }, linesOpacity);
