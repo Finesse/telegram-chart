@@ -1,22 +1,20 @@
 import memoizeObjectArguments from '../../../helpers/memoizeObjectArguments';
-import {chartMapCornersRadius} from '../../../style';
-import {roundedRectanglePath} from '../../../helpers/canvas';
-import {TYPE_LINE, TYPE_LINE_TWO_Y} from '../../../namespace';
+import {chartMapBarsVerticalPadding} from '../../../style';
+import {TYPE_BAR, TYPE_LINE, TYPE_LINE_TWO_Y} from '../../../namespace';
 import drawMapLines from './mapLines';
+import makeBars from './bars';
 
-export default function makeChartMap(ctx, type, linesData) {
+export default function makeChartMap(ctx, type, linesData, minIndex, maxIndex) {
   const [mainLineKey, altLineKey] = Object.keys(linesData);
+
+  const drawBars = type === TYPE_BAR ? makeBars(ctx, linesData) : () => {};
 
   return memoizeObjectArguments(({
     canvasWidth, canvasHeight,
     minValue, maxValue, altMinValue, altMaxValue,
     pixelRatio
   }, linesOpacity) => {
-    ctx.save();
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-    ctx.beginPath();
-    roundedRectanglePath(ctx, 0, 0, canvasWidth, canvasHeight, chartMapCornersRadius * pixelRatio);
-    ctx.clip();
 
     const commonArguments = {
       ctx,
@@ -33,8 +31,9 @@ export default function makeChartMap(ctx, type, linesData) {
           ...commonArguments,
           minValue,
           maxValue,
-          linesData
-        }, linesOpacity);
+          linesData,
+          linesOpacity
+        });
         break;
       case TYPE_LINE_TWO_Y: {
         drawMapLines({
@@ -43,19 +42,35 @@ export default function makeChartMap(ctx, type, linesData) {
           maxValue: altMaxValue,
           linesData: {
             [altLineKey]: linesData[altLineKey]
-          }
-        }, linesOpacity);
+          },
+          linesOpacity
+        });
         drawMapLines({
           ...commonArguments,
           minValue,
           maxValue,
           linesData: {
             [mainLineKey]: linesData[mainLineKey]
-          }
-        }, linesOpacity);
+          },
+          linesOpacity
+        });
+        break;
+      }
+      case TYPE_BAR: {
+        drawBars({
+          ...commonArguments,
+          linesData,
+          linesOpacity,
+          fromX: 0,
+          toX: canvasWidth,
+          fromIndex: minIndex,
+          toIndex: maxIndex,
+          fromSum: minValue,
+          toSum: maxValue,
+          topPadding: chartMapBarsVerticalPadding * pixelRatio
+        });
+        break;
       }
     }
-
-    ctx.restore();
   });
 }

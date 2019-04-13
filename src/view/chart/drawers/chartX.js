@@ -3,9 +3,7 @@ import {chartSidePadding, chartDateScaleLabelMargin, chartMapHeight, chartMapBot
 import drawDateScale from './dateScale';
 import drawMapSelector from './mapSelector';
 
-export default function makeChartX(ctx, dates) {
-  const dataLength = dates.length - 1;
-
+export default function makeChartX(ctx, dates, minIndex, maxIndex) {
   return memoizeObjectArguments(({
     x, y, width, height,
     pixelRatio,
@@ -31,15 +29,15 @@ export default function makeChartX(ctx, dates) {
       theme
     });
 
-    if (dataLength !== 0) {
+    if (minIndex !== maxIndex) {
       drawMapSelector({
         ctx,
         x: x + chartSidePadding * pixelRatio,
         y: y + height - (chartMapHeight + chartMapBottom) * pixelRatio,
         width: width - chartSidePadding * pixelRatio * 2,
         height: chartMapHeight * pixelRatio,
-        from: startIndex / dataLength,
-        to: endIndex / dataLength,
+        from: (startIndex - minIndex) / (maxIndex - minIndex),
+        to: (endIndex - minIndex) / (maxIndex - minIndex),
         pixelRatio,
         theme
       });

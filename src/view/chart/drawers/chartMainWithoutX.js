@@ -1,13 +1,15 @@
 import memoizeObjectArguments from '../../../helpers/memoizeObjectArguments';
 import {chartSidePadding, chartMainLinesTopMargin, chartMainFadeHeight} from '../../../style';
+import {TYPE_BAR, TYPE_LINE, TYPE_LINE_TWO_Y} from '../../../namespace';
 import drawMainLines from './mainLines';
+import makeBars from './bars';
 import drawValueScale from './valueScale';
 import makeTopFade from './topFade';
-import {TYPE_LINE, TYPE_LINE_TWO_Y} from "../../../namespace";
 
 export default function makeChartMainWithoutX(ctx, type, linesData) {
   const [mainLineKey, altLineKey] = Object.keys(linesData);
 
+  const drawBars = type === TYPE_BAR ? makeBars(ctx, linesData) : () => {};
   const drawTopFade = makeTopFade(ctx);
 
   return memoizeObjectArguments(({
@@ -87,6 +89,21 @@ export default function makeChartMainWithoutX(ctx, type, linesData) {
           },
           minValue,
           maxValue
+        });
+        break;
+      }
+
+      case TYPE_BAR: {
+        drawBars({
+          x, y, width, height,
+          linesOpacity,
+          fromX: mainLinesX,
+          toX: mainLinesX + mainLinesWidth,
+          fromIndex: startIndex,
+          toIndex: endIndex,
+          fromSum: minValue,
+          toSum: maxValue,
+          topPadding: mainLinesY - y,
         });
         break;
       }

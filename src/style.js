@@ -13,6 +13,7 @@ export const chartMapCornersRadius = 5;
 export const chartMapLineWidth = 1;
 export const chartMapLinesHorizontalMargin = 1;
 export const chartMapLinesVerticalMargin = 4/3;
+export const chartMapBarsVerticalPadding = 1;
 export const chartSelectorOutsideColors = [0xE2EEF9, 0x304259];
 export const chartSelectorOutsideOpacities = [0.6, 0.6];
 export const chartSelectorBorderColors = [0xC0D1E1, 0x56626D];
@@ -31,7 +32,7 @@ export const chartScaleLabelFontSize = 11;
 export const chartValueScaleLabelMargin = 4;
 export const chartDateScaleLabelMargin = 8;
 export const chartSelectorGripWidth = 10;
-export const chartValueScaleMaxNotchCount = 6;
+export const chartValueScaleMaxNotchCount = 7;
 export const chartValue2YScaleNotchCount = 5.3;
 
 export const chartHeaderFontSize = 13;

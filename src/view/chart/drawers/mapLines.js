@@ -4,11 +4,11 @@ import drawLine from './line';
 export default function drawMapLines({
   ctx,
   x, y, width, height,
-  canvasWidth, canvasHeight,
   minValue, maxValue,
   linesData,
+  linesOpacity,
   pixelRatio
-}, linesOpacity) {
+}) {
   const lineWidth = chartMapLineWidth * pixelRatio;
   const fromX = x + chartMapLinesHorizontalMargin * pixelRatio;
   const toX = x + width - chartMapLinesHorizontalMargin * pixelRatio;

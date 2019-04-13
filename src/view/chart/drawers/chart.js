@@ -11,7 +11,7 @@ import makeChartMainWithoutX from './chartMainWithoutX';
 import makeChartX from './chartX';
 import makeChartMap from './chartMap';
 
-export default function makeChart(mainCanvas, mapCanvas, type, linesData, dates) {
+export default function makeChart(mainCanvas, mapCanvas, type, linesData, dates, minIndex, maxIndex) {
   const mainCtx = mainCanvas.getContext('2d');
   const mapCtx = mapCanvas.getContext('2d');
 
@@ -28,8 +28,8 @@ export default function makeChart(mainCanvas, mapCanvas, type, linesData, dates)
   // The parts of the chart that can be updated independently
   const drawChartTop = makeChartTop(mainCtx);
   const drawChartMainWithoutX = makeChartMainWithoutX(mainCtx, type, linesData);
-  const drawChartX = makeChartX(mainCtx, dates);
-  const drawChartMap = makeChartMap(mapCtx, type, linesData);
+  const drawChartX = makeChartX(mainCtx, dates, minIndex, maxIndex);
+  const drawChartMap = makeChartMap(mapCtx, type, linesData, minIndex, maxIndex);
 
   return ({
     mainCanvasWidth,

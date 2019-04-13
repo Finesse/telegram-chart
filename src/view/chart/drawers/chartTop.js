@@ -1,5 +1,4 @@
 import memoizeObjectArguments from '../../../helpers/memoizeObjectArguments';
-import {rectanglePath} from '../../../helpers/canvas';
 import {mixNumberColors} from '../../../helpers/color';
 import {getDayInMonth, months, timestampInDay} from '../../../helpers/date';
 import {
