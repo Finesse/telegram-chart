@@ -1,4 +1,4 @@
-import {mixNumbers, ceilWithBase} from '../../../helpers/number';
+import {mixNumbers, ceilWithBase, formatNumberToShortForm} from '../../../helpers/number';
 import {mixNumberColors, numberColorToRGBA} from '../../../helpers/color';
 import {subDecimalScaleToNumber} from '../../../helpers/scale';
 import {
@@ -15,8 +15,6 @@ import {
  * `notchScale` determines the distance between the notches measured in the value units.
  * 0 is 1, 1 is 2, 2 is 5, 3 is 10, 4 is 20, 5 is 50 and so on.
  * It can also be not integer, in this case a transitional state is rendered.
- *
- * @todo Print the numbers with suffixes
  */
 export default function drawValueScale({
   ctx,
@@ -86,8 +84,10 @@ export default function drawValueScale({
       ctx.fillRect(x, notchY - lineWidth, width, lineWidth);
     }
 
-    ctx.fillStyle = numberColorToRGBA(labelColor, opacity);
-    ctx.fillText(value, x, notchY - labelOffset);
+    if (notchY > y + labelOffset) {
+      ctx.fillStyle = numberColorToRGBA(labelColor, opacity);
+      ctx.fillText(formatNumberToShortForm(value), x, notchY - labelOffset);
+    }
   }
 }
 
