@@ -8,7 +8,7 @@ import {hexColorToNumber} from './helpers/color';
  */
 
 export default function convertChartData(data) {
-  return data.map(({columns, types, names, colors}, index) => {
+  return data.map(({name, columns, types, names, colors}, index) => {
     // Determine what columns are Xs and what are Ys
     let datesKey;
     const valuesKeys = [];
@@ -21,7 +21,9 @@ export default function convertChartData(data) {
           valuesKeys.push(key);
           break;
         default:
-          console.warn(`Unknown column type "${type}" under key "${key}"`);
+          // todo: Support other types
+          valuesKeys.push(key);
+          // console.warn(`Unknown column type "${type}" under key "${key}"`);
       }
     }
 
@@ -45,7 +47,7 @@ export default function convertChartData(data) {
     }
 
     return {
-      name: `Data #${index + 1}`,
+      name: name || `Data #${index + 1}`,
       dates: indexedColumns[datesKey],
       lines
     };

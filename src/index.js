@@ -1,5 +1,5 @@
 import './polyfills';
-import chartData from './chart_data';
+import chartData from './data';
 import convertChartData from './convertChartData';
 import makeApp from './view/app/app';
 
