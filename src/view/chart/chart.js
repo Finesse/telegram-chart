@@ -37,6 +37,8 @@ const template = `
 export default function makeChart(element, {name, dates, lines}, initialTheme = 'day') {
   // The arguments store the unaltered chart state
 
+  const linesMinAndMax = getLinesMinAndMaxValues(lines);
+
   /**
    * Stores the plain not animated chart state
    */
@@ -45,7 +47,7 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
   /**
    * Stores the animated chart state
    */
-  const transitions = createTransitionGroup(lines, dates, state, updateView);
+  const transitions = createTransitionGroup(lines, dates, state, linesMinAndMax, updateView);
 
   // Creating a DOM and a WebGL renderer
   const {
@@ -141,7 +143,7 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
   function setState(newState) {
     Object.assign(state, newState);
 
-    applyMapMaxValue(lines, state.lines);
+    applyMapMaxValue(linesMinAndMax, state.lines);
     applyLinesOpacity(state.lines);
     applyMainMaxValue(lines, state.lines, state.startIndex, state.endIndex);
     applyDatesRange(dates, state.startIndex, state.endIndex);
@@ -151,8 +153,8 @@ export default function makeChart(element, {name, dates, lines}, initialTheme = 
     transitions.updateOnNextFrame();
   }
 
-  const applyMapMaxValue = memoizeOne((linesData, linesState) => {
-    const mapMaxValue = getMapMaxValue(linesData, linesState);
+  const applyMapMaxValue = memoizeOne((linesMinAndMax, linesState) => {
+    const mapMaxValue = getMapMaxValue(linesMinAndMax, linesState);
     if (mapMaxValue > 0) {
       // Don't shrink the chart when all the lines are disabled
       transitions.setTargets({mapMaxValue});
@@ -322,8 +324,8 @@ function getInitialState(lines, dates, theme) {
 /**
  * Makes the animatable state of the chart
  */
-function createTransitionGroup(lines, dates, {startIndex, endIndex, theme, lines: linesState}, onUpdate) {
-  const mapMaxValue = getMapMaxValue(lines, linesState);
+function createTransitionGroup(lines, dates, {startIndex, endIndex, theme, lines: linesState}, linesMinAndMax, onUpdate) {
+  const mapMaxValue = getMapMaxValue(linesMinAndMax, linesState);
   const mainMaxValue = getMainMaxValue(lines, linesState, startIndex, endIndex);
   const startDate = getDataDateComponentsForRange(dates, startIndex);
   const endDate = getDataDateComponentsForRange(dates, endIndex);
@@ -383,14 +385,16 @@ function getDateNotchScale(datesCount) {
 /**
  * Returns the maximum value of the data on the map
  */
-function getMapMaxValue(linesData, linesState) {
-  const linesEntries = Object.entries(linesData);
+function getMapMaxValue(linesMinAndMax, linesState) {
+  let totalMax = 0;
 
-  return Math.max(0, ...linesEntries.map(([key, {values}]) => {
-    return linesState[key].enabled
-      ? Math.max(...values)
-      : 0;
-  }));
+  for (const [key, {max}] of Object.entries(linesMinAndMax)) {
+    if (linesState[key].enabled && max > totalMax) {
+      totalMax = max;
+    }
+  }
+
+  return totalMax;
 }
 
 /**
@@ -473,4 +477,17 @@ function areAllLinesExceptOneDisabled(linesState, theKey) {
   }
 
   return true;
+}
+
+function getLinesMinAndMaxValues(lines) {
+  const result = {};
+
+  for (const [key, {values}] of Object.entries(lines)) {
+    result[key] = {
+      min: Math.min(...values),
+      max: Math.max(...values)
+    };
+  }
+
+  return result;
 }
