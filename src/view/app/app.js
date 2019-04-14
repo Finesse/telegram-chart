@@ -1,16 +1,10 @@
 import {fontFamily, themeTransitionStyle, themeTransitionCSS} from '../../style';
-import makeRandomChartData from '../../makeRandomChartData';
 import makeChart from '../chart/chart';
 import styles from './app.css?module';
 
 const template = `
 <div></div>
 <div class="${styles.buttonsBlock}">
-  <button
-    class="${styles.button}"
-    style="${themeTransitionCSS}"
-    id="showBigData"
-  >Show BIG data</button>
   ${/*
   <a
     href="http://github.com/Finesse/telegram-chart"
@@ -40,7 +34,6 @@ export default function makeApp(element, chartsData) {
   Object.assign(document.body.style, themeTransitionStyle);
   element.innerHTML = template;
   const themeButton = element.querySelector(`.${styles.themeSwitcher} button`);
-  let bigDataButton = element.querySelector('#showBigData');
 
   function switchTheme() {
     theme = theme === 'day' ? 'night' : 'day';
@@ -55,8 +48,8 @@ export default function makeApp(element, chartsData) {
     document.body.classList.remove(previousClass);
     document.body.classList.add(nextClass);
 
-    for (const chart of charts) {
-      chart.setTheme(theme);
+    for (let i = 0; i < charts.length; ++i) {
+      charts[i].setTheme(theme);
     }
   }
 
@@ -79,18 +72,11 @@ export default function makeApp(element, chartsData) {
   });
   applyTheme();
 
-  for (const chartData of chartsData) {
-    charts.push(addChart(chartData));
+  for (let i = 0; i < chartsData.length; ++i) {
+    charts.push(addChart(chartsData[i]));
   }
 
-  for (const chart of charts) {
-    chart.start();
+  for (let i = 0; i < charts.length; ++i) {
+    charts[i].start();
   }
-
-  bigDataButton.addEventListener('click', event => {
-    event.preventDefault();
-    bigDataButton.remove();
-    bigDataButton = null;
-    charts.push(addChart(makeRandomChartData(10000), true));
-  });
 }
