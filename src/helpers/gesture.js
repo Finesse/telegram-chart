@@ -114,6 +114,7 @@ export function watchHover({element, onMove, onEnd, checkHover = event => true})
   };
 }
 
+// todo: Handle without cancelling the touch start event
 export function watchLongTap(element, onShortTap, onLongTap, longTapTime = 500, maxTapDistance = 10) {
   let tapId;
   let tapStartCoordinates;

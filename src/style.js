@@ -35,6 +35,8 @@ export const chartSelectorGripWidth = 10;
 export const chartValueScaleMaxNotchCount = 7;
 export const chartValue2YScaleNotchCount = 5.3;
 export const chartValueAreaNotchCount = 5;
+export const chartLinePointerRadius = 4;
+export const chartBarDimOpacity = 0.5;
 
 export const chartHeaderFontSize = 13;
 export const chartHeaderFontWeight = 'bold';

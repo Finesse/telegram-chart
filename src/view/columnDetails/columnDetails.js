@@ -3,6 +3,7 @@ import {themeTransitionCSS} from '../../style';
 import {htmlToElement} from '../../helpers/dom';
 import {formatDateForDetails} from '../../helpers/date';
 import styles from './columnDetails.css?module';
+import {numberColorToRGBA} from "../../helpers/color";
 
 const template = `
 <div class="${styles.holder}" style="visibility: hidden;">
@@ -33,7 +34,7 @@ export default function makeToggleButton(linesData, dates, className) {
 
   for (const [key, {color, name}] of Object.values(linesEntries)) {
     const lineElement = htmlToElement(lineTemplate);
-    lineElement.style.color = color;
+    lineElement.style.color = numberColorToRGBA(color);
     lineElement.lastElementChild.textContent = name;
     lineElement.dataset.key = key;
     linesList.appendChild(lineElement);

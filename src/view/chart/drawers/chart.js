@@ -6,12 +6,12 @@ import {
   chartMainTopMargin,
   chartSidePadding
 } from '../../../style';
+import {TYPE_AREA} from '../../../namespace';
 import makeChartTop from './chartTop';
 import makeChartMainWithoutX from './chartMainWithoutX';
 import makeChartX from './chartX';
 import makeChartMap from './chartMap';
 import {makePercentageAreaCache} from './percentageArea';
-import {TYPE_AREA} from "../../../namespace";
 
 export default function makeChart(mainCanvas, mapCanvas, type, linesData, dates, minIndex, maxIndex) {
   const mainCtx = mainCanvas.getContext('2d');
@@ -99,6 +99,8 @@ export default function makeChart(mainCanvas, mapCanvas, type, linesData, dates,
       altValueNotchScale: mainAltValueNotchScale,
       startIndex,
       endIndex,
+      detailsIndex,
+      detailsOpacity,
       pixelRatio,
       theme
     }, linesOpacity);

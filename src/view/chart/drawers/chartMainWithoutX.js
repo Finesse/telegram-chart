@@ -6,6 +6,8 @@ import makeBars from './bars';
 import makePercentageArea from './percentageArea';
 import drawValueScale from './valueScale';
 import makeTopFade from './topFade';
+import drawColumnPointerLine from './columnPointerLine';
+import drawColumnPointerCircles from './columnPointerCircles';
 
 export default function makeChartMainWithoutX(ctx, type, linesData, percentageAreaCache) {
   const [mainLineKey, altLineKey] = Object.keys(linesData);
@@ -25,6 +27,8 @@ export default function makeChartMainWithoutX(ctx, type, linesData, percentageAr
     altValueNotchScale,
     startIndex,
     endIndex,
+    detailsIndex,
+    detailsOpacity,
     theme
   }, linesOpacity) => {
     const mainLinesX = x + chartSidePadding * pixelRatio;
@@ -105,7 +109,9 @@ export default function makeChartMainWithoutX(ctx, type, linesData, percentageAr
           toIndex: endIndex,
           fromSum: minValue,
           toSum: maxValue,
-          topPadding: mainLinesY - y
+          topPadding: mainLinesY - y,
+          highlightIndex: detailsIndex,
+          highlightPower: detailsOpacity
         });
         break;
       }
@@ -170,5 +176,76 @@ export default function makeChartMainWithoutX(ctx, type, linesData, percentageAr
     }
 
     ctx.restore();
+
+    // The details pointer
+    if (detailsOpacity > 0) {
+      const detailsX = mainLinesX + mainLinesWidth * (detailsIndex - startIndex) / (endIndex - startIndex);
+
+      switch (type) {
+        case TYPE_LINE:
+        case TYPE_LINE_TWO_Y:
+        case TYPE_AREA:
+          drawColumnPointerLine({
+            ...commonArguments,
+            x: detailsX,
+            y: mainLinesY,
+            height: mainLinesHeight,
+            opacity: detailsOpacity,
+            drawFromX: x,
+            drawToX: x + width
+          });
+          break;
+      }
+
+      switch (type) {
+        case TYPE_LINE:
+          drawColumnPointerCircles({
+            ...commonArguments,
+            linesData,
+            linesOpacity,
+            x: detailsX,
+            y: mainLinesY,
+            height: mainLinesHeight,
+            index: detailsIndex,
+            opacity: detailsOpacity,
+            fromValue: minValue,
+            toValue: maxValue,
+            drawFromX: x,
+            drawToX: x + width
+          });
+          break;
+        case TYPE_LINE_TWO_Y: {
+          const _commonArguments = {
+            linesOpacity,
+            x: detailsX,
+            y: mainLinesY,
+            height: mainLinesHeight,
+            index: detailsIndex,
+            opacity: detailsOpacity,
+            drawFromX: x,
+            drawToX: x + width
+          };
+          drawColumnPointerCircles({
+            ...commonArguments,
+            ..._commonArguments,
+            linesData: {
+              [altLineKey]: linesData[altLineKey]
+            },
+            fromValue: altMinValue,
+            toValue: altMaxValue
+          });
+          drawColumnPointerCircles({
+            ...commonArguments,
+            ..._commonArguments,
+            linesData: {
+              [mainLineKey]: linesData[mainLineKey]
+            },
+            fromValue: minValue,
+            toValue: maxValue
+          });
+          break;
+        }
+      }
+    }
   });
 }

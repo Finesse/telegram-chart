@@ -1,5 +1,6 @@
 import memoizeOne from 'memoize-one';
 import {quadOut} from 'd3-ease/src/quad';
+import {cubicOut} from 'd3-ease/src/cubic';
 import {
   makeAnimationGroup,
   makeExponentialTransition,
@@ -160,7 +161,14 @@ export default function makeChart(element, {name, type, dates, lines}, initialTh
   }
 
   function handleDetailsPositionChange(relativeX) {
-    setState({detailsScreenPosition: relativeX});
+    if (relativeX === null) {
+      setState({detailsIndex: null});
+    } else {
+      const index = state.startIndex + (state.endIndex - state.startIndex) * relativeX;
+      setState({
+        detailsIndex: Math.max(0, Math.min(Math.round(index), dates.length - 1))
+      });
+    }
   }
 
   /**
@@ -176,7 +184,7 @@ export default function makeChart(element, {name, type, dates, lines}, initialTh
     applyLinesOpacity(state.lines);
     applyMainValueRange(lines, state.lines, state.startIndex, state.endIndex);
     applyDatesRange(dates, minIndex, maxIndex, state.startIndex, state.endIndex);
-    applyDetailsPosition(state.detailsScreenPosition, state.startIndex, state.endIndex);
+    applyDetailsPosition(state.detailsIndex);
     applyTheme(state.theme);
 
     transitions.updateOnNextFrame();
@@ -280,19 +288,9 @@ export default function makeChart(element, {name, type, dates, lines}, initialTh
     gesturesWatcher.setChartState(getStateForGestureWatcher(minIndex, maxIndex, startIndex, endIndex));
   });
 
-  const applyDetailsPosition = memoizeOne((detailsScreenPosition, startIndex, endIndex) => {
-    if (detailsScreenPosition === null || startIndex === endIndex) {
-      transitions.setTargets({
-        detailsScreenPosition: [undefined, 0]
-      });
-      return;
-    }
-
-    const indexRange = endIndex - startIndex;
-    const detailsIndex = Math.max(0, Math.min(Math.round(startIndex + detailsScreenPosition * indexRange), dates.length - 1));
-
+  const applyDetailsPosition = memoizeOne(detailsIndex => {
     transitions.setTargets({
-      detailsScreenPosition: [(detailsIndex - startIndex) / indexRange, 1]
+      detailsPosition: detailsIndex === null ? [undefined, 0] : [detailsIndex, 1]
     });
   });
 
@@ -329,7 +327,7 @@ export default function makeChart(element, {name, type, dates, lines}, initialTh
       mainAltMaxValue,
       mainAltValueNotchScale,
       dateNotchScale,
-      detailsScreenPosition: [detailsScreenPosition, detailsOpacity],
+      detailsPosition: [detailsIndex, detailsOpacity],
       theme,
       rangeStartDay,
       rangeStartMonth,
@@ -344,8 +342,6 @@ export default function makeChart(element, {name, type, dates, lines}, initialTh
     for (const key of Object.keys(lines)) {
       linesOpacity[key] = linesAnimatedState[`line_${key}_opacity`];
     }
-
-    const detailsIndex = startIndex + detailsScreenPosition * (endIndex - startIndex);
 
     updateCanvases({
       mainCanvasWidth: mainCanvasWidth * pixelRatio,
@@ -377,7 +373,7 @@ export default function makeChart(element, {name, type, dates, lines}, initialTh
       theme
     }, linesOpacity);
 
-    setDetailsState(detailsScreenPosition, detailsOpacity, Math.round(detailsIndex), linesState);
+    setDetailsState((detailsIndex - startIndex) / (endIndex - startIndex), detailsOpacity, Math.round(detailsIndex), linesState);
 
     setTogglesState(linesState);
 
@@ -415,7 +411,7 @@ function getInitialState(lines, minIndex, maxIndex, theme) {
     startIndex: minIndex + (maxIndex - minIndex) * 0.73,
     endIndex: maxIndex,
     lines: linesState,
-    detailsScreenPosition: null,
+    detailsIndex: null,
     theme
   }
 }
@@ -515,9 +511,9 @@ function createTransitionGroup({
     dateNotchScale: makeTransition(getDateNotchScale(endIndex - startIndex), {
       maxDistance: 1.5
     }),
-    detailsScreenPosition: makeInstantWhenHiddenTransition(
+    detailsPosition: makeInstantWhenHiddenTransition(
       makeTransition(0.5, {
-        easing: quadOut,
+        easing: cubicOut,
         duration: 300
       }),
       makeTransition(0, {
