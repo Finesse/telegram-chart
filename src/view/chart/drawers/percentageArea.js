@@ -1,10 +1,9 @@
 import memoizeObjectArguments from '../../../helpers/memoizeObjectArguments';
 import {numberColorToRGBA} from '../../../helpers/color';
 
-export default function makePercentageArea(ctx, linesData, getColumnsTotal = makeGetColumnsSums(linesData)) {
+export default function makePercentageArea(ctx, linesData, cache = makePercentageAreaCache(linesData)) {
   const linesKeys = Object.keys(linesData);
   const dataLength = linesData[linesKeys[0]].values.length;
-  const columnsCurrentSums = new Float32Array(dataLength);
 
   return function drawPercentageArea({
     x, y, width, height,
@@ -20,38 +19,29 @@ export default function makePercentageArea(ctx, linesData, getColumnsTotal = mak
     const drawToIndex = toIndex + (x + width - toX) / xPerIndex;
     const realFromIndex = Math.max(0, Math.floor(drawFromIndex));
     const realToIndex = Math.min(Math.ceil(drawToIndex), dataLength - 1);
-    const columnsSums = getColumnsTotal(linesOpacity);
-    let wasLineDrawn = false;
-
-    for (let i = realFromIndex; i <= realToIndex; ++i) {
-      columnsCurrentSums[i] = 0;
-    }
+    const {linesCache, maxOpacity} = cache(linesOpacity);
+    let lastDrawnLineCache;
 
     for (let keyI = 0; keyI < linesKeys.length; ++keyI) {
       const key = linesKeys[keyI];
-      const scale = opacityToScale(linesOpacity[key]);
+      const lineCache = linesCache[key];
 
-      if (scale <= 0) {
+      if (!lineCache.display) {
         continue;
       }
 
-      const {values, color} = linesData[key];
-      ctx.fillStyle = numberColorToRGBA(color);
+      ctx.fillStyle = numberColorToRGBA(linesData[key].color, maxOpacity);
 
       // todo: Try to optimize by drawing less area at the top
-      if (wasLineDrawn) {
+      if (lastDrawnLineCache) {
         ctx.beginPath();
         ctx.moveTo(fromX + (realFromIndex - fromIndex) * xPerIndex, y);
 
         for (let i = realFromIndex; i <= realToIndex; ++i) {
-          const yPosition = columnsSums[i] === 0 ? 0.5 : columnsCurrentSums[i] / columnsSums[i];
-
           ctx.lineTo(
             fromX + (i - fromIndex) * xPerIndex,
-            y + (1 - yPosition) * height
+            y + (1 - lastDrawnLineCache.positions[i]) * height
           );
-
-          columnsCurrentSums[i] += values[i] * scale;
         }
 
         ctx.lineTo(fromX + (realToIndex - fromIndex) * xPerIndex, y);
@@ -61,43 +51,62 @@ export default function makePercentageArea(ctx, linesData, getColumnsTotal = mak
           fromX + (realFromIndex - fromIndex) * xPerIndex, y,
           (realToIndex - realFromIndex) * xPerIndex, height
         );
-
-        for (let i = realFromIndex; i <= realToIndex; ++i) {
-          columnsCurrentSums[i] += values[i] * scale;
-        }
       }
 
-      wasLineDrawn = true;
+      lastDrawnLineCache = lineCache;
     }
   }
 }
 
-export function makeGetColumnsSums(linesData) {
+export function makePercentageAreaCache(linesData) {
   const linesKeys = Object.keys(linesData);
   const dataLength = linesData[linesKeys[0]].values.length;
-  const sums = new Float32Array(dataLength);
+  const linesCache = {};
 
-  // Warning! The result array may be changed by reference
+  for (let i = 0; i < linesKeys.length; ++i) {
+    linesCache[linesKeys[i]] = {
+      display: false,
+      positions: new Float32Array(dataLength)
+    };
+  }
+
+  // Warning! The result object may be changed by reference
   return memoizeObjectArguments(linesOpacity => {
-    for (let i = 0; i < dataLength; ++i) {
-      sums[i] = 0;
-    }
+    let maxOpacity = 0;
 
     for (let keyI = 0; keyI < linesKeys.length; ++keyI) {
       const key = linesKeys[keyI];
-      const scale = opacityToScale(linesOpacity[key]);
+      const opacity = linesOpacity[key];
+      linesCache[key].display = opacity > 0;
 
-      if (scale > 0) {
-        for (let i = 0; i < dataLength; ++i) {
-          sums[i] += linesData[key].values[i] * scale;
+      if (opacity > maxOpacity) {
+        maxOpacity = opacity;
+      }
+    }
+
+    for (let i = 0; i < dataLength; ++i) {
+      let sum = 0;
+      for (let keyI = 0; keyI < linesKeys.length; ++keyI) {
+        const key = linesKeys[keyI];
+        if (linesCache[key].display) {
+          sum += linesData[key].values[i] * linesOpacity[key];
+        }
+      }
+
+      let currentSum = 0;
+      for (let keyI = 0; keyI < linesKeys.length; ++keyI) {
+        const key = linesKeys[keyI];
+        const opacity = linesOpacity[key];
+        if (linesCache[key].display) {
+          currentSum += linesData[key].values[i] * opacity;
+          linesCache[key].positions[i] = sum === 0 ? 0.5 : currentSum / sum;
         }
       }
     }
 
-    return sums;
+    return {
+      linesCache,
+      maxOpacity
+    };
   });
-}
-
-function opacityToScale(opacity) {
-  return opacity;
 }

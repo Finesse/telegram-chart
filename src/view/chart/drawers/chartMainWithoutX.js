@@ -7,11 +7,11 @@ import makePercentageArea from './percentageArea';
 import drawValueScale from './valueScale';
 import makeTopFade from './topFade';
 
-export default function makeChartMainWithoutX(ctx, type, linesData, getColumnsSums) {
+export default function makeChartMainWithoutX(ctx, type, linesData, percentageAreaCache) {
   const [mainLineKey, altLineKey] = Object.keys(linesData);
 
   const drawBars = type === TYPE_BAR ? makeBars(ctx, linesData) : () => {};
-  const drawPercentageArea = type === TYPE_AREA ? makePercentageArea(ctx, linesData, getColumnsSums) : () => {};
+  const drawPercentageArea = type === TYPE_AREA ? makePercentageArea(ctx, linesData, percentageAreaCache) : () => {};
   const drawTopFade = makeTopFade(ctx);
 
   return memoizeObjectArguments(({

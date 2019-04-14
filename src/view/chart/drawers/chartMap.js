@@ -5,11 +5,11 @@ import drawMapLines from './mapLines';
 import makeBars from './bars';
 import makePercentageArea from './percentageArea';
 
-export default function makeChartMap(ctx, type, linesData, minIndex, maxIndex, getColumnsSums) {
+export default function makeChartMap(ctx, type, linesData, minIndex, maxIndex, percentageAreaCache) {
   const [mainLineKey, altLineKey] = Object.keys(linesData);
 
   const drawBars = type === TYPE_BAR ? makeBars(ctx, linesData) : () => {};
-  const drawPercentageArea = type === TYPE_AREA ? makePercentageArea(ctx, linesData, getColumnsSums) : () => {};
+  const drawPercentageArea = type === TYPE_AREA ? makePercentageArea(ctx, linesData, percentageAreaCache) : () => {};
 
   return memoizeObjectArguments(({
     canvasWidth, canvasHeight,
