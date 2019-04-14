@@ -16,7 +16,11 @@ import {
   getMinAndMaxFromLinesCache
 } from '../../helpers/data';
 import {getDateComponentsForRange} from '../../helpers/date';
-import {getDateNotchScale, getSubDecimalScale, getValueRangeAndNotchScale} from '../../helpers/scale';
+import {
+  getDateNotchScale,
+  getValueRangeForFixedNotches,
+  getValueRangeForFixedBottom
+} from '../../helpers/scale';
 import {
   themeTransitionDuration,
   chartMapHeight,
@@ -219,10 +223,12 @@ export default function makeChart(element, {name, type, dates, lines}, initialTh
 
         // Don't shrink the chart when all the lines are disabled
         if (isFinite(min) && isFinite(max)) {
+          const minMax = getValueRangeForFixedBottom(min, max, chartValueScaleMaxNotchCount);
+
           transitions.setTargets({
-            mainMinValue: min,
-            mainMaxValue: max,
-            mainValueNotchScale: getValueNotchScale(min, max)
+            mainMinValue: minMax.min,
+            mainMaxValue: minMax.max,
+            mainValueNotchScale: minMax.notchScale
           });
         }
         break;
@@ -230,9 +236,9 @@ export default function makeChart(element, {name, type, dates, lines}, initialTh
       case TYPE_LINE_TWO_Y: {
         const [mainLineKey, altLineKey] = Object.keys(lines);
         const rawMinMax = getMinAndMaxOnRange(lines[mainLineKey].values, startIndex, endIndex);
-        const minMax = getValueRangeAndNotchScale(rawMinMax.min, rawMinMax.max, chartValue2YScaleNotchCount);
+        const minMax = getValueRangeForFixedNotches(rawMinMax.min, rawMinMax.max, chartValue2YScaleNotchCount);
         const rawAltMinMax = getMinAndMaxOnRange(lines[altLineKey].values, startIndex, endIndex);
-        const altMinMax = getValueRangeAndNotchScale(rawAltMinMax.min, rawAltMinMax.max, chartValue2YScaleNotchCount);
+        const altMinMax = getValueRangeForFixedNotches(rawAltMinMax.min, rawAltMinMax.max, chartValue2YScaleNotchCount);
 
         transitions.setTargets({
           mainMinValue: minMax.min,
@@ -246,11 +252,13 @@ export default function makeChart(element, {name, type, dates, lines}, initialTh
       }
       case TYPE_BAR: {
         const maxSum = getMaxSumOnRange(linesObjectToVectorArray(lines, linesState), startIndex, endIndex);
+        const minMax = getValueRangeForFixedBottom(0, maxSum, chartValueScaleMaxNotchCount);
 
         if (maxSum > 0) {
           transitions.setTargets({
-            mainMaxValue: maxSum,
-            mainValueNotchScale: getValueNotchScale(0, maxSum)
+            mainMinValue: minMax.min,
+            mainMaxValue: minMax.max,
+            mainValueNotchScale: minMax.notchScale
           });
         }
       }
@@ -444,10 +452,11 @@ function createTransitionGroup({
       const mapMinMax = getMinAndMaxFromLinesCache(linesMinAndMax, linesState);
       mapMinValue = mapMinMax.min;
       mapMaxValue = mapMinMax.max;
-      const mainMinMax = getLinesMinAndMaxOnRange(lines, linesState, startIndex, endIndex);
-      mainMinValue = mainMinMax.min; // todo: Align the notch with the bottom line
+      const rawMainMinMax = getLinesMinAndMaxOnRange(lines, linesState, startIndex, endIndex);
+      const mainMinMax = getValueRangeForFixedBottom(rawMainMinMax.min, rawMainMinMax.max, chartValueScaleMaxNotchCount);
+      mainMinValue = mainMinMax.min;
       mainMaxValue = mainMinMax.max;
-      mainValueNotchScale = getValueNotchScale(mainMinValue, mainMaxValue);
+      mainValueNotchScale = mainMinMax.notchScale;
       break;
     }
     case TYPE_LINE_TWO_Y: {
@@ -459,12 +468,12 @@ function createTransitionGroup({
       mapAltMinValue = mapAltMinMax.min;
       mapAltMaxValue = mapAltMinMax.max;
       const mainRawMinMax = getMinAndMaxOnRange(lines[mainLineKey].values, startIndex, endIndex);
-      const mainMinMax = getValueRangeAndNotchScale(mainRawMinMax.min, mainRawMinMax.max, chartValue2YScaleNotchCount);
+      const mainMinMax = getValueRangeForFixedNotches(mainRawMinMax.min, mainRawMinMax.max, chartValue2YScaleNotchCount);
       mainMinValue = mainMinMax.min;
       mainMaxValue = mainMinMax.max;
       mainValueNotchScale = mainMinMax.notchScale;
       const mainAltRawMinMax = getMinAndMaxOnRange(lines[altLineKey].values, startIndex, endIndex);
-      const mainAltMinMax = getValueRangeAndNotchScale(mainAltRawMinMax.min, mainAltRawMinMax.max, chartValue2YScaleNotchCount);
+      const mainAltMinMax = getValueRangeForFixedNotches(mainAltRawMinMax.min, mainAltRawMinMax.max, chartValue2YScaleNotchCount);
       mainAltMinValue = mainAltMinMax.min;
       mainAltMaxValue = mainAltMinMax.max;
       mainAltValueNotchScale = mainAltMinMax.notchScale;
@@ -473,9 +482,11 @@ function createTransitionGroup({
     case TYPE_BAR: {
       mapMinValue = 0;
       mapMaxValue = getMaxSumOnRange(linesObjectToVectorArray(lines, linesState), 0, dates.length - 1);
-      mainMinValue = 0;
-      mainMaxValue = getMaxSumOnRange(linesObjectToVectorArray(lines, linesState), startIndex, endIndex);
-      mainValueNotchScale = getValueNotchScale(0, mainMaxValue);
+      const mainMaxSum = getMaxSumOnRange(linesObjectToVectorArray(lines, linesState), startIndex, endIndex);
+      const mainMinMax = getValueRangeForFixedBottom(0, mainMaxSum, chartValueScaleMaxNotchCount);
+      mainMinValue = mainMinMax.min;
+      mainMaxValue = mainMinMax.max;
+      mainValueNotchScale = mainMinMax.notchScale;
       useLinearValueTransition = true;
       break;
     }
@@ -591,8 +602,4 @@ function areAllLinesExceptOneDisabled(linesState, theKey) {
   }
 
   return true;
-}
-
-function getValueNotchScale(minValue, maxValue) {
-  return Math.max(-1e9, getSubDecimalScale((maxValue - minValue) / chartValueScaleMaxNotchCount, true));
 }

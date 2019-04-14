@@ -17,6 +17,8 @@ const mapGripVerticalOffset = 10;
  * Watches for different gestures on the chart (drag the map, hover the lines, etc.)
  */
 export default function watchGestures(element, chartState, callbacks) {
+  chartState = {...chartState};
+
   let startMapSelectorDrag = null;
   let middleMapSelectorDrag = null;
   let endMapSelectorDrag = null;
@@ -40,7 +42,7 @@ export default function watchGestures(element, chartState, callbacks) {
 
   return {
     setChartState(newState) {
-      chartState = {...chartState, ...newState};
+      chartState = Object.assign(chartState, newState);
     },
     destroy() {
       element.removeEventListener('mousedown', handleMouseDown);

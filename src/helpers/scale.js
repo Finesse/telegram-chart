@@ -72,7 +72,7 @@ export function subDecimalScaleToNumber(scale) {
  * @returns {{min: number, max: number, notchScale: number}} Turn the notch scale to a plain number using the
  *  `subDecimalScaleToNumber` function
  */
-export function getValueRangeAndNotchScale(minValue, maxValue, notchCount = 5) {
+export function getValueRangeForFixedNotches(minValue, maxValue, notchCount = 5) {
   function getValueRange(notchScale) {
     const notchValue = subDecimalScaleToNumber(notchScale);
     const alignedMinValue = floorWithBase(minValue, notchValue);
@@ -88,4 +88,14 @@ export function getValueRangeAndNotchScale(minValue, maxValue, notchCount = 5) {
   }
 
   return {min, max, notchScale};
+}
+
+/**
+ * Calculates the scale such way that the lowest notch is always at the button.
+ *
+ * @see getValueRangeForFixedNotches for arguments and return value
+ */
+export function getValueRangeForFixedBottom(minValue, maxValue, maxNotchCount = 5) {
+  const {min, notchScale} = getValueRangeForFixedNotches(minValue, maxValue, maxNotchCount);
+  return {min, max: maxValue, notchScale};
 }
