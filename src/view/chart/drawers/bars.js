@@ -3,7 +3,7 @@ import {numberColorToRGBA} from '../../../helpers/color';
 export default function makeBars(ctx, linesData) {
   const linesKeys = Object.keys(linesData);
   const dataLength = linesData[linesKeys[0]].values.length;
-  const columnsCurrentY = new Array(dataLength);
+  const columnsCurrentY = new Float32Array(dataLength);
 
   return function drawBars({
     x, y, width, height,

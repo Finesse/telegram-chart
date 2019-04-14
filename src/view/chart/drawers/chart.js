@@ -10,10 +10,14 @@ import makeChartTop from './chartTop';
 import makeChartMainWithoutX from './chartMainWithoutX';
 import makeChartX from './chartX';
 import makeChartMap from './chartMap';
+import {makeGetColumnsSums} from './percentageArea';
+import {TYPE_AREA} from "../../../namespace";
 
 export default function makeChart(mainCanvas, mapCanvas, type, linesData, dates, minIndex, maxIndex) {
   const mainCtx = mainCanvas.getContext('2d');
   const mapCtx = mapCanvas.getContext('2d');
+
+  const getColumnsSums = type === TYPE_AREA ? makeGetColumnsSums(linesData) : () => [];
 
   const updateMainCanvasSize = memoizeOne((width, height) => {
     mainCanvas.width = width;
@@ -27,9 +31,9 @@ export default function makeChart(mainCanvas, mapCanvas, type, linesData, dates,
 
   // The parts of the chart that can be updated independently
   const drawChartTop = makeChartTop(mainCtx);
-  const drawChartMainWithoutX = makeChartMainWithoutX(mainCtx, type, linesData);
+  const drawChartMainWithoutX = makeChartMainWithoutX(mainCtx, type, linesData, getColumnsSums);
   const drawChartX = makeChartX(mainCtx, dates, minIndex, maxIndex);
-  const drawChartMap = makeChartMap(mapCtx, type, linesData, minIndex, maxIndex);
+  const drawChartMap = makeChartMap(mapCtx, type, linesData, minIndex, maxIndex, getColumnsSums);
 
   return ({
     mainCanvasWidth,

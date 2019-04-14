@@ -1,15 +1,17 @@
 import memoizeObjectArguments from '../../../helpers/memoizeObjectArguments';
 import {chartSidePadding, chartMainLinesTopMargin, chartMainFadeHeight} from '../../../style';
-import {TYPE_BAR, TYPE_LINE, TYPE_LINE_TWO_Y} from '../../../namespace';
+import {TYPE_AREA, TYPE_BAR, TYPE_LINE, TYPE_LINE_TWO_Y} from '../../../namespace';
 import drawMainLines from './mainLines';
 import makeBars from './bars';
+import makePercentageArea from './percentageArea';
 import drawValueScale from './valueScale';
 import makeTopFade from './topFade';
 
-export default function makeChartMainWithoutX(ctx, type, linesData) {
+export default function makeChartMainWithoutX(ctx, type, linesData, getColumnsSums) {
   const [mainLineKey, altLineKey] = Object.keys(linesData);
 
   const drawBars = type === TYPE_BAR ? makeBars(ctx, linesData) : () => {};
+  const drawPercentageArea = type === TYPE_AREA ? makePercentageArea(ctx, linesData, getColumnsSums) : () => {};
   const drawTopFade = makeTopFade(ctx);
 
   return memoizeObjectArguments(({
@@ -103,9 +105,24 @@ export default function makeChartMainWithoutX(ctx, type, linesData) {
           toIndex: endIndex,
           fromSum: minValue,
           toSum: maxValue,
-          topPadding: mainLinesY - y,
+          topPadding: mainLinesY - y
         });
         break;
+      }
+
+      case TYPE_AREA: {
+        drawPercentageArea({
+          x,
+          y: mainLinesY,
+          width,
+          height: mainLinesHeight,
+          linesData,
+          linesOpacity,
+          fromX: mainLinesX,
+          toX: mainLinesX + mainLinesWidth,
+          fromIndex: startIndex,
+          toIndex: endIndex
+        });
       }
     }
 
@@ -148,7 +165,9 @@ export default function makeChartMainWithoutX(ctx, type, linesData) {
       });
     }
 
-    drawTopFade(x, y, width, chartMainFadeHeight * pixelRatio);
+    if (type !== TYPE_AREA) {
+      drawTopFade(x, y, width, chartMainFadeHeight * pixelRatio);
+    }
 
     ctx.restore();
   });

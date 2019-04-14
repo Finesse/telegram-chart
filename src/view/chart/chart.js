@@ -19,7 +19,8 @@ import {getDateComponentsForRange} from '../../helpers/date';
 import {
   getDateNotchScale,
   getValueRangeForFixedNotches,
-  getValueRangeForFixedBottom
+  getValueRangeForFixedBottom,
+  getSubDecimalScale
 } from '../../helpers/scale';
 import {
   themeTransitionDuration,
@@ -28,7 +29,8 @@ import {
   chartSidePadding,
   chartValueScaleMaxNotchCount,
   chartValue2YScaleNotchCount,
-  chartMapCornersRadius
+  chartMapCornersRadius,
+  chartValueAreaNotchCount
 } from '../../style';
 import makeToggleButton from '../toggleButton/toggleButton';
 import makeColumnDetails from '../columnDetails/columnDetails';
@@ -60,10 +62,6 @@ const template = `
  */
 export default function makeChart(element, {name, type, dates, lines}, initialTheme = 'day') {
   // The arguments store the unaltered chart state
-
-  if (type === TYPE_AREA) {
-    type = TYPE_LINE;
-  }
 
   const linesMinAndMax = type === TYPE_LINE || type === TYPE_LINE_TWO_Y ? getLinesMinAndMaxValues(lines) : {};
 
@@ -488,6 +486,14 @@ function createTransitionGroup({
       mainMaxValue = mainMinMax.max;
       mainValueNotchScale = mainMinMax.notchScale;
       useLinearValueTransition = true;
+      break;
+    }
+    case TYPE_AREA: {
+      mapMinValue = 0;
+      mapMaxValue = 100;
+      mainMinValue = 0;
+      mainMaxValue = 100;
+      mainValueNotchScale = getSubDecimalScale(100 / chartValueAreaNotchCount);
       break;
     }
   }

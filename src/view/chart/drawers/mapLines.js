@@ -1,6 +1,7 @@
 import {chartMapLineWidth, chartMapLinesHorizontalMargin, chartMapLinesVerticalMargin} from '../../../style';
 import drawLine from './line';
 
+// todo: Unite with mainLines.js
 export default function drawMapLines({
   ctx,
   x, y, width, height,

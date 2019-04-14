@@ -1,13 +1,15 @@
 import memoizeObjectArguments from '../../../helpers/memoizeObjectArguments';
 import {chartMapBarsVerticalPadding} from '../../../style';
-import {TYPE_BAR, TYPE_LINE, TYPE_LINE_TWO_Y} from '../../../namespace';
+import {TYPE_AREA, TYPE_BAR, TYPE_LINE, TYPE_LINE_TWO_Y} from '../../../namespace';
 import drawMapLines from './mapLines';
 import makeBars from './bars';
+import makePercentageArea from './percentageArea';
 
-export default function makeChartMap(ctx, type, linesData, minIndex, maxIndex) {
+export default function makeChartMap(ctx, type, linesData, minIndex, maxIndex, getColumnsSums) {
   const [mainLineKey, altLineKey] = Object.keys(linesData);
 
   const drawBars = type === TYPE_BAR ? makeBars(ctx, linesData) : () => {};
+  const drawPercentageArea = type === TYPE_AREA ? makePercentageArea(ctx, linesData, getColumnsSums) : () => {};
 
   return memoizeObjectArguments(({
     canvasWidth, canvasHeight,
@@ -70,6 +72,17 @@ export default function makeChartMap(ctx, type, linesData, minIndex, maxIndex) {
           topPadding: chartMapBarsVerticalPadding * pixelRatio
         });
         break;
+      }
+      case TYPE_AREA: {
+        drawPercentageArea({
+          ...commonArguments,
+          linesData,
+          linesOpacity,
+          fromX: 0,
+          toX: canvasWidth,
+          fromIndex: minIndex,
+          toIndex: maxIndex
+        });
       }
     }
   });
