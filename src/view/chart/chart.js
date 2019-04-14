@@ -4,6 +4,7 @@ import {
   makeAnimationGroup,
   makeExponentialTransition,
   makeInstantWhenHiddenTransition,
+  makeLogarithmicTransition,
   makeTransition
 } from '../../helpers/animationGroup';
 import {
@@ -22,7 +23,8 @@ import {
   chartMapBottom,
   chartSidePadding,
   chartValueScaleMaxNotchCount,
-  chartValue2YScaleNotchCount, chartMapCornersRadius
+  chartValue2YScaleNotchCount,
+  chartMapCornersRadius
 } from '../../style';
 import makeToggleButton from '../toggleButton/toggleButton';
 import makeColumnDetails from '../columnDetails/columnDetails';
@@ -435,7 +437,7 @@ function createTransitionGroup({
   let mainAltMinValue;
   let mainAltMaxValue;
   let mainAltValueNotchScale;
-  let mapTransitionFactory = makeExponentialTransition;
+  let useLinearValueTransition = false;
 
   switch (type) {
     case TYPE_LINE: {
@@ -474,22 +476,25 @@ function createTransitionGroup({
       mainMinValue = 0;
       mainMaxValue = getMaxSumOnRange(linesObjectToVectorArray(lines, linesState), startIndex, endIndex);
       mainValueNotchScale = getValueNotchScale(0, mainMaxValue);
-      mapTransitionFactory = makeTransition;
+      useLinearValueTransition = true;
       break;
     }
   }
 
+  const valueTransitionFactory = useLinearValueTransition ? makeTransition : makeExponentialTransition;
+  const valueNotchScaleTransitionFactory = useLinearValueTransition ? makeLogarithmicTransition : makeTransition;
+
   const transitions = {
-    mapMinValue: mapTransitionFactory(mapMinValue),
-    mapMaxValue: mapTransitionFactory(mapMaxValue),
-    mapAltMinValue: mapTransitionFactory(mapAltMinValue),
-    mapAltMaxValue: mapTransitionFactory(mapAltMaxValue),
-    mainMinValue: makeExponentialTransition(mainMinValue),
-    mainMaxValue: makeExponentialTransition(mainMaxValue),
-    mainValueNotchScale: makeTransition(mainValueNotchScale),
-    mainAltMinValue: makeExponentialTransition(mainAltMinValue),
-    mainAltMaxValue: makeExponentialTransition(mainAltMaxValue),
-    mainAltValueNotchScale: makeTransition(mainAltValueNotchScale),
+    mapMinValue: valueTransitionFactory(mapMinValue),
+    mapMaxValue: valueTransitionFactory(mapMaxValue),
+    mapAltMinValue: valueTransitionFactory(mapAltMinValue),
+    mapAltMaxValue: valueTransitionFactory(mapAltMaxValue),
+    mainMinValue: valueTransitionFactory(mainMinValue),
+    mainMaxValue: valueTransitionFactory(mainMaxValue),
+    mainValueNotchScale: valueNotchScaleTransitionFactory(mainValueNotchScale),
+    mainAltMinValue: valueTransitionFactory(mainAltMinValue),
+    mainAltMaxValue: valueTransitionFactory(mainAltMaxValue),
+    mainAltValueNotchScale: valueNotchScaleTransitionFactory(mainAltValueNotchScale),
     dateNotchScale: makeTransition(getDateNotchScale(endIndex - startIndex), {
       maxDistance: 1.5
     }),

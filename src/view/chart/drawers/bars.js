@@ -1,6 +1,5 @@
 import {numberColorToRGBA} from '../../../helpers/color';
 
-// todo: Fix the Pears animation
 export default function makeBars(ctx, linesData) {
   const linesKeys = Object.keys(linesData);
   const dataLength = linesData[linesKeys[0]].values.length;

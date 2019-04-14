@@ -168,9 +168,9 @@ export function makeInstantWhenHiddenTransition(valueTransition, opacityTransiti
  *
  * @returns AnimationGroup~Animation
  */
-export function makeExponentialTransition(initialValue = 0, {minPlainValue = 1e-9, ...options} = {}) {
+export function makeExponentialTransition(initialValue = 0, {minPowerValue = 1e-9, ...options} = {}) {
   function plainValueToPower(value) {
-    return Math.max(Math.log(value), minPlainValue);
+    return Math.max(Math.log(value), minPowerValue);
   }
 
   function powerToPlainValue(power) {
@@ -183,11 +183,37 @@ export function makeExponentialTransition(initialValue = 0, {minPlainValue = 1e-
     getState() {
       return powerToPlainValue(powerTransition.getState());
     },
-    isFinished() {
-      return powerTransition.isFinished();
-    },
+    isFinished: powerTransition.isFinished,
     setTarget(value, instant) {
       powerTransition.setTarget(plainValueToPower(value), instant);
+    }
+  };
+}
+
+/**
+ * Animates the number logarithm transition. Designed for transition of the scale of an axis with a linear value
+ * transition. Does opposite to `makeExponentialTransition`.
+ *
+ * @returns AnimationGroup~Animation
+ */
+export function makeLogarithmicTransition(initialValue = 0, {minValue = 1e-9, ...options} = {}) {
+  function plainValueToPower(value) {
+    return Math.max(Math.log(value), minValue);
+  }
+
+  function powerToPlainValue(power) {
+    return Math.exp(power);
+  }
+
+  const valueTransition = makeTransition(powerToPlainValue(initialValue), options);
+
+  return {
+    getState() {
+      return plainValueToPower(valueTransition.getState());
+    },
+    isFinished: valueTransition.isFinished,
+    setTarget(value, instant) {
+      valueTransition.setTarget(powerToPlainValue(value), instant);
     }
   };
 }
