@@ -70,24 +70,25 @@ export function watchHover({element, onMove, onEnd, checkHover = event => true})
   let hoverId = null;
 
   const handleMove = event => {
-    eachSubEvent(event, (id, event) => {
+    eachSubEvent(event, (id, subEvent) => {
       if ((hoverId === null || id === hoverId)) {
-        if (checkHover(event)) {
+        if (checkHover(subEvent)) {
           hoverId = id;
-          onMove(event);
+          onMove(subEvent);
         } else if (hoverId !== null) {
           hoverId = null;
-          onEnd(event);
+          onEnd(subEvent);
         }
       }
     });
   };
 
   const handleEnd = event => {
-    eachSubEvent(event, (id, event) => {
+    eachSubEvent(event, (id, subEvent) => {
       if (hoverId === id) {
+        event.preventDefault(); // To prevent the frozen hover on touch devices
         hoverId = null;
-        onEnd(event);
+        onEnd(subEvent);
       }
     });
   };
