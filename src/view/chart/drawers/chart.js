@@ -26,6 +26,7 @@ export default function makeChart(mainCanvas, mapCanvas, type, linesData, dates,
   const updateMainCanvasSize = memoizeOne((width, height) => {
     mainCanvas.width = width;
     mainCanvas.height = height;
+    ++forceRedrawMainCanvas;
   });
 
   const updateMapCanvasSize = memoizeOne((width, height) => {
@@ -40,6 +41,7 @@ export default function makeChart(mainCanvas, mapCanvas, type, linesData, dates,
   const drawColumnDetails = makeColumnDetails(mainCtx, type, linesData);
   const drawChartMap = makeChartMap(mapCtx, type, linesData, minIndex, maxIndex, percentageAreaCache);
 
+  let wasDetailsPopupDrawn = false;
   let forceRedrawMainCanvas = 0;
 
   return ({
@@ -85,8 +87,10 @@ export default function makeChart(mainCanvas, mapCanvas, type, linesData, dates,
     if (doDrawDetailsPopup) {
       mainCtx.clearRect(0, 0, mainCanvasWidth, mainCanvasHeight);
       forceRedrawMainCanvas++;
-    } else {
-      forceRedrawMainCanvas = 0;
+      wasDetailsPopupDrawn = true;
+    } else if (wasDetailsPopupDrawn) {
+      forceRedrawMainCanvas++;
+      wasDetailsPopupDrawn = false;
     }
 
     drawChartTop({
@@ -103,7 +107,7 @@ export default function makeChart(mainCanvas, mapCanvas, type, linesData, dates,
       endYear: rangeEndYear,
       pixelRatio,
       theme,
-      _: forceRedrawMainCanvas // Not used inside the function. Used to reset the memoization of the function
+      _: forceRedrawMainCanvas // Not used inside the function. Used to reset the memoization of the function.
     });
 
     drawChartMainWithoutX({
