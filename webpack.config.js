@@ -44,7 +44,7 @@ module.exports = (env, argv) => {
   return {
     entry: `./${sourceDirectory}/index.js`,
     mode,
-    devtool: isDevelopment ? 'inline-source-map' : undefined,
+    devtool: isDevelopment ? 'inline-source-map' : 'source-map',
     module: {
       rules: [
         {
