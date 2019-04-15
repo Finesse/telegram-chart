@@ -6,7 +6,8 @@ import {
   makeExponentialTransition,
   makeInstantWhenHiddenTransition,
   makeLogarithmicTransition,
-  makeTransition
+  makeTransition,
+  makeTransitionGroup
 } from '../../helpers/animationGroup';
 import {
   getLinesMinAndMaxValues,
@@ -30,11 +31,10 @@ import {
   chartSidePadding,
   chartValueScaleMaxNotchCount,
   chartValue2YScaleNotchCount,
-  chartMapCornersRadius,
+  chartMapCornerRadius,
   chartValueAreaNotchCount
 } from '../../style';
 import makeToggleButton from '../toggleButton/toggleButton';
-import makeColumnDetails from '../columnDetails/columnDetails';
 import makeSafariAssKicker from '../safariAssKicker/safariAssKicker';
 import {TYPE_AREA, TYPE_BAR, TYPE_LINE, TYPE_LINE_TWO_Y} from '../../namespace';
 import watchGestures from './watchGestures';
@@ -48,7 +48,7 @@ const template = `
 <section class="${styles.root}">
   <h3 class="${styles.name}"></h3>
   <div class="${styles.chart}">
-    <canvas class="${styles.mapCanvas}" style="left: ${chartSidePadding}px; bottom: ${chartMapBottom}px; width: calc(100% - ${chartSidePadding * 2}px); height: ${chartMapHeight}px; border-radius: ${chartMapCornersRadius}px;"></canvas>
+    <canvas class="${styles.mapCanvas}" style="left: ${chartSidePadding}px; bottom: ${chartMapBottom}px; width: calc(100% - ${chartSidePadding * 2}px); height: ${chartMapHeight}px; border-radius: ${chartMapCornerRadius}px;"></canvas>
     <canvas class="${styles.mainCanvas}"></canvas>
   </div>
   <div class="${styles.toggles}"></div>
@@ -84,7 +84,6 @@ export default function makeChart(element, {name, type, dates, lines}, initialTh
     chartBox,
     mainCanvas,
     mapCanvas,
-    setDetailsState,
     setTogglesState,
     kickSafariAss
   } = createDOM(element, name, lines, dates, state.lines, handleToggleLine, handleLineToggleOther);
@@ -289,8 +288,20 @@ export default function makeChart(element, {name, type, dates, lines}, initialTh
   });
 
   const applyDetailsPosition = memoizeOne(detailsIndex => {
+    if (detailsIndex === null) {
+      transitions.setTargets({
+        detailsPosition: [undefined, 0]
+      });
+      return;
+    }
+
+    const detailsDate = getDataDateComponentsForRange(dates, detailsIndex);
+
     transitions.setTargets({
-      detailsPosition: detailsIndex === null ? [undefined, 0] : [detailsIndex, 1]
+      detailsPosition: [{
+        ...detailsDate,
+        index: detailsIndex
+      }, 1]
     });
   });
 
@@ -327,7 +338,15 @@ export default function makeChart(element, {name, type, dates, lines}, initialTh
       mainAltMaxValue,
       mainAltValueNotchScale,
       dateNotchScale,
-      detailsPosition: [detailsIndex, detailsOpacity],
+      detailsPosition: [
+        {
+          index: detailsIndex,
+          day: detailsDay,
+          month: detailsMonth,
+          year: detailsYear
+        },
+        detailsOpacity
+      ],
       theme,
       rangeStartDay,
       rangeStartMonth,
@@ -363,6 +382,9 @@ export default function makeChart(element, {name, type, dates, lines}, initialTh
       startIndex,
       endIndex,
       detailsIndex,
+      detailsDay,
+      detailsMonth,
+      detailsYear,
       detailsOpacity,
       rangeStartDay,
       rangeStartMonth,
@@ -372,8 +394,6 @@ export default function makeChart(element, {name, type, dates, lines}, initialTh
       rangeEndYear,
       theme
     }, linesOpacity);
-
-    setDetailsState((detailsIndex - startIndex) / (endIndex - startIndex), detailsOpacity, Math.round(detailsIndex), linesState);
 
     setTogglesState(linesState);
 
@@ -497,6 +517,11 @@ function createTransitionGroup({
   const valueTransitionFactory = useLinearValueTransition ? makeTransition : makeExponentialTransition;
   const valueNotchScaleTransitionFactory = useLinearValueTransition ? makeLogarithmicTransition : makeTransition;
 
+  const detailsTransitionOptions = {
+    easing: cubicOut,
+    duration: 300
+  };
+
   const transitions = {
     mapMinValue: valueTransitionFactory(mapMinValue),
     mapMaxValue: valueTransitionFactory(mapMaxValue),
@@ -512,9 +537,11 @@ function createTransitionGroup({
       maxDistance: 1.5
     }),
     detailsPosition: makeInstantWhenHiddenTransition(
-      makeTransition(0.5, {
-        easing: cubicOut,
-        duration: 300
+      makeTransitionGroup({
+        index: makeTransition(0, detailsTransitionOptions),
+        day: makeTransition(0, detailsTransitionOptions),
+        month: makeTransition(0, detailsTransitionOptions),
+        year: makeTransition(0, detailsTransitionOptions),
       }),
       makeTransition(0, {
         duration: 300
@@ -546,10 +573,6 @@ function createDOM(root, name, linesData, dates, linesState, onLineToggle, onLin
   const nameBox = root.querySelector(`.${styles.name}`);
   nameBox.textContent = name;
 
-  const columnDetails = makeColumnDetails(linesData, dates, styles.details);
-  const chartBox = root.querySelector(`.${styles.chart}`);
-  chartBox.appendChild(columnDetails.element);
-
   // todo: Don't show toggles if there is only 1 line
   const togglesBox = root.querySelector(`.${styles.toggles}`);
   const togglesStateSetters = {};
@@ -575,10 +598,9 @@ function createDOM(root, name, linesData, dates, linesState, onLineToggle, onLin
   root.appendChild(safariAssKickerElement);
 
   return {
-    chartBox,
+    chartBox: root.querySelector(`.${styles.chart}`),
     mainCanvas: root.querySelector(`.${styles.mainCanvas}`),
     mapCanvas: root.querySelector(`.${styles.mapCanvas}`),
-    setDetailsState: columnDetails.setState,
     setTogglesState,
     kickSafariAss
   };

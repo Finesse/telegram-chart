@@ -31,7 +31,7 @@
 }
 
 .themeSwitcher {
-  position: fixed;
+  position: fixed; /* todo: Detach on small screens */
   z-index: 100;
   left: 0;
   right: 0;

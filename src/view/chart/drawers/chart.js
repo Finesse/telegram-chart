@@ -12,11 +12,11 @@ import makeChartMainWithoutX from './chartMainWithoutX';
 import makeChartX from './chartX';
 import makeChartMap from './chartMap';
 import {makePercentageAreaCache} from './percentageArea';
+import makeColumnDetails from './columnDetails';
 
 export default function makeChart(mainCanvas, mapCanvas, type, linesData, dates, minIndex, maxIndex) {
   const mainCtx = mainCanvas.getContext('2d');
   const mapCtx = mapCanvas.getContext('2d');
-
   const percentageAreaCache = type === TYPE_AREA ? makePercentageAreaCache(linesData) : () => [];
 
   const updateMainCanvasSize = memoizeOne((width, height) => {
@@ -33,7 +33,10 @@ export default function makeChart(mainCanvas, mapCanvas, type, linesData, dates,
   const drawChartTop = makeChartTop(mainCtx);
   const drawChartMainWithoutX = makeChartMainWithoutX(mainCtx, type, linesData, percentageAreaCache);
   const drawChartX = makeChartX(mainCtx, dates, minIndex, maxIndex);
+  const drawColumnDetails = makeColumnDetails(mainCtx, type, linesData);
   const drawChartMap = makeChartMap(mapCtx, type, linesData, minIndex, maxIndex, percentageAreaCache);
+
+  let forceRedrawMainCanvas = 0;
 
   return ({
     mainCanvasWidth,
@@ -55,6 +58,9 @@ export default function makeChart(mainCanvas, mapCanvas, type, linesData, dates,
     startIndex,
     endIndex,
     detailsIndex,
+    detailsDay,
+    detailsMonth,
+    detailsYear,
     detailsOpacity,
     rangeStartDay,
     rangeStartMonth,
@@ -66,9 +72,17 @@ export default function makeChart(mainCanvas, mapCanvas, type, linesData, dates,
   }, linesOpacity) => {
     const mainSectionY = chartMainTopMargin * pixelRatio;
     const mainSectionHeight = mainCanvasHeight - (chartMainLinesBottomMargin + chartMapHeight + chartMapBottom) * pixelRatio - mainSectionY;
+    const doDrawDetailsPopup = detailsOpacity > 0 && detailsIndex !== null;
 
     updateMainCanvasSize(mainCanvasWidth, mainCanvasHeight);
     updateMapCanvasSize(mapCanvasWidth, mapCanvasHeight);
+
+    if (doDrawDetailsPopup) {
+      mainCtx.clearRect(0, 0, mainCanvasWidth, mainCanvasHeight);
+      forceRedrawMainCanvas++;
+    } else {
+      forceRedrawMainCanvas = 0;
+    }
 
     drawChartTop({
       x: 0,
@@ -83,7 +97,8 @@ export default function makeChart(mainCanvas, mapCanvas, type, linesData, dates,
       endMonth: rangeEndMonth,
       endYear: rangeEndYear,
       pixelRatio,
-      theme
+      theme,
+      _: forceRedrawMainCanvas // Not used inside the function. Used to reset the memoization of the function
     });
 
     drawChartMainWithoutX({
@@ -102,7 +117,8 @@ export default function makeChart(mainCanvas, mapCanvas, type, linesData, dates,
       detailsIndex,
       detailsOpacity,
       pixelRatio,
-      theme
+      theme,
+      _: forceRedrawMainCanvas
     }, linesOpacity);
 
     drawChartX({
@@ -114,8 +130,28 @@ export default function makeChart(mainCanvas, mapCanvas, type, linesData, dates,
       endIndex,
       dateNotchScale,
       pixelRatio,
-      theme
+      theme,
+      _: forceRedrawMainCanvas
     });
+
+    if (doDrawDetailsPopup) {
+      // todo: Detect the position
+      drawColumnDetails({
+        x: 10 * pixelRatio,
+        y: 50 * pixelRatio,
+        ctx: mainCtx,
+        pixelRatio,
+        theme,
+        type,
+        linesData,
+        linesOpacity,
+        index: detailsIndex,
+        day: detailsDay,
+        month: detailsMonth,
+        year: detailsYear,
+        opacity: detailsOpacity
+      });
+    }
 
     drawChartMap({
       canvasWidth: mapCanvasWidth,

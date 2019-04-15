@@ -1,6 +1,6 @@
 import {mixNumberColors, mixNumberColorsAndOpacitiesToRGBA, numberColorToRGBA} from '../../../helpers/color';
 import {
-  chartMapCornersRadius,
+  chartMapCornerRadius,
   chartSelectorBorderCornerRadius,
   chartSelectorOutsideColors,
   chartSelectorOutsideOpacities,
@@ -22,7 +22,7 @@ export default function drawMapSelector({
   theme
 }) {
   const sideBorderWidth = chartSelectorGripWidth * pixelRatio;
-  const outsideCornerRadius = chartMapCornersRadius * pixelRatio;
+  const outsideCornerRadius = chartMapCornerRadius * pixelRatio;
   const verticalPadding = chartSelectorVerticalPadding * pixelRatio;
 
   let leftOffset = Math.round(from * width);

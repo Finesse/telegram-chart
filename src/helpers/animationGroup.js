@@ -17,6 +17,7 @@ import {quadInOut} from 'd3-ease/src/quad';
  */
 export function makeAnimationGroup(animations, onUpdate) {
   let animationFrameId = null;
+  const animationGroup = makeTransitionGroup(animations);
 
   /**
    * Sets the animations targets. The motion happens after calling this.
@@ -24,14 +25,9 @@ export function makeAnimationGroup(animations, onUpdate) {
    * @param {Record<string, *>} targets The keys are the animation ids. May contain not all the animations.
    */
   function setTargets(targets) {
-    for (const key in targets) {
-      if (animations.hasOwnProperty(key)) {
-        animations[key].setTarget(targets[key]);
-
-        if (!animations[key].isFinished()) {
-          updateOnNextFrame();
-        }
-      }
+    animationGroup.setTarget(targets);
+    if (!animationGroup.isFinished()) {
+      updateOnNextFrame();
     }
   }
 
@@ -41,15 +37,7 @@ export function makeAnimationGroup(animations, onUpdate) {
    * @returns {Record<string, *>} The keys are the animation ids
    */
   function getState() {
-    const state = {};
-
-    for (const key in animations) {
-      if (animations.hasOwnProperty(key)) {
-        state[key] = animations[key].getState();
-      }
-    }
-
-    return state;
+    return animationGroup.getState();
   }
 
   /**
@@ -74,16 +62,7 @@ export function makeAnimationGroup(animations, onUpdate) {
   function handleAnimationFrame() {
     animationFrameId = null;
 
-    let areAllFinished = true;
-    for (const key in animations) {
-      if (animations.hasOwnProperty(key)) {
-        if (!animations[key].isFinished()) {
-          areAllFinished = false;
-          break;
-        }
-      }
-    }
-    if (!areAllFinished) {
+    if (!animationGroup.isFinished()) {
       updateOnNextFrame();
     }
 
@@ -108,7 +87,7 @@ export function makeTransition(initialValue = 0, {
   let targetValue = initialValue;
   let finished = true;
 
-  const getState = () => {
+  function getState() {
     const stage = Math.min(1, (Date.now() - startTime) / duration);
 
     if (stage >= 1) {
@@ -116,11 +95,13 @@ export function makeTransition(initialValue = 0, {
     }
 
     return startValue + (targetValue - startValue) * easing(stage);
-  };
+  }
 
-  const isFinished = () => finished;
+  function isFinished() {
+    return finished;
+  }
 
-  const setTarget = (value, instant) => {
+  function setTarget(value, instant) {
     if (value === targetValue) {
       return;
     }
@@ -135,9 +116,51 @@ export function makeTransition(initialValue = 0, {
     } else {
       startValue = Math.min(startValue, targetValue + maxDistance);
     }
-  };
+  }
 
   return {getState, isFinished, setTarget};
+}
+
+/**
+ * Groups multiple transition so that they can be controlled as one transition
+ *
+ * @param {Record<string, AnimationGroup~Animation>} transitions
+ * @returns AnimationGroup~Animation
+ */
+export function makeTransitionGroup(transitions) {
+  const transitionKeys = Object.keys(transitions);
+
+  return {
+    getState() {
+      const state = {};
+
+      for (let i = 0; i < transitionKeys.length; ++i) {
+        state[transitionKeys[i]] = transitions[transitionKeys[i]].getState();
+      }
+
+      return state;
+    },
+    isFinished() {
+      for (let i = 0; i < transitionKeys.length; ++i) {
+        if (!transitions[transitionKeys[i]].isFinished()) {
+          return false;
+        }
+      }
+
+      return true;
+    },
+    setTarget(targets, instant) {
+      if (!targets) {
+        return;
+      }
+
+      for (const key in targets) {
+        if (transitions.hasOwnProperty(key)) {
+          transitions[key].setTarget(targets[key], instant);
+        }
+      }
+    }
+  }
 }
 
 /**

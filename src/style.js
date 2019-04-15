@@ -2,6 +2,14 @@ export const fontFamily = 'Helvetica Neue, Helvetica, Roboto, Arial, sans-serif'
 export const textColors = [0x000000, 0xffffff];
 export const backgroundColors = [0xffffff, 0x242f3e];
 
+export const themeTransitionDuration = 300; // ms
+export const themeTransitionStyle = {
+  transitionDuration: `${themeTransitionDuration}ms`,
+  transitionTimingFunction: 'ease-in-out'
+};
+export const themeTransitionCSS = `transition-duration: ${themeTransitionStyle.transitionDuration};`
+  + `transition-timing-function: ${themeTransitionStyle.transitionTimingFunction};`;
+
 export const chartSidePadding = 12;
 export const chartMainTopMargin = 32;
 export const chartMainFadeHeight = 16;
@@ -9,7 +17,7 @@ export const chartMainLinesTopMargin = 18;
 export const chartMainLinesBottomMargin = 35;
 export const chartMapHeight = 40;
 export const chartMapBottom = 1;
-export const chartMapCornersRadius = 5;
+export const chartMapCornerRadius = 5;
 export const chartMapLineWidth = 1;
 export const chartMapLinesHorizontalMargin = 1;
 export const chartMapLinesVerticalMargin = 4/3;
@@ -42,10 +50,24 @@ export const chartHeaderFontSize = 13;
 export const chartHeaderFontWeight = 'bold';
 export const chartHeaderBaselineOffset = 23;
 
-export const themeTransitionDuration = 300; // ms
-export const themeTransitionStyle = {
-  transitionDuration: `${themeTransitionDuration}ms`,
-  transitionTimingFunction: 'ease-in-out'
-};
-export const themeTransitionCSS = `transition-duration: ${themeTransitionStyle.transitionDuration};`
-  + `transition-timing-function: ${themeTransitionStyle.transitionTimingFunction};`;
+export const chartColumnDetailsWidth = 160;
+export const chartColumnDetailsSidePadding = 12;
+export const chartColumnDetailsCornerRadius = 10;
+export const chartColumnDetailsHeaderFontSize = 13;
+export const chartColumnDetailsHeaderFontWeight = 'bold';
+export const chartColumnDetailsHeaderBaselineY = 20;
+export const chartColumnDetailsFirstRowBaselineY = 41;
+export const chartColumnDetailsRowHeight = 21;
+export const chartColumnDetailsBottomPadding = 13;
+export const chartColumnDetailsFontSize = 13;
+export const chartColumnDetailsFontWeight = 'regular';
+export const chartColumnDetailsValueFontWeight = 'bold';
+export const chartColumnDetailsStakeWidth = 24;
+export const chartColumnDetailsStakeMargin = 7;
+export const chartColumnDetailsBackgroundColors = [0xffffff, 0x1c2533];
+export const chartColumnDetailsShadowColors = [0x000000, 0x000000];
+export const chartColumnDetailsShadowOpacities = [0.2, 0];
+export const chartColumnDetailsShadowXOffset = 0;
+export const chartColumnDetailsShadowYOffset = 1;
+export const chartColumnDetailsShadowBlur = 3;
+export const chartColumnDetailsTotalText = 'All';

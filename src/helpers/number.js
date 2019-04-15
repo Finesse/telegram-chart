@@ -43,6 +43,19 @@ function getNumberSuffixPower(number) {
   return shortNumberSuffixes.length;
 }
 
+export function formatNumberWithThousandGroups(number, divider = ' ') {
+  const [integer, fractional] = String(number).split('.');
+  const digitsCount = integer.length;
+  let groupedInteger = '';
+
+  for (let i = 0; i < digitsCount; i += 3) {
+    groupedInteger = integer.slice(Math.max(0, digitsCount - i - 3), digitsCount - i)
+      + (groupedInteger ? divider + groupedInteger : '');
+  }
+
+  return groupedInteger + (fractional ? '.' + fractional : '');
+}
+
 // https://stackoverflow.com/q/4467539/1118709
 export function modulo(dividend, divider) {
   return ((dividend % divider) + divider) % divider;

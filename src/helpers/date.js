@@ -30,15 +30,14 @@ export function formatDateForDateScale(timestamp) {
   return months[date.getUTCMonth()].slice(0, 3) + ' ' + date.getUTCDate();
 }
 
-export function formatDateForDetails(timestamp) {
-  const date = new Date(timestamp);
-  return weekDays[date.getUTCDay()].slice(0, 3)
-    + ' ' + months[date.getUTCMonth()].slice(0, 3)
-    + ' ' + date.getUTCDate();
-}
-
 export function getDayInMonth(timestamp) {
   return new Date(timestamp).getUTCDate();
+}
+
+export function getDayInWeekAndMonth(timestamp) {
+  const date = new Date(timestamp);
+  return weekDays[date.getUTCDay()].slice(0, 3)
+    + ', ' + date.getUTCDate();
 }
 
 export function getDateComponentsForRange(timestamp) {

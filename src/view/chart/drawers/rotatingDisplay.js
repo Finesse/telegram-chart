@@ -1,7 +1,7 @@
 import {numberColorToRGBA} from '../../../helpers/color';
 
 const edgeScale = 0.5;
-const edgeYRelativeOffset = 0.6;
+const edgeYRelativeOffset = 0.7;
 
 /**
  * `position` is the current display state (it rotates while the position increases).
@@ -15,7 +15,7 @@ export default function drawRotatingDisplay({
   getItemText = index => index,
   containerAlign = 'left', baseline = 'alphabetic',
   fontSize = 10,
-  fontWeight = '',
+  fontWeight = 'regular',
   fontFamily = '',
   lineHeight = 1,
   topAlign = 0.5,
@@ -25,7 +25,7 @@ export default function drawRotatingDisplay({
   const itemIndices = [Math.floor(position), Math.floor(position) + 1];
   let averageWidth = 0;
 
-  const fontStringBeforeSize = fontWeight + ' ';
+  const fontStringBeforeSize = (fontWeight === 'regular' ? '' : fontWeight) + ' ';
   const fontStringAfterSize = 'px/' + lineHeight + ' ' + fontFamily;
 
   ctx.textBaseline = baseline;
@@ -40,7 +40,6 @@ export default function drawRotatingDisplay({
     }
 
     // Measure the text width
-    // todo: Measuring takes much time. Try to optimize it by precomputing.
     const itemText = getItemText(itemIndex);
     ctx.font = fontStringBeforeSize + Math.round(fontSize) + fontStringAfterSize;
     const itemWidth = ctx.measureText(itemText).width;

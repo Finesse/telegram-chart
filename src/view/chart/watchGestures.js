@@ -1,4 +1,5 @@
 import {
+  chartMainTopMargin,
   chartMapHeight,
   chartSidePadding,
   chartMainLinesTopMargin,
@@ -233,12 +234,13 @@ export default function watchGestures(element, chartState, callbacks) {
 
   function getMainLinesBounds() {
     const {clientWidth, clientHeight} = element;
+    const y = chartMainTopMargin + chartMainLinesTopMargin;
 
     return {
       x: chartSidePadding,
-      y: chartMainLinesTopMargin,
+      y,
       width: clientWidth - chartSidePadding * 2,
-      height: clientHeight - chartMainLinesTopMargin - chartMainLinesBottomMargin - chartMapHeight
+      height: clientHeight - y - chartMainLinesBottomMargin - chartMapHeight
     };
   }
 }

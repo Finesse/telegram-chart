@@ -11,16 +11,11 @@ import {
   chartValueScaleLabelMargin
 } from '../../../style';
 
-/**
- * `notchScale` determines the distance between the notches measured in the value units.
- * 0 is 1, 1 is 2, 2 is 5, 3 is 10, 4 is 20, 5 is 50 and so on.
- * It can also be not integer, in this case a transitional state is rendered.
- */
 export default function drawValueScale({
   ctx,
   x, y, width, height,
   fromValue, toValue,
-  notchScale,
+  notchScale, // See the `getSubDecimalScale` function. It can be not integer, in this case a transitional state is rendered.
   topPadding = 0,
   pixelRatio,
   theme,

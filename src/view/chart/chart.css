@@ -49,11 +49,3 @@
 .toggle {
   margin: 3px;
 }
-
-.details {
-  position: absolute;
-  z-index: 100;
-  bottom: 83%;
-  left: 6px;
-  right: 6px;
-}
