@@ -1,5 +1,5 @@
 import memoizeObjectArguments from '../../../helpers/memoizeObjectArguments';
-import {chartSidePadding, chartMainLinesTopMargin, chartMainFadeHeight} from '../../../style';
+import {chartSidePadding, chartMainLinesTopMargin, chartMainFadeHeight, chartScaleLineWidth} from '../../../style';
 import {TYPE_AREA, TYPE_BAR, TYPE_LINE, TYPE_LINE_TWO_Y} from '../../../namespace';
 import drawMainLines from './mainLines';
 import makeBars from './bars';
@@ -119,9 +119,9 @@ export default function makeChartMainWithoutX(ctx, type, linesData, percentageAr
       case TYPE_AREA: {
         drawPercentageArea({
           x,
-          y: mainLinesY,
+          y: mainLinesY - chartScaleLineWidth * pixelRatio,
           width,
-          height: mainLinesHeight,
+          height: mainLinesHeight + chartScaleLineWidth * pixelRatio,
           linesData,
           linesOpacity,
           fromX: mainLinesX,

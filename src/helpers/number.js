@@ -56,6 +56,16 @@ export function formatNumberWithThousandGroups(number, divider = ' ') {
   return groupedInteger + (fractional ? '.' + fractional : '');
 }
 
+export function inRange(min, value, max) {
+  if (value < min) {
+    return min;
+  }
+  if (value > max) {
+    return max;
+  }
+  return value;
+}
+
 // https://stackoverflow.com/q/4467539/1118709
 export function modulo(dividend, divider) {
   return ((dividend % divider) + divider) % divider;

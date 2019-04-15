@@ -4,7 +4,11 @@ import {
   chartMapHeight,
   chartMapBottom,
   chartMainTopMargin,
-  chartSidePadding
+  chartSidePadding,
+  chartColumnDetailsY,
+  chartColumnDetailsXMargin,
+  chartColumnDetailsWidth,
+  chartColumnDetailsMinDistanceToEdge
 } from '../../../style';
 import {TYPE_AREA} from '../../../namespace';
 import makeChartTop from './chartTop';
@@ -61,6 +65,7 @@ export default function makeChart(mainCanvas, mapCanvas, type, linesData, dates,
     detailsDay,
     detailsMonth,
     detailsYear,
+    detailsAlign, // 0 - to the left of the pointer, 1 - to the right
     detailsOpacity,
     rangeStartDay,
     rangeStartMonth,
@@ -135,10 +140,9 @@ export default function makeChart(mainCanvas, mapCanvas, type, linesData, dates,
     });
 
     if (doDrawDetailsPopup) {
-      // todo: Detect the position
       drawColumnDetails({
-        x: 10 * pixelRatio,
-        y: 50 * pixelRatio,
+        x: Math.round(getDetailsPopupX(mainCanvasWidth, pixelRatio, detailsIndex, startIndex, endIndex, detailsAlign)),
+        y: chartColumnDetailsY * pixelRatio,
         ctx: mainCtx,
         pixelRatio,
         theme,
@@ -163,4 +167,20 @@ export default function makeChart(mainCanvas, mapCanvas, type, linesData, dates,
       pixelRatio
     }, linesOpacity);
   };
+}
+
+function getDetailsPopupX(canvasWidth, pixelRatio, detailsIndex, startIndex, endIndex, align) {
+  const pointerX = chartSidePadding * pixelRatio
+    + (canvasWidth - chartSidePadding * 2 * pixelRatio) * (detailsIndex - startIndex) / (endIndex - startIndex);
+
+  const xOnLeftAlign = Math.max(
+    chartColumnDetailsMinDistanceToEdge * pixelRatio,
+    pointerX - (chartColumnDetailsWidth + chartColumnDetailsXMargin) * pixelRatio
+  );
+  const xOnRightAlign = Math.min(
+    canvasWidth - (chartColumnDetailsMinDistanceToEdge + chartColumnDetailsWidth) * pixelRatio,
+    pointerX + chartColumnDetailsXMargin * pixelRatio
+  );
+
+  return xOnLeftAlign * (1 - align) + xOnRightAlign * align;
 }

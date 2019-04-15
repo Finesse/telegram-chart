@@ -24,6 +24,7 @@ import {
   getValueRangeForFixedBottom,
   getSubDecimalScale
 } from '../../helpers/scale';
+import {inRange} from '../../helpers/number';
 import {
   themeTransitionDuration,
   chartMapHeight,
@@ -136,7 +137,7 @@ export default function makeChart(element, {name, type, dates, lines}, initialTh
 
   function handleStartIndexChange(relativeIndex) {
     const x = minIndex + relativeIndex * (maxIndex - minIndex);
-    const startIndex = Math.max(minIndex, Math.min(x, maxIndex - minMapSelectionLength));
+    const startIndex = inRange(minIndex, x, maxIndex - minMapSelectionLength);
     const endIndex = Math.max(state.endIndex, startIndex + minMapSelectionLength);
 
     setState({startIndex, endIndex});
@@ -144,7 +145,7 @@ export default function makeChart(element, {name, type, dates, lines}, initialTh
 
   function handleEndIndexChange(relativeIndex) {
     const x = minIndex + relativeIndex * (maxIndex - minIndex);
-    const endIndex = Math.max(minIndex + minMapSelectionLength, Math.min(x, maxIndex));
+    const endIndex = inRange(minIndex + minMapSelectionLength, x, maxIndex);
     const startIndex = Math.min(state.startIndex, endIndex - minMapSelectionLength);
 
     setState({startIndex, endIndex});
@@ -153,7 +154,7 @@ export default function makeChart(element, {name, type, dates, lines}, initialTh
   function handleIndexMove(relativeMiddleX) {
     const x = minIndex + relativeMiddleX * (maxIndex - minIndex);
     const currentXLength = state.endIndex - state.startIndex;
-    const startIndex = Math.min(Math.max(minIndex, x - currentXLength / 2), maxIndex - currentXLength);
+    const startIndex = inRange(minIndex, x - currentXLength / 2, maxIndex - currentXLength);
     const endIndex = startIndex + currentXLength;
 
     setState({startIndex, endIndex});
@@ -165,7 +166,7 @@ export default function makeChart(element, {name, type, dates, lines}, initialTh
     } else {
       const index = state.startIndex + (state.endIndex - state.startIndex) * relativeX;
       setState({
-        detailsIndex: Math.max(0, Math.min(Math.round(index), dates.length - 1))
+        detailsIndex: inRange(0, Math.round(index), dates.length - 1)
       });
     }
   }
@@ -183,7 +184,7 @@ export default function makeChart(element, {name, type, dates, lines}, initialTh
     applyLinesOpacity(state.lines);
     applyMainValueRange(lines, state.lines, state.startIndex, state.endIndex);
     applyDatesRange(dates, minIndex, maxIndex, state.startIndex, state.endIndex);
-    applyDetailsPosition(state.detailsIndex);
+    applyDetailsPosition(state.detailsIndex, state.startIndex, state.endIndex);
     applyTheme(state.theme);
 
     transitions.updateOnNextFrame();
@@ -287,7 +288,7 @@ export default function makeChart(element, {name, type, dates, lines}, initialTh
     gesturesWatcher.setChartState(getStateForGestureWatcher(minIndex, maxIndex, startIndex, endIndex));
   });
 
-  const applyDetailsPosition = memoizeOne(detailsIndex => {
+  const applyDetailsPosition = memoizeOne((detailsIndex, startIndex, endIndex) => {
     if (detailsIndex === null) {
       transitions.setTargets({
         detailsPosition: [undefined, 0]
@@ -296,11 +297,13 @@ export default function makeChart(element, {name, type, dates, lines}, initialTh
     }
 
     const detailsDate = getDataDateComponentsForRange(dates, detailsIndex);
+    const relativePosition = (detailsIndex - startIndex) / (endIndex - startIndex);
 
     transitions.setTargets({
       detailsPosition: [{
         ...detailsDate,
-        index: detailsIndex
+        index: detailsIndex,
+        align: relativePosition > 0.5 ? 0 : 1
       }, 1]
     });
   });
@@ -343,7 +346,8 @@ export default function makeChart(element, {name, type, dates, lines}, initialTh
           index: detailsIndex,
           day: detailsDay,
           month: detailsMonth,
-          year: detailsYear
+          year: detailsYear,
+          align: detailsAlign
         },
         detailsOpacity
       ],
@@ -385,6 +389,7 @@ export default function makeChart(element, {name, type, dates, lines}, initialTh
       detailsDay,
       detailsMonth,
       detailsYear,
+      detailsAlign,
       detailsOpacity,
       rangeStartDay,
       rangeStartMonth,
@@ -542,6 +547,7 @@ function createTransitionGroup({
         day: makeTransition(0, detailsTransitionOptions),
         month: makeTransition(0, detailsTransitionOptions),
         year: makeTransition(0, detailsTransitionOptions),
+        align: makeTransition(0)
       }),
       makeTransition(0, {
         duration: 300
@@ -614,7 +620,7 @@ function getStateForGestureWatcher(minIndex, maxIndex, startIndex, endIndex) {
 }
 
 function getDataDateComponentsForRange(dates, index) {
-  const timestamp = dates[Math.max(0, Math.min(Math.round(index), dates.length - 1))];
+  const timestamp = dates[inRange(0, Math.round(index), dates.length - 1)];
   return getDateComponentsForRange(timestamp);
 }
 

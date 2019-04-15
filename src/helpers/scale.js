@@ -80,7 +80,7 @@ export function getValueRangeForFixedNotches(minValue, maxValue, notchCount = 5)
     return [alignedMinValue, alignedMaxValue];
   }
 
-  let notchScale = Math.max(-1e9, getSubDecimalScale(Math.max(1e-9, Math.abs((maxValue - minValue) / notchCount)), true));
+  let notchScale = getSubDecimalScale(Math.max(1e-9, Math.abs((maxValue - minValue) / notchCount)), true);
   let [min, max] = getValueRange(notchScale);
 
   if (max < maxValue) {
