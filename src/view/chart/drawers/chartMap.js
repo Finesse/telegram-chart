@@ -1,7 +1,12 @@
 import memoizeObjectArguments from '../../../helpers/memoizeObjectArguments';
-import {chartMapBarsVerticalPadding} from '../../../style';
+import {
+  chartMapBarsVerticalPadding,
+  chartMapLinesHorizontalMargin,
+  chartMapLinesVerticalMargin,
+  chartMapLineWidth
+} from '../../../style';
 import {TYPE_AREA, TYPE_BAR, TYPE_LINE, TYPE_LINE_TWO_Y} from '../../../namespace';
-import drawMapLines from './mapLines';
+import drawLinesGroup from './linesGroup';
 import makeBars from './bars';
 import makePercentageArea from './percentageArea';
 
@@ -23,45 +28,60 @@ export default function makeChartMap(ctx, type, linesData, minIndex, maxIndex, p
       x: 0,
       y: 0,
       width: canvasWidth,
-      height: canvasHeight,
-      pixelRatio
+      height: canvasHeight
     };
 
     switch (type) {
       case TYPE_LINE:
-        drawMapLines({
+        drawLinesGroup({
           ...commonArguments,
-          minValue,
-          maxValue,
           linesData,
-          linesOpacity
+          linesOpacity,
+          fromX: chartMapLinesHorizontalMargin * pixelRatio,
+          toX: canvasWidth - chartMapLinesHorizontalMargin * pixelRatio,
+          fromIndex: minIndex,
+          toIndex: maxIndex,
+          fromY: canvasHeight - chartMapLinesVerticalMargin * pixelRatio,
+          toY: chartMapLinesVerticalMargin * pixelRatio,
+          fromValue: minValue,
+          toValue: maxValue,
+          lineWidth: chartMapLineWidth * pixelRatio
         });
         break;
       case TYPE_LINE_TWO_Y: {
-        drawMapLines({
+        const _commonArguments = {
+          linesOpacity,
+          fromX: chartMapLinesHorizontalMargin * pixelRatio,
+          toX: canvasWidth - chartMapLinesHorizontalMargin * pixelRatio,
+          fromIndex: minIndex,
+          toIndex: maxIndex,
+          fromY: canvasHeight - chartMapLinesVerticalMargin * pixelRatio,
+          toY: chartMapLinesVerticalMargin * pixelRatio,
+          lineWidth: chartMapLineWidth * pixelRatio
+        };
+        drawLinesGroup({
           ...commonArguments,
-          minValue: altMinValue,
-          maxValue: altMaxValue,
+          ..._commonArguments,
+          fromValue: altMinValue,
+          toValue: altMaxValue,
           linesData: {
             [altLineKey]: linesData[altLineKey]
-          },
-          linesOpacity
+          }
         });
-        drawMapLines({
+        drawLinesGroup({
           ...commonArguments,
-          minValue,
-          maxValue,
+          ..._commonArguments,
+          fromValue: minValue,
+          toValue: maxValue,
           linesData: {
             [mainLineKey]: linesData[mainLineKey]
-          },
-          linesOpacity
+          }
         });
         break;
       }
       case TYPE_BAR: {
         drawBars({
           ...commonArguments,
-          linesData,
           linesOpacity,
           fromX: 0,
           toX: canvasWidth,
@@ -76,7 +96,6 @@ export default function makeChartMap(ctx, type, linesData, minIndex, maxIndex, p
       case TYPE_AREA: {
         drawPercentageArea({
           ...commonArguments,
-          linesData,
           linesOpacity,
           fromX: 0,
           toX: canvasWidth,

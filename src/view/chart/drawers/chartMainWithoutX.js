@@ -1,7 +1,13 @@
 import memoizeObjectArguments from '../../../helpers/memoizeObjectArguments';
-import {chartSidePadding, chartMainLinesTopMargin, chartMainFadeHeight, chartScaleLineWidth} from '../../../style';
+import {
+  chartSidePadding,
+  chartMainLinesTopMargin,
+  chartMainFadeHeight,
+  chartScaleLineWidth,
+  chartMainLineWidth
+} from '../../../style';
 import {TYPE_AREA, TYPE_BAR, TYPE_LINE, TYPE_LINE_TWO_Y} from '../../../namespace';
-import drawMainLines from './mainLines';
+import drawLinesGroup from './linesGroup';
 import makeBars from './bars';
 import makePercentageArea from './percentageArea';
 import drawValueScale from './valueScale';
@@ -51,50 +57,53 @@ export default function makeChartMainWithoutX(ctx, type, linesData, percentageAr
     // The plot
     switch (type) {
       case TYPE_LINE:
-        drawMainLines({
-          ...commonArguments,
+        drawLinesGroup({
+          ctx,
           linesData,
           linesOpacity,
-          canvasWidth: width,
-          x: mainLinesX,
-          y: mainLinesY,
-          width: mainLinesWidth,
-          height: mainLinesHeight,
-          minValue,
-          maxValue,
+          x,
+          width,
+          fromX: mainLinesX,
+          toX: mainLinesX + mainLinesWidth,
           fromIndex: startIndex,
-          toIndex: endIndex
+          toIndex: endIndex,
+          fromY: mainLinesY + mainLinesHeight,
+          toY: mainLinesY,
+          fromValue: minValue,
+          toValue: maxValue,
+          lineWidth: chartMainLineWidth * pixelRatio
         });
         break;
 
       case TYPE_LINE_TWO_Y: {
         const _commonArguments = {
+          ctx,
           linesOpacity,
-          canvasWidth: width,
-          x: mainLinesX,
-          y: mainLinesY,
-          width: mainLinesWidth,
-          height: mainLinesHeight,
+          x,
+          width,
+          fromX: mainLinesX,
+          toX: mainLinesX + mainLinesWidth,
           fromIndex: startIndex,
           toIndex: endIndex,
+          fromY: mainLinesY + mainLinesHeight,
+          toY: mainLinesY,
+          lineWidth: chartMainLineWidth * pixelRatio
         };
-        drawMainLines({
-          ...commonArguments,
+        drawLinesGroup({
           ..._commonArguments,
           linesData: {
             [altLineKey]: linesData[altLineKey]
           },
-          minValue: altMinValue,
-          maxValue: altMaxValue
+          fromValue: altMinValue,
+          toValue: altMaxValue
         });
-        drawMainLines({
-          ...commonArguments,
+        drawLinesGroup({
           ..._commonArguments,
           linesData: {
             [mainLineKey]: linesData[mainLineKey]
           },
-          minValue,
-          maxValue
+          fromValue: minValue,
+          toValue: maxValue
         });
         break;
       }

@@ -217,9 +217,14 @@ export default function makeChart(element, {name, type, dates, lines}, initialTh
   });
 
   const applyLinesOpacity = memoizeOne(linesState => {
-    for (const [key, {enabled}] of Object.entries(linesState)) {
-      transitions.setTargets({[`line_${key}_opacity`]: enabled ? 1 : 0});
+    const linesOpacity = {};
+    for (const key in linesState) {
+      if (linesState.hasOwnProperty(key)) {
+        linesOpacity[key] = linesState[key].enabled ? 1 : 0;
+      }
     }
+
+    transitions.setTargets({linesOpacity});
   });
 
   const applyMainValueRange = memoizeOne((linesData, linesState, startIndex, endIndex) => {
@@ -330,17 +335,7 @@ export default function makeChart(element, {name, type, dates, lines}, initialTh
     } = state;
 
     const {
-      mapMinValue,
-      mapMaxValue,
-      mapAltMinValue,
-      mapAltMaxValue,
-      mainMinValue,
-      mainMaxValue,
-      mainValueNotchScale,
-      mainAltMinValue,
-      mainAltMaxValue,
-      mainAltValueNotchScale,
-      dateNotchScale,
+      linesOpacity,
       detailsPosition: [
         {
           index: detailsIndex,
@@ -351,38 +346,16 @@ export default function makeChart(element, {name, type, dates, lines}, initialTh
         },
         detailsOpacity
       ],
-      theme,
-      rangeStartDay,
-      rangeStartMonth,
-      rangeStartYear,
-      rangeEndDay,
-      rangeEndMonth,
-      rangeEndYear,
-      ...linesAnimatedState
+      ...restTransitionState
     } = transitions.getState();
 
-    const linesOpacity = {};
-    for (const key of Object.keys(lines)) {
-      linesOpacity[key] = linesAnimatedState[`line_${key}_opacity`];
-    }
-
     updateCanvases({
+      ...restTransitionState,
       mainCanvasWidth: mainCanvasWidth * pixelRatio,
       mainCanvasHeight: mainCanvasHeight * pixelRatio,
       mapCanvasWidth: mapCanvasWidth * pixelRatio,
       mapCanvasHeight: mapCanvasHeight * pixelRatio,
       pixelRatio,
-      mapMinValue,
-      mapMaxValue,
-      mapAltMinValue,
-      mapAltMaxValue,
-      mainMinValue,
-      mainMaxValue,
-      mainValueNotchScale,
-      mainAltMinValue,
-      mainAltMaxValue,
-      mainAltValueNotchScale,
-      dateNotchScale,
       startIndex,
       endIndex,
       detailsIndex,
@@ -390,14 +363,7 @@ export default function makeChart(element, {name, type, dates, lines}, initialTh
       detailsMonth,
       detailsYear,
       detailsAlign,
-      detailsOpacity,
-      rangeStartDay,
-      rangeStartMonth,
-      rangeStartYear,
-      rangeEndDay,
-      rangeEndMonth,
-      rangeEndYear,
-      theme
+      detailsOpacity
     }, linesOpacity);
 
     setTogglesState(linesState);
@@ -527,7 +493,13 @@ function createTransitionGroup({
     duration: 300
   };
 
-  const transitions = {
+  const linesOpacityTransitions = {};
+  for (const [key, {enabled}] of Object.entries(linesState)) {
+    linesOpacityTransitions[key] = makeTransition(enabled ? 1 : 0);
+  }
+
+  return makeAnimationGroup({
+    linesOpacity: makeTransitionGroup(linesOpacityTransitions),
     mapMinValue: valueTransitionFactory(mapMinValue),
     mapMaxValue: valueTransitionFactory(mapMaxValue),
     mapAltMinValue: valueTransitionFactory(mapAltMinValue),
@@ -560,13 +532,7 @@ function createTransitionGroup({
     rangeEndMonth: makeTransition(endDate.month, {easing: quadOut}),
     rangeEndYear: makeTransition(endDate.year, {easing: quadOut}),
     theme: makeTransition(theme === 'day' ? 0 : 1, {duration: themeTransitionDuration}),
-  };
-
-  for (const [key, {enabled}] of Object.entries(linesState)) {
-    transitions[`line_${key}_opacity`] = makeTransition(enabled ? 1 : 0);
-  }
-
-  return makeAnimationGroup(transitions, onUpdate);
+  }, onUpdate);
 }
 
 /**

@@ -39,7 +39,7 @@
     "webpack-bundle-analyzer": "^3.2.0"
   },
   "browserslist": [
-    "last 5 years",
-    "not < 0.1%"
+    "last 2 years",
+    "not < 0.5%"
   ]
 }
