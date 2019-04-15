@@ -49,6 +49,7 @@ export const chartBarDimOpacity = 0.5;
 export const chartHeaderFontSize = 13;
 export const chartHeaderFontWeight = 'bold';
 export const chartHeaderBaselineOffset = 23;
+export const chartHeaderShrinkStartWidth = 350;
 
 export const chartColumnDetailsXMargin = 22;
 export const chartColumnDetailsMinDistanceToEdge = 5;
