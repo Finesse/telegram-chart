@@ -27,7 +27,7 @@ ${/*
  * Renders and operates the whole application
  */
 export default function makeApp(element, chartsData) {
-  let theme = 'day'; // todo: Get the initial theme from the OS settings
+  let theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'night' : 'day';
   const charts = [];
 
   document.body.style.fontFamily = fontFamily;

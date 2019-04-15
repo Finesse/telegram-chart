@@ -3,14 +3,20 @@
   padding: 0;
   transition-property: background, color;
   line-height: 1.4;
+  background: #fff;
+  color: #000;
   /* font-family is set through the JS */
 }
-
+@media (prefers-color-scheme: dark) {
+  :global(body) {
+    background: #242f3e;
+    color: #fff;
+  }
+}
 :global(.dayTheme) {
   background: #fff;
   color: #000;
 }
-
 :global(.nightTheme) {
   background: #242f3e;
   color: #fff;
