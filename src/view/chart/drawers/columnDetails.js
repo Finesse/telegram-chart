@@ -2,7 +2,7 @@ import {mixNumberColors, numberColorToRGBA} from '../../../helpers/color';
 import {mixNumbers, formatNumberWithThousandGroups} from '../../../helpers/number';
 import {roundedRectanglePath} from '../../../helpers/canvas';
 import {getDayInWeekAndMonth, months, timestampInDay} from '../../../helpers/date';
-import memoizeObjectArguments from '../../../helpers/memoizeObjectArguments';
+import {memoizeObjectArguments} from '../../../helpers/memoize';
 import {TYPE_AREA, TYPE_BAR} from '../../../namespace';
 import {
   fontFamily,

@@ -1,4 +1,4 @@
-import memoizeObjectArguments from '../../../helpers/memoizeObjectArguments';
+import {memoizeObjectArguments} from '../../../helpers/memoize';
 import {mixNumberColors} from '../../../helpers/color';
 import {getDayInMonth, months, timestampInDay} from '../../../helpers/date';
 import {

@@ -1,4 +1,4 @@
-import memoizeOne from 'memoize-one';
+import {memoize} from '../../../helpers/memoize';
 import {
   chartMainLinesBottomMargin,
   chartMapHeight,
@@ -23,13 +23,13 @@ export default function makeChart(mainCanvas, mapCanvas, type, linesData, dates,
   const mapCtx = mapCanvas.getContext('2d');
   const percentageAreaCache = type === TYPE_AREA ? makePercentageAreaCache(linesData) : () => [];
 
-  const updateMainCanvasSize = memoizeOne((width, height) => {
+  const updateMainCanvasSize = memoize((width, height) => {
     mainCanvas.width = width;
     mainCanvas.height = height;
     ++forceRedrawMainCanvas;
   });
 
-  const updateMapCanvasSize = memoizeOne((width, height) => {
+  const updateMapCanvasSize = memoize((width, height) => {
     mapCanvas.width = width;
     mapCanvas.height = height;
   });

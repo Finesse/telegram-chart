@@ -1,4 +1,4 @@
-import memoizeObjectArguments from '../../../helpers/memoizeObjectArguments';
+import {memoizeObjectArguments} from '../../../helpers/memoize';
 import {numberColorToRGBA} from '../../../helpers/color';
 
 export default function makePercentageArea(ctx, linesData, cache = makePercentageAreaCache(linesData)) {

@@ -1,6 +1,6 @@
-import memoizeOne from 'memoize-one';
-import {quadOut} from 'd3-ease/src/quad';
-import {cubicOut} from 'd3-ease/src/cubic';
+import {memoize} from '../../helpers/memoize';
+import {quadOut} from '../../helpers/easing';
+import {cubicOut} from '../../helpers/easing';
 import {
   makeAnimationGroup,
   makeExponentialTransition,
@@ -190,7 +190,7 @@ export default function makeChart(element, {name, type, dates, lines}, initialTh
     transitions.updateOnNextFrame();
   }
 
-  const applyMapValueRange = memoizeOne((linesMinAndMax, linesState) => {
+  const applyMapValueRange = memoize((linesMinAndMax, linesState) => {
     switch (type) {
       case TYPE_LINE: {
         const {min, max} = getMinAndMaxFromLinesCache(linesMinAndMax, linesState);
@@ -216,7 +216,7 @@ export default function makeChart(element, {name, type, dates, lines}, initialTh
     }
   });
 
-  const applyLinesOpacity = memoizeOne(linesState => {
+  const applyLinesOpacity = memoize(linesState => {
     const linesOpacity = {};
     for (const key in linesState) {
       if (linesState.hasOwnProperty(key)) {
@@ -227,7 +227,7 @@ export default function makeChart(element, {name, type, dates, lines}, initialTh
     transitions.setTargets({linesOpacity});
   });
 
-  const applyMainValueRange = memoizeOne((linesData, linesState, startIndex, endIndex) => {
+  const applyMainValueRange = memoize((linesData, linesState, startIndex, endIndex) => {
     switch (type) {
       case TYPE_LINE: {
         const {min, max} = getLinesMinAndMaxOnRange(linesData, linesState, startIndex, endIndex);
@@ -276,7 +276,7 @@ export default function makeChart(element, {name, type, dates, lines}, initialTh
     }
   });
 
-  const applyDatesRange = memoizeOne((dates, minIndex, maxIndex, startIndex, endIndex) => {
+  const applyDatesRange = memoize((dates, minIndex, maxIndex, startIndex, endIndex) => {
     const startDate = getDataDateComponentsForRange(dates, startIndex);
     const endDate = getDataDateComponentsForRange(dates, endIndex);
 
@@ -293,7 +293,7 @@ export default function makeChart(element, {name, type, dates, lines}, initialTh
     gesturesWatcher.setChartState(getStateForGestureWatcher(minIndex, maxIndex, startIndex, endIndex));
   });
 
-  const applyDetailsPosition = memoizeOne((detailsIndex, startIndex, endIndex) => {
+  const applyDetailsPosition = memoize((detailsIndex, startIndex, endIndex) => {
     if (detailsIndex === null) {
       transitions.setTargets({
         detailsPosition: [undefined, 0]
@@ -313,7 +313,7 @@ export default function makeChart(element, {name, type, dates, lines}, initialTh
     });
   });
 
-  const applyTheme = memoizeOne(theme => {
+  const applyTheme = memoize(theme => {
     transitions.setTargets({
       theme: theme === 'day' ? 0 : 1
     });
@@ -561,7 +561,7 @@ function createDOM(root, name, linesData, dates, linesState, onLineToggle, onLin
       togglesBox.appendChild(element);
     }
 
-    setTogglesState = memoizeOne(linesState => {
+    setTogglesState = memoize(linesState => {
       for (const key of Object.keys(linesState)) {
         togglesStateSetters[key](linesState[key].enabled);
       }

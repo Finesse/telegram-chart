@@ -1,4 +1,4 @@
-import {quadInOut} from 'd3-ease/src/quad';
+import {quadInOut} from './easing';
 
 /**
  * A passive animation for an animation group

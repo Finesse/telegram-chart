@@ -1,4 +1,4 @@
-import memoizeObjectArguments from '../../../helpers/memoizeObjectArguments';
+import {memoizeObjectArguments} from '../../../helpers/memoize';
 import {chartSidePadding, chartDateScaleLabelMargin, chartMapHeight, chartMapBottom} from '../../../style';
 import drawDateScale from './dateScale';
 import drawMapSelector from './mapSelector';

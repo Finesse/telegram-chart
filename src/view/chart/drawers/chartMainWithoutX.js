@@ -1,4 +1,4 @@
-import memoizeObjectArguments from '../../../helpers/memoizeObjectArguments';
+import {memoizeObjectArguments} from '../../../helpers/memoize';
 import {
   chartSidePadding,
   chartMainLinesTopMargin,

@@ -1,7 +1,7 @@
-import memoizeOne from 'memoize-one';
+import {memoize} from '../../../helpers/memoize';
 
 export default function makeTopFade(ctx) {
-  const getGradient = memoizeOne((y, height) => {
+  const getGradient = memoize((y, height) => {
     const gradient = ctx.createLinearGradient(0, y, 0, y + height);
     gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
     gradient.addColorStop(1, 'rgba(0, 0, 0, 1)');
