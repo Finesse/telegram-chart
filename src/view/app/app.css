@@ -16,12 +16,27 @@
   color: #fff;
 }
 
-.chart {
-  margin: 12px 0;
+.charts {
+  display: flex;
+  flex-wrap: wrap;
 }
-
-.chart:not(:first-child) {
-  margin-top: 40px;
+.chart {
+  box-sizing: border-box;
+  width: 33.333%;
+  padding: 12px 0 40px;
+}
+@media (max-width: 1200px) {
+  .chart {
+    width: 50%;
+  }
+}
+@media (max-width: 750px) {
+  .charts {
+    display: block;
+  }
+  .chart {
+    width: auto;
+  }
 }
 
 .themeSwitcher,
@@ -31,7 +46,7 @@
 }
 
 .themeSwitcher {
-  position: fixed; /* todo: Detach on small screens */
+  position: fixed;
   z-index: 100;
   left: 0;
   right: 0;
@@ -50,6 +65,15 @@
   box-shadow: 0 5px 10px 10px #242f3e;
 }
 
+@media (max-height: 350px) {
+  .themeSwitcher {
+    position: static;
+  }
+  .themeSwitcherHolder {
+    display: none;
+  }
+}
+
 .button {
   border: none;
   background: none;
@@ -66,7 +90,7 @@
   color: #108be3;
 }
 :global(.nightTheme) .button {
-  color: #36a8f1;
+  color: #48aaf0;
 }
 
 @media (max-width: 500px) {

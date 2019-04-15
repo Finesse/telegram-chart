@@ -3,17 +3,17 @@ import makeChart from '../chart/chart';
 import styles from './app.css?module';
 
 const template = `
-<div></div>
+<div class="${styles.charts}"></div>
+${/*
 <div class="${styles.buttonsBlock}">
-  ${/*
   <a
     href="http://github.com/Finesse/telegram-chart"
     target="_blank"
     class="${styles.button}"
     style="${themeTransitionCSS}"
   >See the source code</a>
-  */''}
 </div>
+*/''}
 <div class="${styles.themeSwitcherHolder}"></div>
 <div class="${styles.themeSwitcher}" style="${themeTransitionCSS}">
   <button
@@ -33,6 +33,7 @@ export default function makeApp(element, chartsData) {
   document.body.style.fontFamily = fontFamily;
   Object.assign(document.body.style, themeTransitionStyle);
   element.innerHTML = template;
+  const chartsContainer = element.querySelector(`.${styles.charts}`);
   const themeButton = element.querySelector(`.${styles.themeSwitcher} button`);
 
   function switchTheme() {
@@ -56,7 +57,7 @@ export default function makeApp(element, chartsData) {
   function addChart(chartData, start) {
     const chartBox = document.createElement('div');
     chartBox.className = styles.chart;
-    element.firstElementChild.appendChild(chartBox);
+    chartsContainer.appendChild(chartBox);
 
     const chart = makeChart(chartBox, chartData, theme);
     if (start) {
