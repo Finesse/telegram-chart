@@ -114,7 +114,6 @@ export function watchHover({element, onMove, onEnd, checkHover = event => true})
   };
 }
 
-// todo: Handle without cancelling the touch start event
 export function watchLongTap(element, onShortTap, onLongTap, longTapTime = 500, maxTapDistance = 10) {
   let tapId;
   let tapStartCoordinates;
@@ -125,7 +124,8 @@ export function watchLongTap(element, onShortTap, onLongTap, longTapTime = 500, 
     touchstart: handleTapStart,
     touchmove: handleTapMove,
     touchend: handleTapEnd,
-    touchcancel: handleTapEnd
+    touchcancel: handleTapEnd,
+    contextmenu: preventDefault // To prevent the context menu on a long touch
   };
 
   for (const event in permanentEventHandlers) {
@@ -146,8 +146,6 @@ export function watchLongTap(element, onShortTap, onLongTap, longTapTime = 500, 
   };
 
   function handleTapStart(event) {
-    event.preventDefault();
-
     eachSubEvent(event, (id, subEvent) => {
       clearAfterTap();
       tapId = id;
@@ -155,6 +153,7 @@ export function watchLongTap(element, onShortTap, onLongTap, longTapTime = 500, 
       timeoutId = setTimeout(handleTapTimeout, longTapTime);
 
       if (id === 'mouse') {
+        event.preventDefault();
         window.addEventListener('mousemove', handleTapMove);
         window.addEventListener('mouseup', handleTapEnd);
       }
@@ -172,6 +171,8 @@ export function watchLongTap(element, onShortTap, onLongTap, longTapTime = 500, 
   }
 
   function handleTapEnd(event) {
+    event.preventDefault(); // To prevent excess artificial mouse events after releasing the element
+
     eachSubEvent(event, id => {
       if (id === tapId) {
         clearAfterTap();
@@ -220,4 +221,8 @@ function eachSubEvent(event, callback) {
       callback(`touch${touch.identifier}`, touch);
     }
   }
+}
+
+function preventDefault(event) {
+  event.preventDefault();
 }
