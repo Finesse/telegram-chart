@@ -7,7 +7,8 @@
     "build": "webpack  --mode=production --progress",
     "build:noprogress": "webpack --mode=production",
     "analyze:dev": "npm start -- --analyze",
-    "analyze:prod": "npm run build -- --analyze"
+    "analyze:prod": "npm run build -- --analyze",
+    "deploy": "gh-pages -d build"
   },
   "engines": {
     "node": ">=10"
@@ -36,6 +37,7 @@
     "webpack-dev-server": "^3.2.1"
   },
   "devDependencies": {
+    "gh-pages": "^2.0.1",
     "webpack-bundle-analyzer": "^3.2.0"
   },
   "browserslist": [
