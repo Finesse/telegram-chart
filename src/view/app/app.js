@@ -27,7 +27,7 @@ const template = `
  * Renders and operates the whole application
  */
 export default function makeApp(element, chartsData) {
-  let theme = 'day';
+  let theme = 'day'; // todo: Get the initial theme from the OS settings
   const charts = [];
 
   document.body.style.fontFamily = fontFamily;

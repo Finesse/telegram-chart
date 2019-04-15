@@ -545,26 +545,32 @@ function createDOM(root, name, linesData, dates, linesState, onLineToggle, onLin
   const nameBox = root.querySelector(`.${styles.name}`);
   nameBox.textContent = name;
 
-  // todo: Don't show toggles if there is only 1 line
   const togglesBox = root.querySelector(`.${styles.toggles}`);
-  const togglesStateSetters = {};
-  for (const [key, {color, name}] of Object.entries(linesData)) {
-    const {element, setState} = makeToggleButton(
-      color,
-      name,
-      () => onLineToggle(key),
-      () => onLineToggleOther(key),
-      styles.toggle
-    );
-    togglesStateSetters[key] = setState;
-    togglesBox.appendChild(element);
-  }
-  const setTogglesState = memoizeOne(linesState => {
-    for (const key of Object.keys(linesState)) {
-      togglesStateSetters[key](linesState[key].enabled);
+  let setTogglesState;
+  if (Object.keys(linesData).length > 1) {
+    const togglesStateSetters = {};
+    for (const [key, {color, name}] of Object.entries(linesData)) {
+      const {element, setState} = makeToggleButton(
+        color,
+        name,
+        () => onLineToggle(key),
+        () => onLineToggleOther(key),
+        styles.toggle
+      );
+      togglesStateSetters[key] = setState;
+      togglesBox.appendChild(element);
     }
-  });
-  setTogglesState(linesState);
+
+    setTogglesState = memoizeOne(linesState => {
+      for (const key of Object.keys(linesState)) {
+        togglesStateSetters[key](linesState[key].enabled);
+      }
+    });
+    setTogglesState(linesState);
+  } else {
+    togglesBox.parentNode.removeChild(togglesBox);
+    setTogglesState = () => {};
+  }
 
   const {element: safariAssKickerElement, kick: kickSafariAss} = makeSafariAssKicker();
   root.appendChild(safariAssKickerElement);
