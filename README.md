@@ -1,31 +1,10 @@
 # Telegram chart
 
-This is a JS solution for [the Telegram March 2019 coding contest](http://t.me/contest/6).
-The goal was to develop an application for showing simple charts based on [the input data](src/chart_data.json).
+This is a JS solution for [the Telegram April 2019 coding contest](https://t.me/contest/59).
+The goal was to develop an application for showing charts based on [the input data](src/data) and the [design specification](docs/design).
+The solution is implemented without the bonus goals.
 
-<details>
-<summary>About the input data format</summary>
-The JSON file is an input data for the 5 charts. It contains a vector of JSON objects ('chart'), each representing a separate graph.
-
-chart.columns – List of all data columns in the chart. Each column has its label at position 0, followed by values.
-x values are UNIX timestamps in milliseconds.
-
-chart.types – Chart types for each of the columns. Supported values:
-"line" (line on the graph with linear interpolation),
-"x" (x axis values for each of the charts at the corresponding positions).
-
-chart.colors – Color for each line in 6-hex-digit format (e.g. "#AAAAAA").
-chart.names – Names for each line.
-</details>
-
-Specialized charting libraries were not allowed.
-The criteria were using to define the winner are speed, efficiency and the size of the app.
-
-This is how the chart application should work: [video](docs/charts.mp4)
-
-|Day|Night|
-|-----|-----|
-|![](docs/jsChartDay.png)|![](docs/jsChartNight.png)|
+The solution page on the official contest platform: http://contest.dev/chart-js/entry18
 
 ## How to start the application
 
@@ -51,8 +30,8 @@ upload the content of the `dist` directory to the web server and make the direct
 
 ## Architecture concepts
 
-Both SVG and canvas are too slow for Telegram so I decided to use WebGL.
-The WebGL render is implemented using [PixiJS](http://pixijs.com).
+I've chosen [canvas](https://developer.mozilla.org/en-US/docs/HTML/Canvas) to draw the charts
+because it's the best approach in terms of performance and reliability.
 The DOM is manipulated using a pure JS to make it fast and the code small.
 
 The chart supports multiple touches.
