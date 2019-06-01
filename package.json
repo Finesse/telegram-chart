@@ -8,7 +8,7 @@
     "build:noprogress": "webpack --mode=production",
     "analyze:dev": "npm start -- --analyze",
     "analyze:prod": "npm run build -- --analyze",
-    "deploy": "gh-pages -d build"
+    "deploy": "gh-pages -d dist"
   },
   "engines": {
     "node": ">=10"

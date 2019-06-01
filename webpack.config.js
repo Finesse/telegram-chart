@@ -7,7 +7,7 @@ const autoprefixer = require('autoprefixer');
 const csso = require('postcss-csso');
 
 const sourceDirectory = 'src';
-const distDirectory = 'build';
+const destinationDirectory = 'dist';
 
 function makeCSSLoaders(useCSSModules, isDevelopment) {
   return [
@@ -90,11 +90,11 @@ module.exports = (env, argv) => {
       ]
     },
     output: {
-      path: path.resolve(__dirname, distDirectory),
+      path: path.resolve(__dirname, destinationDirectory),
       filename: '[name].[hash].js'
     },
     devServer: {
-      contentBase: `./${distDirectory}`,
+      contentBase: `./${destinationDirectory}`,
       port: 8000
     },
     plugins: [

@@ -9,7 +9,7 @@ script:
   - npm run build:noprogress
 
 deploy:
-  local-dir: build
+  local-dir: dist
   provider: pages
   skip-cleanup: true
   github-token: $GITHUB_TOKEN
