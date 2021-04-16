@@ -6,6 +6,8 @@ The solution is implemented without the bonus goals.
 
 The solution page on the official contest platform: http://contest.dev/chart-js/entry18
 
+This code was refactored and improved at https://github.com/fingerprintjs/audio-fingerprint-article-demos
+
 ## How to start the application
 
 First install the application:

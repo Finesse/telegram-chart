@@ -89,7 +89,7 @@ export default function makeChart(element, {name, type, dates, lines}, initialTh
     kickSafariAss
   } = createDOM(element, name, lines, dates, state.lines, handleToggleLine, handleLineToggleOther);
   const updateCanvases = makeChartDrawer(mainCanvas, mapCanvas, type, lines, dates, minIndex, maxIndex);
-  const gesturesWatcher = watchGestures(chartBox, getStateForGestureWatcher(dates, state.startIndex, state.endIndex), {
+  const gesturesWatcher = watchGestures(chartBox, getStateForGestureWatcher(minIndex, maxIndex, state.startIndex, state.endIndex), {
     mapSelectorStart: handleStartIndexChange,
     mapSelectorMiddle: handleIndexMove,
     mapSelectorEnd: handleEndIndexChange,
